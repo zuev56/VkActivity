@@ -11,4 +11,8 @@
     <PackageReference Include="Zs.Common.Services" Version="6.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Abstractions\" />
+  </ItemGroup>
+
 </Project>

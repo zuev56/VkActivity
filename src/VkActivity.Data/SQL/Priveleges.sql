@@ -1,0 +1,5 @@
+﻿-- (!) Script must be reexecutable
+GRANT CONNECT        ON DATABASE "DefaultDbName"   TO app;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA vk TO app;
+GRANT ALL PRIVILEGES ON SCHEMA vk                  TO app;
+GRANT ALL PRIVILEGES ON ALL TABLES    IN SCHEMA vk TO app;

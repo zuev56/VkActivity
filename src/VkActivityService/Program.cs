@@ -1,4 +1,4 @@
-using VkActivityService;
+using VkActivity.Service;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
