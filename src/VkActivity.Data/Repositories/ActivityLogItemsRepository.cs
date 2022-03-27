@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using VkActivity.Data.Abstractions;
 using VkActivity.Data.Repositories;
 using Zs.Common.Extensions;
 
 namespace VkActivity.Data.Models;
 
-public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContext, ActivityLogItem>
+public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContext, ActivityLogItem>, IActivityLogItemsRepository
 {
     public ActivityLogItemsRepository(
         IDbContextFactory<VkActivityContext> contextFactory,
@@ -15,11 +16,13 @@ public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContex
     {
     }
 
-    public async Task<List<ActivityLogItem>> FindAllByIdsInDateRangeAsync(int[] userIds, DateTime fromDate, DateTime toDate)
+    public async Task<List<ActivityLogItem>> FindAllByIdsInDateRangeAsync(int[] userIds, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
     {
-        return await FindAllAsync(l => userIds.Contains(l.UserId)
-           && l.LastSeen >= fromDate.ToUnixEpoch()
-           && l.LastSeen <= toDate.ToUnixEpoch());
+        return await FindAllAsync(
+            l => userIds.Contains(l.UserId) 
+                && l.LastSeen >= fromDate.ToUnixEpoch()
+                && l.LastSeen <= toDate.ToUnixEpoch(),
+            cancellationToken: cancellationToken);
     }
 
     public async Task<List<ActivityLogItem>> FindLastUsersActivity(params int[] userIds)
@@ -36,4 +39,8 @@ public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContex
         return await FindAllBySqlAsync(sql);
     }
 
+    public async Task<bool> SaveRangeAsync(List<ActivityLogItem> activityLogItems, CancellationToken cancellationToken = default)
+    {
+        return await SaveRangeAsync(activityLogItems, i => i.Id, (i, id) => i.Id = id, cancellationToken);
+    }
 }

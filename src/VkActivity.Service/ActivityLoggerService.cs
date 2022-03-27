@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using Home.Data.Abstractions;
 using Home.Data.Models.VkAPI;
 using Microsoft.EntityFrameworkCore;
+using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
 using VkActivity.Service.Models;
 using Zs.Common.Abstractions;
@@ -16,7 +16,7 @@ public class ActivityLoggerService : IActivityLoggerService
 {
     private readonly IConfiguration _configuration;
     private readonly IActivityLogItemsRepository _vkActivityLogRepo;
-    private readonly IVkUsersRepository _vkUsersRepo;
+    private readonly IUsersRepository _vkUsersRepo;
     private readonly ILogger<ActivityLoggerService> _logger;
     private readonly float? _version;
     private readonly string _accessToken;
@@ -24,7 +24,7 @@ public class ActivityLoggerService : IActivityLoggerService
     public ActivityLoggerService(
         IConfiguration configuration,
         IActivityLogItemsRepository vkActivityLogRepo,
-        IVkUsersRepository vkUsersRepo,
+        IUsersRepository vkUsersRepo,
         ILogger<ActivityLoggerService> logger = null)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -40,7 +40,7 @@ public class ActivityLoggerService : IActivityLoggerService
     public async Task<IOperationResult<List<User>>> AddNewUsersAsync(params int[] userIds)
     {
         if (userIds == null || userIds.Length == 0 || _accessToken == null || _version == null)
-            return ServiceResult<List<User>>.Error(ErrorMessage.CANT_ACCESS_API_WITHOUT_REQUIRED_PARAMS);
+            return ServiceResult<List<User>>.Error(Constants.CANT_ACCESS_API_WITHOUT_REQUIRED_PARAMS);
 
         var resultUsersList = new List<User>();
         var result = ServiceResult<List<User>>.Success(resultUsersList);
@@ -59,7 +59,7 @@ public class ActivityLoggerService : IActivityLoggerService
             if (response is null)
                 return ServiceResult<List<User>>.Error("Response is null");
 
-            var existingDbUsers = await _vkUsersRepo.FindAllAsync(userIds);
+            var existingDbUsers = await _vkUsersRepo.FindAllByIdsAsync(userIds);
 
             if (existingDbUsers?.Count > 0)
                 result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', existingDbUsers.Select(u => u.Id))}", InfoMessageType.Warning);
@@ -86,7 +86,7 @@ public class ActivityLoggerService : IActivityLoggerService
     public async Task<IOperationResult> SaveVkUsersActivityAsync()
     {
         if (_accessToken == null || _version == null)
-            return ServiceResult.Error(ErrorMessage.CANT_ACCESS_API_WITHOUT_REQUIRED_PARAMS);
+            return ServiceResult.Error(Constants.CANT_ACCESS_API_WITHOUT_REQUIRED_PARAMS);
 
         ServiceResult result = ServiceResult.Success();
         try

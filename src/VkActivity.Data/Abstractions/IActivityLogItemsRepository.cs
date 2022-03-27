@@ -1,10 +1,11 @@
 ﻿using VkActivity.Data.Models;
+using VkActivity.Data.Repositories;
 
-namespace Home.Data.Abstractions;
+namespace VkActivity.Data.Abstractions;
 
-public interface IActivityLogItemsRepository
+public interface IActivityLogItemsRepository : IBaseRepository<ActivityLogItem>
 {
     Task<List<ActivityLogItem>> FindLastUsersActivity(params int[] userIds);
-    Task<List<ActivityLogItem>> FindAllByIdsInDateRangeAsync(int[] userIds, DateTime fromDate, DateTime toDate);
-    Task<bool> SaveRangeAsync(List<ActivityLogItem> activityLogItems);
+    Task<List<ActivityLogItem>> FindAllByIdsInDateRangeAsync(int[] userIds, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default);
+    Task<bool> SaveRangeAsync(List<ActivityLogItem> activityLogItems, CancellationToken cancellationToken = default);
 }
