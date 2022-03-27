@@ -1,11 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using VkActivity.Data.Repositories;
 using Zs.Common.Extensions;
 
 namespace VkActivity.Data.Models;
 
-public class ActivityLogItemsRepository
+public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContext, ActivityLogItem>
 {
-    public ActivityLogItemsRepository()
+    public ActivityLogItemsRepository(
+        IDbContextFactory<VkActivityContext> contextFactory,
+        TimeSpan? criticalQueryExecutionTimeForLogging = null,
+        ILoggerFactory? loggerfFactory = null)
+        : base(contextFactory, criticalQueryExecutionTimeForLogging, loggerfFactory)
     {
     }
 
@@ -14,11 +20,6 @@ public class ActivityLogItemsRepository
         return await FindAllAsync(l => userIds.Contains(l.UserId)
            && l.LastSeen >= fromDate.ToUnixEpoch()
            && l.LastSeen <= toDate.ToUnixEpoch());
-    }
-
-    private Task<List<ActivityLogItem>> FindAllAsync(Func<ActivityLogItem, bool> p)
-    {
-        throw new NotImplementedException();
     }
 
     public async Task<List<ActivityLogItem>> FindLastUsersActivity(params int[] userIds)
@@ -35,8 +36,4 @@ public class ActivityLogItemsRepository
         return await FindAllBySqlAsync(sql);
     }
 
-    private Task<List<ActivityLogItem>> FindAllBySqlAsync(string sql)
-    {
-        throw new NotImplementedException();
-    }
 }

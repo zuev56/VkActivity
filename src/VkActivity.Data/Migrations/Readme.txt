@@ -1,10 +1,13 @@
-﻿1. PS> dotnet ef migrations add InitialHomeContext --context HomeContext --output-dir "Migrations"
+﻿1. VkActivity.Data -> Open in Terminal
 
-2.1 Add to MigrationBuilder.Up(...) method:
-            migrationBuilder.Sql(PostgreSqlBotContext.GetOtherSqlScripts(@"..\Home.Bot\appsettings.json"));
-            migrationBuilder.Sql(Data.HomeContext.GetOtherSqlScripts(@"..\Home.Bot\appsettings.json"));
+2. PS> dotnet ef migrations add InitialVkActivityContext --context VkActivityContext --output-dir "Migrations"
 
-3. PS> dotnet ef database update --context HomeContext
+3. Append to generated MigrationBuilder.Up(...) method:
+            migrationBuilder.Sql(VkActivityContext.GetOtherSqlScripts(@"..\VkActivity.Service\appsettings.Development.json"));
+
+4. VkActivity.Service -> Open in Terminal
+
+5. PS> dotnet ef database update --context VkActivityContext --project ..\VkActivity.Data\VkActivity.Data.csproj 
 
 
 // ADD Microsoft.EntityFrameworkCore.Design

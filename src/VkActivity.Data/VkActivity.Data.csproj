@@ -7,6 +7,20 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="SQL\ForeignTales.sql" />
+      <None Remove="SQL\Priveleges.sql" />
+      <None Remove="SQL\StoredFunctions.sql" />
+      <None Remove="SQL\Views.sql" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="SQL\ForeignTales.sql" />
+      <EmbeddedResource Include="SQL\Priveleges.sql" />
+      <EmbeddedResource Include="SQL\StoredFunctions.sql" />
+      <EmbeddedResource Include="SQL\Views.sql" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.3">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -20,6 +34,13 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.3" />
       <PackageReference Include="Zs.Common" Version="6.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Resource Include="SQL\ForeignTales.sql" />
+      <Resource Include="SQL\Priveleges.sql" />
+      <Resource Include="SQL\StoredFunctions.sql" />
+      <Resource Include="SQL\Views.sql" />
     </ItemGroup>
 
    

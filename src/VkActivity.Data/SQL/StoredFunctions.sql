@@ -23,7 +23,7 @@ BEGIN
     _vkUserIds = string_to_array(_vkUserIdsStr, ',');
     --RAISE NOTICE '1. _vkUserIds: %', _vkUserIds;
 
-    SELECT array_agg(user_id) INTO _dbUserIds
+    SELECT array_agg(id) INTO _dbUserIds
     FROM vk.users
     WHERE cast(raw_data ->> 'id' AS integer) = ANY(_vkUserIds);
     --RAISE NOTICE '2. _dbUserIds: %', _dbUserIds;
@@ -42,10 +42,10 @@ BEGIN
     IF (cardinality(_notActiveDbUserIds) > 0)
     THEN
         SELECT string_agg((u.first_name || ' ' || u.last_name || ' is not active for ' ||
-            EXTRACT(epoch FROM (now() - (SELECT insert_date FROM vk.activity_log l WHERE l.user_id = u.user_id ORDER BY insert_date DESC LIMIT 1)))::int / 3600
+            EXTRACT(epoch FROM (now() - (SELECT insert_date FROM vk.activity_log l WHERE l.user_id = u.id ORDER BY insert_date DESC LIMIT 1)))::int / 3600
             || ' hours'), chr(10)) INTO _result
         FROM vk.users as u
-        WHERE u.user_id = ANY(_notActiveDbUserIds);
+        WHERE u.id = ANY(_notActiveDbUserIds);
     END IF;
 
     RETURN _result;
@@ -74,7 +74,7 @@ ALTER FUNCTION vk.sf_cmd_get_not_active_users(text, integer)
 --BEGIN
 --    RAISE NOTICE '1. _vkUserId: %', _vkUserId;
 --    
---    SELECT user_id INTO _dbUserId
+--    SELECT id INTO _dbUserId
 --    FROM vk.users
 --    WHERE cast(raw_data ->> 'id' AS integer) = _vkUserId;
 --    RAISE NOTICE '2. _dbUserId: %', _dbUserId;

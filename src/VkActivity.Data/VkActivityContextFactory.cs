@@ -25,7 +25,7 @@ public class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, ID
     public VkActivityContext CreateDbContext(string[] args)
     {
         var configuration = new ConfigurationBuilder()
-            .AddJsonFile(System.IO.Path.GetFullPath(@"..\Home.Bot\appsettings.json"))
+            .AddJsonFile(System.IO.Path.GetFullPath(@"..\VkActivity.Service\appsettings.Development.json"))
             .Build();
         var connectionString = configuration.GetSecretValue("ConnectionStrings:Default");
 

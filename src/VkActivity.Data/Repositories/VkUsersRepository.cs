@@ -1,11 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using VkActivity.Data;
 using VkActivity.Data.Models;
+using VkActivity.Data.Repositories;
 
 namespace Home.Data.Repositories;
 
-public class VkUsersRepository
+public sealed class UsersRepository : BaseRepository<VkActivityContext, User>
 {
-    public VkUsersRepository()
+    public UsersRepository(
+        IDbContextFactory<VkActivityContext> contextFactory,
+        TimeSpan? criticalQueryExecutionTimeForLogging = null,
+        ILoggerFactory? loggerfFactory = null)
+        : base(contextFactory, criticalQueryExecutionTimeForLogging, loggerfFactory)
     {
     }
 
@@ -14,8 +21,4 @@ public class VkUsersRepository
         return await FindAllAsync(u => EF.Functions.ILike(u.FirstName, $"%{value}%") || EF.Functions.ILike(u.LastName, $"%{value}%"), skip: skip, take: take);
     }
 
-    private Task<List<User>> FindAllAsync(Func<User, bool> p, int? skip, int? take)
-    {
-        throw new NotImplementedException();
-    }
 }

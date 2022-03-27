@@ -5,9 +5,9 @@ VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "tests\UnitTests\UnitTests.csproj", "{FC6957AA-EA79-4824-8027-A3996BB46639}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Service", "src\VkActivityService\VkActivity.Service.csproj", "{70719B11-E8C0-4EF5-98DE-3E94453EE8A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Service", "src\VkActivity.Service\VkActivity.Service.csproj", "{70719B11-E8C0-4EF5-98DE-3E94453EE8A2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.API", "src\VkActivityAPI\VkActivity.API.csproj", "{CC6A3B8F-ED36-40E1-AB05-A60A85E851AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.API", "src\VkActivity.API\VkActivity.API.csproj", "{CC6A3B8F-ED36-40E1-AB05-A60A85E851AB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VkActivity.Data", "src\VkActivity.Data\VkActivity.Data.csproj", "{00BB3993-E898-4B92-865D-B380F2B59427}"
 EndProject
