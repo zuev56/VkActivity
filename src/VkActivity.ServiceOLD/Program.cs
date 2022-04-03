@@ -1,14 +1,11 @@
 using System.Diagnostics;
 using Home.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using VkActivity.Data;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
-using VkActivity.Service.Abstractions;
-using VkActivity.Service.Services;
-using Zs.Common.Abstractions;
+using VkActivity.Service;
 using Zs.Common.Exceptions;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
@@ -24,7 +21,6 @@ Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, Us
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, builder) => builder.AddConfiguration(CreateConfiguration(args)))
     .UseSerilog()
-    .ConfigureWebHostDefaults(ConfigureWebHostDefaults)
     .ConfigureServices(ConfigureServices)
     .Build();
 
@@ -53,30 +49,6 @@ IConfiguration CreateConfiguration(string[] args)
     return configuration;
 }
 
-void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
-{
-    webHostBuilder.ConfigureServices(services =>
-    {
-        services.AddControllers();
-
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
-    })
-       .Configure(app =>
-       {
-           app.UseSwagger();
-           app.UseSwaggerUI();
-
-           app.UseRouting();
-
-           app.UseAuthorization();
-
-           app.UseEndpoints(endpoints =>
-           {
-               endpoints.MapControllers();
-           });
-       });
-}
 
 void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 {
@@ -89,18 +61,10 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     // For repositories
     services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
 
-
-    services.AddScoped<IDbClient, DbClient>(sp =>
-        new DbClient(
-            context.Configuration.GetSecretValue("ConnectionStrings:Default"),
-            sp.GetService<ILogger<DbClient>>())
-        );
-
     services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
     services.AddScoped<IUsersRepository, UsersRepository>();
 
     services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
 
-    services.AddHostedService<UserWatcher>();
+    services.AddHostedService<Worker>();
 }
-

@@ -13,10 +13,10 @@ public class ApiUser
     public int Id { get; set; }
 
     [JsonPropertyName("first_name")]
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
     [JsonPropertyName("last_name")]
-    public string LastName { get; set; }
+    public string? LastName { get; set; }
 
     [JsonPropertyName("online")]
     public int Online { get; set; }
@@ -28,13 +28,13 @@ public class ApiUser
     public int OnlineApp { get; set; }
 
     [JsonPropertyName("last_seen")]
-    public ApiLastSeen LastSeenUnix { get; set; }
+    public ApiLastSeen? LastSeenUnix { get; set; }
     public DateTime LastSeen => LastSeenUnix is null
                               ? DateTime.MinValue
                               : LastSeenUnix.Time.FromUnixEpoch();
 
     [JsonExtensionData]
-    public Dictionary<string, JsonElement> RawData { get; set; }
+    public Dictionary<string, JsonElement>? RawData { get; set; }
 
 
     public static explicit operator User(ApiUser apiVkUser)

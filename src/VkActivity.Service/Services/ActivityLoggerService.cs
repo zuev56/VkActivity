@@ -3,6 +3,7 @@ using Home.Data.Models.VkAPI;
 using Microsoft.EntityFrameworkCore;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
+using VkActivity.Service.Abstractions;
 using VkActivity.Service.Models;
 using Zs.Common.Abstractions;
 using Zs.Common.Enums;
@@ -10,33 +11,32 @@ using Zs.Common.Extensions;
 using Zs.Common.Models;
 using Zs.Common.Services.WebAPI;
 
-namespace VkActivity.Service;
+namespace VkActivity.Service.Services;
 
-public class ActivityLoggerService : IActivityLoggerService
+internal class ActivityLoggerService : IActivityLoggerService
 {
     private readonly IConfiguration _configuration;
-    private readonly IActivityLogItemsRepository _vkActivityLogRepo;
-    private readonly IUsersRepository _vkUsersRepo;
+    private readonly IActivityLogItemsRepository _activityLogRepo;
+    private readonly IUsersRepository _usersRepo;
     private readonly ILogger<ActivityLoggerService> _logger;
     private readonly float? _version;
     private readonly string _accessToken;
 
     public ActivityLoggerService(
         IConfiguration configuration,
-        IActivityLogItemsRepository vkActivityLogRepo,
-        IUsersRepository vkUsersRepo,
-        ILogger<ActivityLoggerService> logger = null)
+        IActivityLogItemsRepository activityLogRepo,
+        IUsersRepository usersRepo,
+        ILogger<ActivityLoggerService> logger)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _vkActivityLogRepo = vkActivityLogRepo ?? throw new ArgumentNullException(nameof(vkActivityLogRepo));
-        _vkUsersRepo = vkUsersRepo ?? throw new ArgumentNullException(nameof(vkUsersRepo));
-        _logger = logger;
+        _activityLogRepo = activityLogRepo ?? throw new ArgumentNullException(nameof(activityLogRepo));
+        _usersRepo = usersRepo ?? throw new ArgumentNullException(nameof(usersRepo));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         _version = _configuration["Home:Vk:Version"] != null ? float.Parse(_configuration["Home:Vk:Version"], CultureInfo.InvariantCulture) : null;
         _accessToken = _configuration.GetSecretValue("Home:Vk:AccessToken");
     }
 
-    /// <inheritdoc/>
     public async Task<IOperationResult<List<User>>> AddNewUsersAsync(params int[] userIds)
     {
         if (userIds == null || userIds.Length == 0 || _accessToken == null || _version == null)
@@ -59,13 +59,13 @@ public class ActivityLoggerService : IActivityLoggerService
             if (response is null)
                 return ServiceResult<List<User>>.Error("Response is null");
 
-            var existingDbUsers = await _vkUsersRepo.FindAllByIdsAsync(userIds);
+            var existingDbUsers = await _usersRepo.FindAllByIdsAsync(userIds);
 
             if (existingDbUsers?.Count > 0)
                 result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', existingDbUsers.Select(u => u.Id))}", InfoMessageType.Warning);
 
             var usersForSave = response.Users.Where(u => !existingDbUsers.Select(eu => eu.Id).Contains(u.Id)).Select(u => (User)u);
-            var savedSuccessfully = await _vkUsersRepo.SaveRangeAsync(usersForSave);
+            var savedSuccessfully = await _usersRepo.SaveRangeAsync(usersForSave);
 
             if (savedSuccessfully)
             {
@@ -77,7 +77,7 @@ public class ActivityLoggerService : IActivityLoggerService
         }
         catch (Exception ex)
         {
-            _logger?.LogErrorIfNeed(ex, "New users saving failed");
+            _logger.LogErrorIfNeed(ex, "New users saving failed");
             return ServiceResult<List<User>>.Error("New users saving failed");
         }
     }
@@ -91,7 +91,7 @@ public class ActivityLoggerService : IActivityLoggerService
         ServiceResult result = ServiceResult.Success();
         try
         {
-            var vkUsers = await _vkUsersRepo.FindAllAsync();
+            var vkUsers = await _usersRepo.FindAllAsync();
             var userIds = vkUsers.Select(u => u.Id);
 
             if (!userIds.Any())
@@ -120,7 +120,7 @@ public class ActivityLoggerService : IActivityLoggerService
         }
         catch (Exception ex)
         {
-            _logger?.LogErrorIfNeed(ex, "SaveVkUsersActivityAsync error");
+            _logger.LogErrorIfNeed(ex, "SaveVkUsersActivityAsync error");
             return ServiceResult.Error("Users activity saving error");
         }
     }
@@ -128,9 +128,9 @@ public class ActivityLoggerService : IActivityLoggerService
     /// <summary>Save undefined user activities to database</summary>
     private async Task<bool> SetUndefinedActivityToAllVkUsers()
     {
-        var users = await _vkUsersRepo.FindAllAsync();
+        var users = await _usersRepo.FindAllAsync();
 
-        var lastUsersActivityLogItems = await _vkActivityLogRepo.FindLastUsersActivity();
+        var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
 
         var activityLogItems = new List<ActivityLogItem>();
         foreach (var user in users)
@@ -149,7 +149,7 @@ public class ActivityLoggerService : IActivityLoggerService
                 );
         }
 
-        return await _vkActivityLogRepo.SaveRangeAsync(activityLogItems);
+        return await _activityLogRepo.SaveRangeAsync(activityLogItems);
     }
 
     /// <summary>Save user activities to database</summary>
@@ -158,7 +158,7 @@ public class ActivityLoggerService : IActivityLoggerService
     private async Task<int> LogVkUsersActivityAsync(List<ApiUser> apiUsers)
     {
         // TODO: Add user activity info (range) - ???
-        var lastActivityLogItems = await _vkActivityLogRepo.FindLastUsersActivity();
+        var lastActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
         var activityLogItemsForSave = new List<ActivityLogItem>();
 
         foreach (var apiUser in apiUsers)
@@ -195,7 +195,7 @@ public class ActivityLoggerService : IActivityLoggerService
             }
         }
 
-        return await _vkActivityLogRepo.SaveRangeAsync(activityLogItemsForSave)
+        return await _activityLogRepo.SaveRangeAsync(activityLogItemsForSave)
             ? activityLogItemsForSave.Count
             : -1;
     }
