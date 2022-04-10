@@ -28,12 +28,7 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
     }
 
     public async Task<List<User>> FindAllByIdsAsync(params int[] userIds)
-{
-        return await FindAllAsync(u => userIds.Contains(u.Id));
-    }
-
-    public Task<bool> SaveRangeAsync(IEnumerable<User> usersForSave, CancellationToken cancellationToken = default)
     {
-        return SaveRangeAsync(usersForSave, u => u.Id, (u, id) => u.Id = id, cancellationToken);
+        return await FindAllAsync(u => userIds.Contains(u.Id));
     }
 }

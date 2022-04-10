@@ -9,8 +9,7 @@ using Zs.Common.Extensions;
 
 namespace VkActivity.Service.Controllers;
 
-[Area("vk")]
-[Route("api/vk/[controller]")] // глобальный префикс для маршрутов
+[Route("api/[controller]")] // глобальный префикс для маршрутов
 //[ServiceFilter(typeof(ApiExceptionFilter))]
 [ApiController] // Реализует проверку модели и возвращает 400, если она не валидна
 public class ActivityLogController : Controller
@@ -18,7 +17,7 @@ public class ActivityLogController : Controller
     private readonly IActivityLoggerService _activityLoggerService;
     private readonly ILogger<ActivityLogController> _logger;
 
-    internal ActivityLogController(
+    public ActivityLogController(
         IActivityLoggerService activityLoggerService,
         ILogger<ActivityLogController> logger)
     {
@@ -32,7 +31,7 @@ public class ActivityLogController : Controller
         return Ok("AddNewUsers called!");
     }
 
-    [HttpGet]
+    [HttpGet(nameof(Test))]
     public IActionResult Test()
     {
         try

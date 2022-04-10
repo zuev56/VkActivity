@@ -98,12 +98,10 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         }
     }
 
-    public virtual async Task<bool> SaveAsync<TId>(TEntity item, Func<TEntity, TId> getId, Action<TId> setId, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> SaveAsync(TEntity item, CancellationToken cancellationToken = default)
     {
         // TODO: Split to AddNewOrUpdateAsync AddNewAsync and UpdateExistingAsync
         ArgumentNullException.ThrowIfNull(item, nameof(item));
-        ArgumentNullException.ThrowIfNull(getId, nameof(getId));
-        ArgumentNullException.ThrowIfNull(setId, nameof(setId));
 
         var sw = new Stopwatch();
         sw.Start();
@@ -114,19 +112,12 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         {
             await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
             {
-                var itemToSave = await BaseRepository<TContext, TEntity>.AddItemForSaveToContext(context, item, getId, cancellationToken).ConfigureAwait(false);
+                context.Set<TEntity>().Add(item);
 
-                if (context.ChangeTracker.HasChanges())
-                {
-                    GetChangesForLogging(context, out resultChanges, out detailedResultChanges);
+                GetChangesForLogging(context, out resultChanges, out detailedResultChanges);
 
-                    int changes = await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                    setId(getId(itemToSave));
-                    return changes == 1;
-                }
+                return 1 == await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
-
-            return false;
         }
         finally
         {
@@ -141,12 +132,9 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         detailedResultChanges = Environment.NewLine + context.ChangeTracker.ToDebugString(ChangeTrackerDebugStringOptions.LongDefault);
     }
 
-    public virtual async Task<bool> SaveRangeAsync<TId>(IEnumerable<TEntity> items, Func<TEntity, TId> getId, Action<TEntity, TId> setId, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> SaveRangeAsync(IEnumerable<TEntity> items, CancellationToken cancellationToken = default)
     {
-        // TODO: Split to AddNewOrUpdateRangeAsync AddNewAsync and UpdateExistingAsync
         ArgumentNullException.ThrowIfNull(items, nameof(items));
-        ArgumentNullException.ThrowIfNull(getId, nameof(getId));
-        ArgumentNullException.ThrowIfNull(setId, nameof(setId));
 
         var sw = new Stopwatch();
         sw.Start();
@@ -157,30 +145,15 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         {
             await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
             {
-                var itemsToSave = new List<TEntity>();
                 foreach (var item in items)
                 {
-                    // :( Performs an access to DB to check if the item exists
-                    itemsToSave.Add(await AddItemForSaveToContext(context, item, getId, cancellationToken).ConfigureAwait(false));
+                    context.Set<TEntity>().Add(item);
                 }
 
-                if (context.ChangeTracker.HasChanges())
-                {
-                    GetChangesForLogging(context, out resultChanges, out detailedResultChanges!);
+                GetChangesForLogging(context, out resultChanges, out detailedResultChanges);
 
-                    int changes = await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-                    var itemsList = items.ToList();
-                    for (int i = 0; i < itemsToSave.Count; i++)
-                    {
-                        setId(itemsList[i], getId(itemsToSave[i]));
-                    }
-
-                    return changes == itemsList.Count;
-                }
+                return items.Count() == await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
-
-            return false;
         }
         finally
         {
@@ -212,6 +185,16 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         }
 
         return item;
+    }
+
+    public Task<bool> UpdateAsync<TId>(TEntity item, Func<TEntity, TId> getId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpdateRangeAsync<TId>(IEnumerable<TEntity> items, Func<TEntity, TId> getId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     //public virtual async Task<bool> DeleteAsync(TEntity item, CancellationToken cancellationToken = default)

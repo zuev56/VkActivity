@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using Home.Data.Models.VkAPI;
 using Microsoft.EntityFrameworkCore;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
@@ -33,8 +32,8 @@ internal class ActivityLoggerService : IActivityLoggerService
         _usersRepo = usersRepo ?? throw new ArgumentNullException(nameof(usersRepo));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _version = _configuration["Home:Vk:Version"] != null ? float.Parse(_configuration["Home:Vk:Version"], CultureInfo.InvariantCulture) : null;
-        _accessToken = _configuration.GetSecretValue("Home:Vk:AccessToken");
+        _version = _configuration["Vk:Version"] != null ? float.Parse(_configuration["Vk:Version"], CultureInfo.InvariantCulture) : null;
+        _accessToken = _configuration.GetSecretValue("Vk:AccessToken");
     }
 
     public async Task<IOperationResult<List<User>>> AddNewUsersAsync(params int[] userIds)

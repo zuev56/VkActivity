@@ -39,8 +39,4 @@ public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContex
         return await FindAllBySqlAsync(sql);
     }
 
-    public async Task<bool> SaveRangeAsync(List<ActivityLogItem> activityLogItems, CancellationToken cancellationToken = default)
-    {
-        return await SaveRangeAsync(activityLogItems, i => i.Id, (i, id) => i.Id = id, cancellationToken);
-    }
 }

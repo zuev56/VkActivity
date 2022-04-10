@@ -1,4 +1,5 @@
-﻿using VkActivity.Service.Abstractions;
+﻿using Microsoft.Extensions.Configuration;
+using VkActivity.Service.Abstractions;
 using VkActivity.Service.Models;
 using Zs.Common.Abstractions;
 using Zs.Common.Enums;
@@ -16,27 +17,29 @@ namespace VkActivity.Service.Services;
 
 internal class UserWatcher : BackgroundService
 {
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IScheduler _scheduler;
     private readonly IConfiguration _configuration;
-    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<UserWatcher> _logger;
 
     private IJob? _userActivityLoggerJob;
     private bool _isFirstStep = true;
 
-    public IReadOnlyCollection<IJobBase> Jobs { get; private init; }
 
     public UserWatcher(
+        IServiceScopeFactory serviceScopeFactory,
+        IScheduler scheduler,
         IConfiguration configuration,
-        IServiceProvider serviceProvider,
         ILogger<UserWatcher> logger)
     {
         try
         {
+            _scopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
+            _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            Jobs = CreateJobs();
+            _scheduler.Jobs.AddRange(CreateJobs());
         }
         catch (Exception ex)
         {
@@ -50,8 +53,15 @@ internal class UserWatcher : BackgroundService
     {
         try
         {
-            var activityLoggerService = _serviceProvider.GetService<IActivityLoggerService>();
-            await activityLoggerService.AddNewUsersAsync(_configuration.GetSection("Vk:UserIds").Get<int[]>());
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var activityLoggerService = scope.ServiceProvider.GetService<IActivityLoggerService>();
+                var userIds = scope.ServiceProvider.GetService<IConfiguration>()?.GetSection("Vk:UserIds").Get<int[]>();
+                await activityLoggerService!.AddNewUsersAsync(userIds ?? Array.Empty<int>()).ConfigureAwait(false);
+            }
+
+            _scheduler.Start(3000, 1000);
+
             _logger.LogInformation($"{nameof(UserWatcher)} started");
         }
         catch (Exception ex)
@@ -96,13 +106,17 @@ internal class UserWatcher : BackgroundService
         if (_isFirstStep)
         {
             _isFirstStep = false;
-            _userActivityLoggerJob.IdleStepsCount = 10;
+            _userActivityLoggerJob!.IdleStepsCount = 10;
         }
 
-        var activityLoggerService = _serviceProvider.GetService<IActivityLoggerService>();
-        var result = await activityLoggerService.SaveVkUsersActivityAsync();
+        IOperationResult result;
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            var activityLoggerService = scope.ServiceProvider.GetService<IActivityLoggerService>();
+            result = await activityLoggerService!.SaveVkUsersActivityAsync();
+        }
 
-        if (_userActivityLoggerJob.IdleStepsCount > 0)
+        if (_userActivityLoggerJob!.IdleStepsCount > 0)
             _userActivityLoggerJob.IdleStepsCount = 0;
 
         if (!result.IsSuccess)
@@ -113,6 +127,7 @@ internal class UserWatcher : BackgroundService
 
             _logger.LogError(logMessage);
         }
+
     }
 
 }

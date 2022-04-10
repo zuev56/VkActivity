@@ -3,7 +3,7 @@ using Zs.Common.Abstractions;
 
 namespace VkActivity.Service.Abstractions;
 
-internal interface IActivityLoggerService
+public interface IActivityLoggerService
 {
     /// <summary> Add new Vk user ID</summary>
     /// <param name="userIds">VK user ID</param>

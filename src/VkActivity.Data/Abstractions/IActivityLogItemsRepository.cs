@@ -7,5 +7,4 @@ public interface IActivityLogItemsRepository : IBaseRepository<ActivityLogItem>
 {
     Task<List<ActivityLogItem>> FindLastUsersActivity(params int[] userIds);
     Task<List<ActivityLogItem>> FindAllByIdsInDateRangeAsync(int[] userIds, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default);
-    Task<bool> SaveRangeAsync(List<ActivityLogItem> activityLogItems, CancellationToken cancellationToken = default);
 }
