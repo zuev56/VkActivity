@@ -1,10 +1,12 @@
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AutoMapper;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using VkActivity.Data;
@@ -18,6 +20,8 @@ using Zs.Common.Extensions;
 using Zs.Common.Models;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Scheduler;
+
+[assembly: InternalsVisibleTo("UnitTests")]
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(CreateConfiguration(args), "Serilog")
@@ -153,6 +157,8 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
     services.AddScoped<IUsersRepository, UsersRepository>();
 
+    services.AddSingleton<IVkIntegration, VkIntegration>(
+        sp => new VkIntegration(context.Configuration["Vk:Version"], context.Configuration["Vk:AccessToken"]));
     services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
     services.AddScoped<IActivityAnalyzerService, ActivityAnalyzerService>();
 

@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VkActivity.Data;
-using VkActivity.Data.Models;
 using VkActivity.Data.Repositories;
 
 namespace UnitTests.Data;
