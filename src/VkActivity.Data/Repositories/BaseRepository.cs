@@ -26,6 +26,57 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         _logger = loggerfFactory?.CreateLogger<BaseRepository<TContext, TEntity>>();
     }
 
+    protected async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default)
+    {
+        await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return predicate is null
+                ? await context.Set<TEntity>().CountAsync(cancellationToken).ConfigureAwait(false)
+                : await context.Set<TEntity>().CountAsync(predicate, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Asynchronously returns the first element of a sequence that satisfies a specified
+    /// condition or a default value if no such element is found
+    /// </summary>
+    /// <param name="predicate"></param>
+    /// <param name="orderBy"> Sorting rules before executing predicate</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    protected virtual async Task<TEntity?> FindAsync(
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        var sw = new Stopwatch();
+        sw.Start();
+        string? resultQuery = null;
+
+        try
+        {
+            await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                IQueryable<TEntity> query = context.Set<TEntity>();
+
+                if (predicate != null)
+                    query = query.Where(predicate);
+
+                if (orderBy != null)
+                    query = orderBy(query);
+
+                resultQuery = query.ToQueryString();
+
+                return await query.AsNoTracking().FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            sw.Stop();
+            LogFind("Repository.FindAsync [Elapsed: {Elapsed}].\n\tSQL: {SQL}", sw.Elapsed, resultQuery ?? "");
+        }
+    }
+
     /// <summary>
     /// Asynchronously returns the list of elements of a sequence that satisfies a specified condition
     /// </summary>
@@ -70,7 +121,7 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         finally
         {
             sw.Stop();
-            LogFind("Repository.FindAllAsync [Elapsed: {Elapsed}].\n\tSQL: {SQL}", sw.Elapsed, resultQuery);
+            LogFind("Repository.FindAllAsync [Elapsed: {Elapsed}].\n\tSQL: {SQL}", sw.Elapsed, resultQuery ?? "");
         }
     }
 
@@ -122,7 +173,7 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
         finally
         {
             sw.Stop();
-            LogSave("Repository.SaveAsync [Elapsed: {Elapsed}].\n\tChanges: {changes}", sw.Elapsed, resultChanges, detailedResultChanges);
+            LogSave("Repository.SaveAsync [Elapsed: {Elapsed}].\n\tChanges: {changes}", sw.Elapsed, resultChanges ?? "", detailedResultChanges ?? "");
         }
     }
 

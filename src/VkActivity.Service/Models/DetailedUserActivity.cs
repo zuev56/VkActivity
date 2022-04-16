@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace VkActivity.Data.Models;
+namespace VkActivity.Service.Models;
 
 public class DetailedUserActivity
 {

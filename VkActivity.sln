@@ -5,17 +5,17 @@ VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "tests\UnitTests\UnitTests.csproj", "{FC6957AA-EA79-4824-8027-A3996BB46639}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.ServiceOld", "src\VkActivity.ServiceOLD\VkActivity.ServiceOld.csproj", "{70719B11-E8C0-4EF5-98DE-3E94453EE8A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Service_OLD", "src\VkActivity.ServiceOLD\VkActivity.Service_OLD.csproj", "{70719B11-E8C0-4EF5-98DE-3E94453EE8A2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.API", "src\VkActivity.API\VkActivity.API.csproj", "{CC6A3B8F-ED36-40E1-AB05-A60A85E851AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.API_OLD", "src\VkActivity.API\VkActivity.API_OLD.csproj", "{CC6A3B8F-ED36-40E1-AB05-A60A85E851AB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Data", "src\VkActivity.Data\VkActivity.Data.csproj", "{00BB3993-E898-4B92-865D-B380F2B59427}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.ServiceDemo", "src\VkActivity.ServiceDemo\VkActivity.ServiceDemo.csproj", "{17F4E399-F8D8-428D-B1E8-6BAA2416C35C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.ServiceDemo_OLD", "src\VkActivity.ServiceDemo\VkActivity.ServiceDemo_OLD.csproj", "{17F4E399-F8D8-428D-B1E8-6BAA2416C35C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VkActivity.Service", "src\VkActivity.Service\VkActivity.Service.csproj", "{84FAB167-76EF-4414-87F0-75ECE3E850CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Service", "src\VkActivity.Service\VkActivity.Service.csproj", "{84FAB167-76EF-4414-87F0-75ECE3E850CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VkActivity.Service.Hangfire", "src\VkActivity.Service.Hangfire\VkActivity.Service.Hangfire.csproj", "{0770E306-6093-4A6C-BC03-F6EC567381BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Service.Hangfire_OLD", "src\VkActivity.Service.Hangfire\VkActivity.Service.Hangfire_OLD.csproj", "{0770E306-6093-4A6C-BC03-F6EC567381BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

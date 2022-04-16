@@ -19,16 +19,18 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
     }
 
     public async Task<List<User>> FindAllWhereNameLikeValueAsync(string value, int? skip, int? take, CancellationToken cancellationToken = default)
-    {
-        return await FindAllAsync(
-            u => EF.Functions.ILike(u.FirstName, $"%{value}%") || EF.Functions.ILike(u.LastName, $"%{value}%"),
-            skip: skip,
-            take: take,
-            cancellationToken: cancellationToken);
-    }
+        => await FindAllAsync(
+               u => EF.Functions.ILike(u.FirstName!, $"%{value}%") || EF.Functions.ILike(u.LastName!, $"%{value}%"),
+               skip: skip,
+               take: take,
+               cancellationToken: cancellationToken);
 
     public async Task<List<User>> FindAllByIdsAsync(params int[] userIds)
-    {
-        return await FindAllAsync(u => userIds.Contains(u.Id));
-    }
+        => await FindAllAsync(u => userIds.Contains(u.Id));
+
+    public async Task<User?> FindByIdAsync(int userId, CancellationToken cancellationToken = default)
+        => await FindAsync(u => u.Id == userId, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+    public async Task<List<User>> FindAllAsync(int? skip, int? take, CancellationToken cancellationToken = default)
+        => await FindAllAsync(skip: skip, take: take, cancellationToken: cancellationToken);
 }

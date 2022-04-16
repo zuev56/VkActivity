@@ -7,7 +7,7 @@ using Zs.Common.Extensions;
 
 namespace VkActivity.Service.Models;
 
-public class ApiUser
+public class VkApiUser
 {
     [JsonPropertyName("id")]
     public int Id { get; set; }
@@ -28,7 +28,7 @@ public class ApiUser
     public int OnlineApp { get; set; }
 
     [JsonPropertyName("last_seen")]
-    public ApiLastSeen? LastSeenUnix { get; set; }
+    public VkApiLastSeen? LastSeenUnix { get; set; }
     public DateTime LastSeen => LastSeenUnix is null
                               ? DateTime.MinValue
                               : LastSeenUnix.Time.FromUnixEpoch();
@@ -37,7 +37,7 @@ public class ApiUser
     public Dictionary<string, JsonElement>? RawData { get; set; }
 
 
-    public static explicit operator User(ApiUser apiVkUser)
+    public static explicit operator User(VkApiUser apiVkUser)
     {
         var options = new JsonSerializerOptions
         {

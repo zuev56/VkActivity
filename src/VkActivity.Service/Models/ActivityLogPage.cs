@@ -1,4 +1,6 @@
-﻿namespace VkActivity.Data.Models;
+﻿using VkActivity.Data.Models;
+
+namespace VkActivity.Service.Models;
 
 public partial class ActivityLogPage
 {

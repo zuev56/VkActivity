@@ -1,4 +1,4 @@
-﻿namespace VkActivity.Data.Models;
+﻿namespace VkActivity.Service.Models;
 
 public class SimpleUserActivity
 {

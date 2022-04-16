@@ -85,6 +85,7 @@ internal class UserWatcher : BackgroundService
             description: "logUserStatus",
             logger: _logger);
 
+        // Это разместить в боте!
         //var notActiveUsersInformerJob = new SqlJob(
         //    period: TimeSpan.FromHours(1),
         //    resultType: QueryResultType.String,

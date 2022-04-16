@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using AutoMapper;
 using Home.Data.Repositories;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, Us
 
 
 IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration((context, builder) => builder.AddConfiguration(CreateConfiguration(args)))
+    .ConfigureAppConfiguration(ConfigureAppConfiguration)
     .UseSerilog()
     .ConfigureWebHostDefaults(ConfigureWebHostDefaults)
     .ConfigureServices(ConfigureServices)
@@ -40,6 +41,13 @@ IHost host = Host.CreateDefaultBuilder(args)
 await host.RunAsync();
 
 
+
+void ConfigureAppConfiguration(HostBuilderContext context, IConfigurationBuilder builder)
+{
+    var configuration = CreateConfiguration(args);
+
+    builder.AddConfiguration(configuration);
+}
 
 IConfiguration CreateConfiguration(string[] args)
 {
@@ -102,7 +110,7 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
     .ConfigureKestrel(serverOptions =>
     {
         // https://docs.microsoft.com/ru-ru/aspnet/core/fundamentals/servers/kestrel/options?view=aspnetcore-6.0
-        
+
         serverOptions.Limits.MaxConcurrentConnections = 100;
         serverOptions.Limits.MaxConcurrentUpgradedConnections = 100;
         serverOptions.Limits.MaxRequestBodySize = 10 * 1024;
@@ -134,14 +142,12 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     // For repositories
     services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
 
+    var mapperConfig = MapperConfiguration.CreateMapperConfiguration();
+    mapperConfig.AssertConfigurationIsValid();
+    services.AddScoped<IMapper, Mapper>(sp => new Mapper(mapperConfig));
+
     services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
     services.AddScoped<IUsersRepository, UsersRepository>();
-
-    services.AddScoped<IDbClient, DbClient>(sp =>
-        new DbClient(
-            context.Configuration.GetSecretValue("ConnectionStrings:Default"),
-            sp.GetService<ILogger<DbClient>>())
-        );
 
     services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
 
@@ -149,4 +155,3 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 
     services.AddHostedService<UserWatcher>();
 }
-

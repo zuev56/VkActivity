@@ -2,7 +2,7 @@
 
 namespace VkActivity.Service.Models;
 
-public class ApiLastSeen
+public class VkApiLastSeen
 {
     [JsonPropertyName("time")]
     public int Time { get; set; }

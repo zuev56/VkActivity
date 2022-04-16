@@ -53,7 +53,7 @@ internal class ActivityLoggerService : IActivityLoggerService
                     + "is_favorite,is_hidden_from_feed,timezone,screen_name,maiden_name,is_friend,friend_status,career,military,"
                     + $"blacklisted,blacklisted_by_me,can_be_invited_group&access_token={_accessToken}&v={_version.Value.ToString(CultureInfo.InvariantCulture)}";
 
-            var response = await ApiHelper.GetAsync<ApiResponse>(url, throwExceptionOnError: true);
+            var response = await ApiHelper.GetAsync<VkApiResponse>(url, throwExceptionOnError: true);
 
             if (response is null)
                 return ServiceResult<List<User>>.Error("Response is null");
@@ -102,7 +102,7 @@ internal class ActivityLoggerService : IActivityLoggerService
             string url = $"https://api.vk.com/method/users.get?user_ids={string.Join(',', userIds)}"
                        + $"&fields=online,online_mobile,online_app,last_seen&access_token={_accessToken}&v={_version.Value.ToString(CultureInfo.InvariantCulture)}";
 
-            var response = await ApiHelper.GetAsync<ApiResponse>(url, throwExceptionOnError: true);
+            var response = await ApiHelper.GetAsync<VkApiResponse>(url, throwExceptionOnError: true);
 
             if (response is null)
             {
@@ -154,7 +154,7 @@ internal class ActivityLoggerService : IActivityLoggerService
     /// <summary>Save user activities to database</summary>
     /// <param name="apiUsers">All users current state from VK API</param>
     /// <returns>Logged <see cref="ActivityLogItem">s count</returns>
-    private async Task<int> LogVkUsersActivityAsync(List<ApiUser> apiUsers)
+    private async Task<int> LogVkUsersActivityAsync(List<VkApiUser> apiUsers)
     {
         // TODO: Add user activity info (range) - ???
         var lastActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
