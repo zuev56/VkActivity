@@ -15,16 +15,16 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
     private readonly IActivityLogItemsRepository _vkActivityLogRepo;
     private readonly IUsersRepository _vkUsersRepo;
     private readonly ILogger<ActivityAnalyzerService> _logger;
-    private readonly DateTime _tmpMinLogDate = new DateTime(2020, 10, 01);
+    private readonly DateTime _tmpMinLogDate = new(2020, 10, 01);
 
     public ActivityAnalyzerService(
         IActivityLogItemsRepository vkActivityLogRepo,
         IUsersRepository vkUsersRepo,
-        ILogger<ActivityAnalyzerService> logger = null)
+        ILogger<ActivityAnalyzerService> logger)
     {
         _vkActivityLogRepo = vkActivityLogRepo ?? throw new ArgumentNullException(nameof(vkActivityLogRepo));
         _vkUsersRepo = vkUsersRepo ?? throw new ArgumentNullException(nameof(vkUsersRepo));
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
 
@@ -147,7 +147,7 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
     //}
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<List<User>>> GetUsersAsync(string filterText = null, int? skip = null, int? take = null)
+    public async Task<IOperationResult<List<User>>> GetUsersAsync(string? filterText = null, int? skip = null, int? take = null)
     {
         try
         {

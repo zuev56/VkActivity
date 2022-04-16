@@ -1,10 +1,5 @@
-﻿
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using VkActivity.Service.Abstractions;
 using VkActivity.Service.Models;
 using Zs.Common.Extensions;
@@ -12,7 +7,7 @@ using Zs.Common.Extensions;
 namespace VkActivity.Service.Controllers;
 
 [Route("api/[controller]")] // глобальный префикс для маршрутов
-//[ServiceFilter(typeof(ApiExceptionFilter))]
+[ServiceFilter(typeof(ApiExceptionFilter))]
 [ApiController] // Реализует проверку модели и возвращает 400, если она не валидна
 public class ActivityLogController : Controller
 {
@@ -29,14 +24,17 @@ public class ActivityLogController : Controller
     {
         _activityLoggerService = activityLoggerService ?? throw new ArgumentNullException(nameof(activityLoggerService));
         _activityAnalyzerService = activityAnalyzerService ?? throw new ArgumentNullException(nameof(activityAnalyzerService));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper)); 
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger;
     }
 
     [HttpPost(nameof(AddNewUsers))]
     public async Task<IActionResult> AddNewUsers(int[] userIds)
     {
-        return Ok("AddNewUsers called!");
+        var addUsersResult = await _activityLoggerService.AddNewUsersAsync(userIds).ConfigureAwait(false);
+        return addUsersResult.IsSuccess
+            ? Ok(addUsersResult)
+            : StatusCode(500, addUsersResult);
     }
 
 

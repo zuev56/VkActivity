@@ -1,6 +1,6 @@
 ﻿namespace VkActivity.Service.Models;
 
-public enum Device 
+public enum Device
 {
     All,
     Mobile,

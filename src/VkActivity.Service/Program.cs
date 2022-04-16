@@ -1,18 +1,19 @@
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 using AutoMapper;
 using Home.Data.Repositories;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using VkActivity.Data;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
+using VkActivity.Service;
 using VkActivity.Service.Abstractions;
 using VkActivity.Service.Services;
-using Zs.Common.Abstractions;
 using Zs.Common.Exceptions;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
@@ -74,7 +75,11 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 {
     webHostBuilder.ConfigureServices((context, services) =>
     {
-        services.AddControllers();
+        services.AddControllers().AddJsonOptions(o =>
+        {
+            o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options
@@ -137,12 +142,12 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
         options.UseNpgsql(context.Configuration.GetSecretValue("ConnectionStrings:Default")));
 
     // TODO: remove!
-    AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    //AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
     // For repositories
     services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
 
-    var mapperConfig = MapperConfiguration.CreateMapperConfiguration();
+    var mapperConfig = VkActivity.Service.MapperConfiguration.CreateMapperConfiguration();
     mapperConfig.AssertConfigurationIsValid();
     services.AddScoped<IMapper, Mapper>(sp => new Mapper(mapperConfig));
 
@@ -150,8 +155,11 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddScoped<IUsersRepository, UsersRepository>();
 
     services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
+    services.AddScoped<IActivityAnalyzerService, ActivityAnalyzerService>();
 
     services.AddSingleton<IScheduler, Scheduler>();
+
+    services.AddScoped<ApiExceptionFilter>();
 
     services.AddHostedService<UserWatcher>();
 }
