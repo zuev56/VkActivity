@@ -1,12 +1,9 @@
-﻿using System.Threading;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using VkActivity.Data;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
-using VkActivity.Data.Repositories;
 
-namespace Home.Data.Repositories;
+namespace VkActivity.Data.Repositories;
 
 public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, IUsersRepository
 {

@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VkActivity.Data.Abstractions;
-using VkActivity.Data.Repositories;
+using VkActivity.Data.Models;
 using Zs.Common.Extensions;
 
-namespace VkActivity.Data.Models;
+namespace VkActivity.Data.Repositories;
 
 public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContext, ActivityLogItem>, IActivityLogItemsRepository
 {
@@ -19,7 +19,7 @@ public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContex
     public async Task<List<ActivityLogItem>> FindAllByIdsInDateRangeAsync(int[] userIds, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
     {
         return await FindAllAsync(
-            l => userIds.Contains(l.UserId) 
+            l => userIds.Contains(l.UserId)
                 && l.LastSeen >= fromDate.ToUnixEpoch()
                 && l.LastSeen <= toDate.ToUnixEpoch(),
             cancellationToken: cancellationToken);
