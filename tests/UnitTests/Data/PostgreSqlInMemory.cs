@@ -31,14 +31,14 @@ public class PostgreSqlInMemory
 
     public void FillWithFakeData(int entitiesCount)
     {
-        var activityLogItems = StubFactory.CreateActivityLogItems(entitiesCount);
         var vkUsers = StubFactory.CreateVkUsers(entitiesCount);
+        var activityLogItems = StubFactory.CreateActivityLogItems(entitiesCount);
 
 
         Task.WaitAll(new Task[]
         {
-            ActivityLogItemsRepository.SaveRangeAsync(activityLogItems),
             VkUsersRepository.SaveRangeAsync(vkUsers),
+            ActivityLogItemsRepository.SaveRangeAsync(activityLogItems)
         });
     }
 }

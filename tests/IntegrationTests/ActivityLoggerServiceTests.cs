@@ -38,9 +38,9 @@ namespace IntegrationTests
                 .Build();
 
             return new ActivityLoggerService(
-                configuration,
                 postgreSqlInMemory.ActivityLogItemsRepository,
                 postgreSqlInMemory.VkUsersRepository,
+                new VkIntegration(configuration["Vk:AccessToken"], configuration["Vk:Version"]),
                 Mock.Of<ILogger<ActivityLoggerService>>());
         }
 

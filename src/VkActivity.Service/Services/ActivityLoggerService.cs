@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
@@ -8,13 +9,11 @@ using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
-using Zs.Common.Services.WebAPI;
 
 namespace VkActivity.Service.Services;
 
 public class ActivityLoggerService : IActivityLoggerService
 {
-    private readonly IConfiguration _configuration;
     private readonly IActivityLogItemsRepository _activityLogRepo;
     private readonly IUsersRepository _usersRepo;
     private readonly IVkIntegration _vkIntegration;
@@ -22,7 +21,7 @@ public class ActivityLoggerService : IActivityLoggerService
 
     public ActivityLoggerService(
         IActivityLogItemsRepository activityLogRepo,
-        IUsersRepository usersRepo, 
+        IUsersRepository usersRepo,
         IVkIntegration vkIntegration,
         ILogger<ActivityLoggerService> logger)
     {
@@ -38,18 +37,23 @@ public class ActivityLoggerService : IActivityLoggerService
         var result = ServiceResult<List<User>>.Success(resultUsersList);
         try
         {
-            var response = await _vkIntegration.GetUsers(userIds);
+            var existingDbUsers = await _usersRepo.FindAllByIdsAsync(userIds).ConfigureAwait(false);
+            var newUserIds = userIds.Except(existingDbUsers.Select(u => u.Id)).ToArray();
+            
+            if (!newUserIds.Any())
+                return ServiceResult<List<User>>.Warning("Users already exist in DB");
 
-            if (response is null)
-                return ServiceResult<List<User>>.Error("Response is null");
+            var vkUsers = await _vkIntegration.GetUsersAsync(newUserIds);
+            if (vkUsers is null)
+                return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
 
-            var existingDbUsers = await _usersRepo.FindAllByIdsAsync(userIds);
+            if (userIds.Except(newUserIds).Any())
+                result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', userIds.Except(newUserIds))}", InfoMessageType.Warning);
 
-            if (existingDbUsers?.Count > 0)
-                result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', existingDbUsers.Select(u => u.Id))}", InfoMessageType.Warning);
-
-            var usersForSave = response.Users.Where(u => !existingDbUsers.Select(eu => eu.Id).Contains(u.Id)).Select(u => (User)u);
-            var savedSuccessfully = await _usersRepo.SaveRangeAsync(usersForSave);
+            var usersForSave = vkUsers.Select(u => (User)u);
+            var savedSuccessfully = usersForSave.Any()
+                ? await _usersRepo.SaveRangeAsync(usersForSave).ConfigureAwait(false)
+                : true;
 
             if (savedSuccessfully)
             {
@@ -72,8 +76,7 @@ public class ActivityLoggerService : IActivityLoggerService
         ServiceResult result = ServiceResult.Success();
         try
         {
-            var vkUsers = await _usersRepo.FindAllAsync();
-            var userIds = vkUsers.Select(u => u.Id).ToArray();
+            var userIds = await _usersRepo.FindAllIdsAsync().ConfigureAwait(false);
 
             if (!userIds.Any())
             {
@@ -81,53 +84,64 @@ public class ActivityLoggerService : IActivityLoggerService
                 return result;
             }
 
-            var response = await _vkIntegration.GetUsersActivity(userIds);
+            var vkUsers = await _vkIntegration.GetUsersActivityAsync(userIds).ConfigureAwait(false);
 
-            if (response is null)
-            {
-                bool saveResult = await SetUndefinedActivityToAllVkUsers();
-                _logger?.LogWarning("Set undefined activity to all VkUsers (succeeded: {SaveResult})", saveResult);
-                result.AddMessage(InfoMessage.Warning("Response is null. Setting undefined activity to all VkUsers"));
-                return result;
-            }
+            int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
-            int loggedItemsCount = await LogVkUsersActivityAsync(response.Users);
+#if DEBUG
+            Trace.WriteLine($"LoggedItemsCount: {loggedItemsCount}");
+#endif
 
-            result.AddMessage(InfoMessage.Success($"Logged {loggedItemsCount} activities"));
             return result;
         }
         catch (Exception ex)
         {
             _logger.LogErrorIfNeed(ex, "SaveVkUsersActivityAsync error");
+
+            await TrySetUndefinedActivityToAllVkUsers().ConfigureAwait(false);
+            
             return ServiceResult.Error("Users activity saving error");
         }
     }
 
     /// <summary>Save undefined user activities to database</summary>
-    private async Task<bool> SetUndefinedActivityToAllVkUsers()
+    private async Task TrySetUndefinedActivityToAllVkUsers()
     {
-        var users = await _usersRepo.FindAllAsync();
-
-        var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
-
-        var activityLogItems = new List<ActivityLogItem>();
-        foreach (var user in users)
+        try
         {
-            if (lastUsersActivityLogItems.First(i => i.UserId == user.Id).IsOnline == true)
-                activityLogItems.Add(
-                    new ActivityLogItem
-                    {
-                        UserId = user.Id,
-                        IsOnline = null,
-                        IsOnlineMobile = false,
-                        OnlineApp = null,
-                        LastSeen = -1,
-                        InsertDate = DateTime.UtcNow
-                    }
-                );
-        }
+            var users = await _usersRepo.FindAllAsync();
 
-        return await _activityLogRepo.SaveRangeAsync(activityLogItems);
+            var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
+
+            if (!lastUsersActivityLogItems.Any())
+                return;
+
+            var activityLogItems = new List<ActivityLogItem>();
+            foreach (var user in users)
+            {
+                if (lastUsersActivityLogItems.First(i => i.UserId == user.Id).IsOnline == true)
+                    activityLogItems.Add(
+                        new ActivityLogItem
+                        {
+                            UserId = user.Id,
+                            IsOnline = null,
+                            IsOnlineMobile = false,
+                            OnlineApp = null,
+                            LastSeen = -1,
+                            InsertDate = DateTime.UtcNow
+                        }
+                    );
+            }
+
+            var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
+            
+            _logger.LogWarningIfNeed("Set undefined activity to all VkUsers (succeeded: {SaveResult})", saveResult);
+        }
+        catch (Exception)
+        {
+            _logger.LogErrorIfNeed("Set undefined activity to all VkUsers error");
+            throw;
+        }
     }
 
     /// <summary>Save user activities to database</summary>
@@ -136,7 +150,7 @@ public class ActivityLoggerService : IActivityLoggerService
     private async Task<int> LogVkUsersActivityAsync(List<VkApiUser> apiUsers)
     {
         // TODO: Add user activity info (range) - ???
-        var lastActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
+        var lastActivityLogItems = await _activityLogRepo.FindLastUsersActivity().ConfigureAwait(false);
         var activityLogItemsForSave = new List<ActivityLogItem>();
 
         foreach (var apiUser in apiUsers)
@@ -173,9 +187,14 @@ public class ActivityLoggerService : IActivityLoggerService
             }
         }
 
-        return await _activityLogRepo.SaveRangeAsync(activityLogItemsForSave)
-            ? activityLogItemsForSave.Count
-            : -1;
+        if (activityLogItemsForSave.Any())
+        {
+            return await _activityLogRepo.SaveRangeAsync(activityLogItemsForSave).ConfigureAwait(false)
+                ? activityLogItemsForSave.Count
+                : -1;
+        }
+
+        return 0;
     }
 
 }

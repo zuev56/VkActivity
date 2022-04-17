@@ -80,7 +80,7 @@ internal class UserWatcher : BackgroundService
     private List<IJobBase> CreateJobs()
     {
         _userActivityLoggerJob = new ProgramJob(
-            period: TimeSpan.FromSeconds(_configuration.GetSection("Vk:ActivityLogIntervalSec").Get<int>()),
+            period: TimeSpan.FromMilliseconds(_configuration.GetSection("Vk:ActivityLogIntervalMs").Get<int>()),
             method: SaveVkUsersActivityAsync,
             description: "logUserStatus",
             logger: _logger);
@@ -114,7 +114,7 @@ internal class UserWatcher : BackgroundService
         using (var scope = _scopeFactory.CreateScope())
         {
             var activityLoggerService = scope.ServiceProvider.GetService<IActivityLoggerService>();
-            result = await activityLoggerService!.SaveVkUsersActivityAsync();
+            result = await activityLoggerService!.SaveVkUsersActivityAsync().ConfigureAwait(false);
         }
 
         if (_userActivityLoggerJob!.IdleStepsCount > 0)

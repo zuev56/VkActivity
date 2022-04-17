@@ -158,7 +158,7 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddScoped<IUsersRepository, UsersRepository>();
 
     services.AddSingleton<IVkIntegration, VkIntegration>(
-        sp => new VkIntegration(context.Configuration["Vk:Version"], context.Configuration["Vk:AccessToken"]));
+        sp => new VkIntegration(context.Configuration["Vk:AccessToken"], context.Configuration["Vk:Version"]));
     services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
     services.AddScoped<IActivityAnalyzerService, ActivityAnalyzerService>();
 

@@ -22,17 +22,37 @@ public class VkIntegration : IVkIntegration
         _getUsersUrl = $"https://api.vk.com/method/users.get?access_token={token}&v={version}";
     }
 
-    public async Task<VkApiResponse> GetUsersActivity(int[] userIds)
+    public async Task<List<VkApiUser>> GetUsersActivityAsync(int[] userIds)
     {
-        var url = $"{_getUsersUrl}&fields={FIELDS_FOR_GETTING_ACTIVITY}&user_ids={string.Join(',', userIds)}";
+        ArgumentNullException.ThrowIfNull(userIds);
 
-        return await ApiHelper.GetAsync<VkApiResponse>(url, throwExceptionOnError: true);
+        if (userIds.Length == 0)
+            throw new ArgumentException("UserIds array couldn't be empty", nameof(userIds));
+
+        var url = $"{_getUsersUrl}&fields={FIELDS_FOR_GETTING_ACTIVITY}&user_ids={string.Join(',', userIds)}";
+        
+        return await GetVkUsers(url);
     }
 
-    public async Task<VkApiResponse> GetUsers(int[] userIds)
+    private static async Task<List<VkApiUser>> GetVkUsers(string url)
     {
+        var response = await ApiHelper.GetAsync<VkApiResponse>(url, throwExceptionOnError: true);
+
+        if (response?.Users == null)
+            throw new InvalidOperationException("Unable to get correct response from Vk API");
+
+        return response.Users;
+    }
+
+    public async Task<List<VkApiUser>> GetUsersAsync(int[] userIds)
+    {
+        ArgumentNullException.ThrowIfNull(userIds);
+
+        if (userIds.Length == 0)
+            throw new ArgumentException("UserIds array couldn't be empty", nameof(userIds));
+
         var url = $"{_getUsersUrl}&fields={FIELDS_FOR_ADDING_USER}&user_ids={string.Join(',', userIds)}";
 
-        return await ApiHelper.GetAsync<VkApiResponse>(url, throwExceptionOnError: true);
+        return await GetVkUsers(url);
     }
 }

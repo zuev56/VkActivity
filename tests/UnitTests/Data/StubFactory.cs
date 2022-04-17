@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using VkActivity.Data.Models;
 
 namespace UnitTests.Data;
@@ -64,7 +66,7 @@ internal class StubFactory
         var activityLogItems = new ActivityLogItem[amount];
 
         for (int i = 0; i < amount; i++)
-            activityLogItems[i] = CreateActivityLogItem(i + 1);
+            activityLogItems[i] = CreateActivityLogItem(i + 1, i + 1);
 
         return activityLogItems;
     }

@@ -8,11 +8,11 @@
 
     <ItemGroup>
         <PackageReference Include="AutoMapper" Version="11.0.1" />
-        <PackageReference Include="Microsoft.AspNetCore.Hosting.WindowsServices" Version="6.0.3" />
+        <PackageReference Include="Microsoft.AspNetCore.Hosting.WindowsServices" Version="6.0.4" />
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
 		
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.3">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.4">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -22,7 +22,7 @@
         <PackageReference Include="Serilog.Settings.Configuration" Version="3.3.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
         <PackageReference Include="Serilog.Sinks.Seq" Version="5.1.1" />
-        <PackageReference Include="Zs.Common.Services" Version="6.0.6" />
+        <PackageReference Include="Zs.Common.Services" Version="6.0.7" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\VkActivity.Data\VkActivity.Data.csproj" />

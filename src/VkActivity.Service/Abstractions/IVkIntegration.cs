@@ -4,6 +4,6 @@ namespace VkActivity.Service.Abstractions;
 
 public interface IVkIntegration
 {
-    Task<VkApiResponse> GetUsersActivity(int[] userIds);
-    Task<VkApiResponse> GetUsers(int[] userIds);
+    Task<List<VkApiUser>> GetUsersActivityAsync(int[] userIds);
+    Task<List<VkApiUser>> GetUsersAsync(int[] userIds);
 }
