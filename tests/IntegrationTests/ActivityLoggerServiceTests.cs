@@ -16,7 +16,7 @@ namespace IntegrationTests
 
 
         [Fact]
-        public async Task SaveVkUsersActivityAsync_InternetConnectionEstablished_ReturnsSuccess()
+        public async Task SaveVkUsersActivityAsync_ReturnsSuccess()
         {
             // Arrange
             var activityLoggerService = GetActivityLoggerService();

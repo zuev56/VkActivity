@@ -144,9 +144,6 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddDbContext<VkActivityContext>(options =>
         options.UseNpgsql(context.Configuration.GetSecretValue("ConnectionStrings:Default")));
 
-    // TODO: remove!
-    //AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
     // For repositories
     services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
 
@@ -154,17 +151,19 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     mapperConfig.AssertConfigurationIsValid();
     services.AddScoped<IMapper, Mapper>(sp => new Mapper(mapperConfig));
 
-    services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
-    services.AddScoped<IUsersRepository, UsersRepository>();
-
-    services.AddSingleton<IVkIntegration, VkIntegration>(
-        sp => new VkIntegration(context.Configuration["Vk:AccessToken"], context.Configuration["Vk:Version"]));
-    services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
-    services.AddScoped<IActivityAnalyzerService, ActivityAnalyzerService>();
+    services.AddScoped<ApiExceptionFilter>();
 
     services.AddSingleton<IScheduler, Scheduler>();
 
-    services.AddScoped<ApiExceptionFilter>();
+    services.AddSingleton<IVkIntegration, VkIntegration>(
+        sp => new VkIntegration(context.Configuration["Vk:AccessToken"], context.Configuration["Vk:Version"]));
+    
+    services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
+    services.AddScoped<IActivityAnalyzerService, ActivityAnalyzerService>();
+
+    services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
+    services.AddScoped<IUsersRepository, UsersRepository>();
+
 
     services.AddHostedService<UserWatcher>();
 }

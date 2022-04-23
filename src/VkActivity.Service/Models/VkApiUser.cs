@@ -56,6 +56,4 @@ public class VkApiUser
             UpdateDate = DateTime.UtcNow
         };
     }
-
-    public override string ToString() => $"{Id}  {FirstName} {LastName}";
 }
