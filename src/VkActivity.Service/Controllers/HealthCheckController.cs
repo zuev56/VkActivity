@@ -6,9 +6,11 @@ namespace VkActivity.Service.Controllers;
 [Route("api/[controller]")]
 public class HealthCheckController : Controller
 {
-    [HttpGet("")]
-    [HttpHead("")]
-    public IActionResult Index()
+    // TODO: Try HealthCheckApplicationBuilderExtensions _healthCheckApplicationBuilderExtensions;
+
+    [HttpGet]
+    [HttpHead]
+    public IActionResult GetHealthInfo()
     {
         if (Request.Method == "HEAD")
             return Ok();
@@ -33,7 +35,7 @@ public class HealthCheckController : Controller
         });
     }
 
-    // TODO: Move to Zs.Common
+    // TODO: Use Zs.Common.Models.ProgramUtilites.GetAppsettingsPath instead
     private static string BytesToSize(long bytes)
     {
         string[] array = new string[5]

@@ -1,6 +1,6 @@
 ﻿namespace VkActivity.Data.Models;
 
-/// <summary> Vk users activity log item </summary>
+/// <summary>Vk activity item (DB)</summary>
 public partial class ActivityLogItem
 {
     public int Id { get; set; }

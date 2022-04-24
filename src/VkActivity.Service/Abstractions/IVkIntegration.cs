@@ -1,4 +1,4 @@
-﻿using VkActivity.Service.Models;
+﻿using VkActivity.Service.Models.VkApi;
 
 namespace VkActivity.Service.Abstractions;
 

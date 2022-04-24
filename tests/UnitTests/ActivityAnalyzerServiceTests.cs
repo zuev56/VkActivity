@@ -21,7 +21,7 @@ namespace UnitTests
             var userId = Random.Shared.Next(1, _dbEntitiesAmount);
 
             // Act
-            var fullTimeUserActivity = await activityAnalyzerService.GetFullTimeUserStatisticsAsync(userId);
+            var fullTimeUserActivity = await activityAnalyzerService.GetFullTimeActivityAsync(userId);
 
             // Assert
             Assert.NotNull(fullTimeUserActivity);

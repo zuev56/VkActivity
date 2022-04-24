@@ -5,6 +5,7 @@ using VkActivity.Data.Models;
 using VkActivity.Service.Abstractions;
 using VkActivity.Service.Models;
 using Zs.Common.Abstractions;
+using Zs.Common.Exceptions;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
 
@@ -29,21 +30,23 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
 
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<DetailedUserActivity>> GetFullTimeUserStatisticsAsync(int userId)
+    public async Task<IOperationResult<DetailedActivity>> GetFullTimeActivityAsync(int userId)
     {
         try
         {
             if (userId == default)
                 throw new ArgumentOutOfRangeException(nameof(userId));
 
-            var user = await _vkUsersRepo.FindByIdAsync(userId);
+            var user = await _vkUsersRepo.FindByIdAsync(userId)
+                ?? throw new ItemNotFoundException($"The user with ID={userId} is not found in the database");
 
             var orderedLogForUser = await GetOrderedLog(_tmpMinLogDate, DateTime.UtcNow, userId);
             if (!orderedLogForUser.Any())
-                return ServiceResult<DetailedUserActivity>.Warning(new DetailedUserActivity(), "No data");
+                return ServiceResult<DetailedActivity>.Warning("No data");
 
-            var activityDetails = new DetailedUserActivity
+            var activityDetails = new DetailedActivity
             {
+                UserId = user.Id,
                 UserName = $"{user.FirstName} {user.LastName}",
                 AnalyzedDaysCount = (int)(orderedLogForUser.Max(l => l.InsertDate.Date) - orderedLogForUser.Min(l => l.InsertDate.Date)).TotalDays,
                 ActivityDaysCount = orderedLogForUser.Select(l => l.InsertDate.Date).Distinct().Count(),
@@ -55,17 +58,17 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
                 Url = $"https://vk.com/id{JsonDocument.Parse(user.RawData).RootElement.GetProperty("id")}"
             };
 
-            return ServiceResult<DetailedUserActivity>.Success(activityDetails);
+            return ServiceResult<DetailedActivity>.Success(activityDetails);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "GetDetailedUserActivity error");
-            return ServiceResult<DetailedUserActivity>.Error("Failed to get detailed user activity");
+            return ServiceResult<DetailedActivity>.Error("Failed to get detailed user activity");
         }
     }
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<List<UserWithActivity>>> GetUsersWithActivityAsync(string filterText, DateTime fromDate, DateTime toDate)
+    public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(string filterText, DateTime fromDate, DateTime toDate)
     {
         try
         {
@@ -74,14 +77,14 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
             var log = await GetOrderedLog(fromDate, toDate, usersResult.Value.Select(u => u.Id).ToArray());
             var onlineUserIds = await GetOnlineUserIdsAsync();
 
-            var userActivityBag = new ConcurrentBag<UserWithActivity>();
+            var userActivityBag = new ConcurrentBag<ActivityListItem>();
             usersResult.Value.AsParallel().ForAll(user =>
             {
                 var orderedLogForUser = log.Where(l => l.UserId == user.Id).OrderBy(l => l.LastSeen).ToList();
 
                 AddToLogClosingIntervalItem(orderedLogForUser, toDate);
 
-                userActivityBag.Add(new UserWithActivity
+                userActivityBag.Add(new ActivityListItem
                 {
                     User = user,
                     ActivitySec = GetActivitySeconds(orderedLogForUser, Device.All),
@@ -93,12 +96,12 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
                 .OrderByDescending(i => i.ActivitySec).ThenBy(i => i.User.FirstName).ThenBy(i => i.User.LastName)
                 .ToList();
 
-            return ServiceResult<List<UserWithActivity>>.Success(orderedUserList);
+            return ServiceResult<List<ActivityListItem>>.Success(orderedUserList);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "GetVkUsersWithActivity error");
-            return ServiceResult<List<UserWithActivity>>.Error("Failed to get users list with activity time");
+            return ServiceResult<List<ActivityListItem>>.Error("Failed to get users list with activity time");
         }
     }
 
@@ -282,7 +285,7 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
     }
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<SimpleUserActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
+    public async Task<IOperationResult<SimpleActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
     {
         try
         {
@@ -290,31 +293,31 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
 
             var user = await _vkUsersRepo.FindByIdAsync(userId);
             if (user == null)
-                return ServiceResult<SimpleUserActivity>.Error("User is not found");
+                return ServiceResult<SimpleActivity>.Error("User is not found");
 
             var orderedLogForUser = await GetOrderedLog(fromDate, toDate, userId);
             var userStatResult = GetUserStatistics(userId, $"{user.FirstName} {user.LastName}", orderedLogForUser.ToList());
 
             if (!userStatResult.IsSuccess)
-                return ServiceResult<SimpleUserActivity>.ErrorFrom(userStatResult);
+                return ServiceResult<SimpleActivity>.ErrorFrom(userStatResult);
 
-            return ServiceResult<SimpleUserActivity>.Success(userStatResult.Value);
+            return ServiceResult<SimpleActivity>.Success(userStatResult.Value);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "GetPeriodUserStatistics error");
-            return ServiceResult<SimpleUserActivity>.Error("Failed to get period statistics");
+            return ServiceResult<SimpleActivity>.Error("Failed to get period statistics");
         }
     }
 
-    private IOperationResult<SimpleUserActivity> GetUserStatistics(int userId, string userName, List<ActivityLogItem> orderedLogForUser)
+    private IOperationResult<SimpleActivity> GetUserStatistics(int userId, string userName, List<ActivityLogItem> orderedLogForUser)
     {
         try
         {
             int browserActivitySec = GetActivitySeconds(orderedLogForUser, Device.PC);
             int mobileActivitySec = GetActivitySeconds(orderedLogForUser, Device.Mobile);
 
-            var periodUserActivity = new SimpleUserActivity()
+            var periodUserActivity = new SimpleActivity()
             {
                 UserId = userId,
                 UserName = userName,
@@ -323,12 +326,12 @@ public class ActivityAnalyzerService : IActivityAnalyzerService
                 VisitsCount = orderedLogForUser.Count(l => l.IsOnline == true)
             };
 
-            return ServiceResult<SimpleUserActivity>.Success(periodUserActivity);
+            return ServiceResult<SimpleActivity>.Success(periodUserActivity);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "GetUserStatistics error");
-            return ServiceResult<SimpleUserActivity>.Error("Failed to get statistics");
+            return ServiceResult<SimpleActivity>.Error("Failed to get statistics");
         }
     }
 

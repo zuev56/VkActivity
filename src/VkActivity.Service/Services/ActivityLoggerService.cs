@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
 using VkActivity.Service.Abstractions;
-using VkActivity.Service.Models;
+using VkActivity.Service.Models.VkApi;
 using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
@@ -39,7 +38,7 @@ public class ActivityLoggerService : IActivityLoggerService
         {
             var existingDbUsers = await _usersRepo.FindAllByIdsAsync(userIds).ConfigureAwait(false);
             var newUserIds = userIds.Except(existingDbUsers.Select(u => u.Id)).ToArray();
-            
+
             if (!newUserIds.Any())
                 return ServiceResult<List<User>>.Warning("Users already exist in DB");
 
@@ -99,7 +98,7 @@ public class ActivityLoggerService : IActivityLoggerService
             _logger.LogErrorIfNeed(ex, "SaveVkUsersActivityAsync error");
 
             await TrySetUndefinedActivityToAllVkUsers().ConfigureAwait(false);
-            
+
             return ServiceResult.Error("Users activity saving error");
         }
     }
@@ -134,7 +133,7 @@ public class ActivityLoggerService : IActivityLoggerService
             }
 
             var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
-            
+
             _logger.LogWarningIfNeed("Set undefined activity to all VkUsers (succeeded: {SaveResult})", saveResult);
         }
         catch (Exception)

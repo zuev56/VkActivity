@@ -5,10 +5,17 @@ using System.Text.Unicode;
 using VkActivity.Data.Models;
 using Zs.Common.Extensions;
 
-namespace VkActivity.Service.Models;
+namespace VkActivity.Service.Models.VkApi;
 
 public class VkApiUser
 {
+    private static JsonSerializerOptions _jsonSerializerOptions = new() 
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+    };
+
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
@@ -30,8 +37,8 @@ public class VkApiUser
     [JsonPropertyName("last_seen")]
     public VkApiLastSeen? LastSeenUnix { get; set; }
     public DateTime LastSeen => LastSeenUnix is null
-                              ? DateTime.MinValue
-                              : LastSeenUnix.Time.FromUnixEpoch();
+        ? DateTime.MinValue
+        : LastSeenUnix.Time.FromUnixEpoch();
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? RawData { get; set; }
@@ -39,19 +46,12 @@ public class VkApiUser
 
     public static explicit operator User(VkApiUser apiVkUser)
     {
-        var options = new JsonSerializerOptions
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = true,
-            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
-        };
-
         return new User()
         {
             Id = apiVkUser.Id,
             FirstName = apiVkUser.FirstName,
             LastName = apiVkUser.LastName,
-            RawData = JsonSerializer.Serialize(apiVkUser, options).NormalizeJsonString(),
+            RawData = JsonSerializer.Serialize(apiVkUser, _jsonSerializerOptions).NormalizeJsonString(),
             InsertDate = DateTime.UtcNow,
             UpdateDate = DateTime.UtcNow
         };

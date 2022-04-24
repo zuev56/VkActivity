@@ -55,11 +55,14 @@ void ConfigureAppConfiguration(HostBuilderContext context, IConfigurationBuilder
 
 IConfiguration CreateConfiguration(string[] args)
 {
-    if (!File.Exists(ProgramUtilites.MainConfigurationPath))
+    // TODO: use ProgramUtilites.GetAppsettingsPath(AppEnvironment.Development) after packages update;
+    var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.Development.json");
+
+    if (!File.Exists(configPath))
         throw new AppsettingsNotFoundException();
 
     var configuration = new ConfigurationManager();
-    configuration.AddJsonFile(ProgramUtilites.MainConfigurationPath, optional: false, reloadOnChange: true);
+    configuration.AddJsonFile(configPath, optional: false, reloadOnChange: true);
 
     foreach (var arg in args)
     {

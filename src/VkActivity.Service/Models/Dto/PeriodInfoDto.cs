@@ -1,4 +1,4 @@
-﻿namespace VkActivity.Service.Models;
+﻿namespace VkActivity.Service.Models.Dto;
 
 public class PeriodInfoDto
 {

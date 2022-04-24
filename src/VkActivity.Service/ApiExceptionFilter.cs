@@ -4,6 +4,7 @@ using Zs.Common.Extensions;
 
 namespace VkActivity.Service;
 
+// TODO: Move to Zs.Common.Web
 public class ApiExceptionFilter : Attribute, IExceptionFilter
 {
     private readonly ILogger<ApiExceptionFilter> _logger;
@@ -17,7 +18,12 @@ public class ApiExceptionFilter : Attribute, IExceptionFilter
     {
         _logger.LogErrorIfNeed(context.Exception, $"Action {context.ActionDescriptor.DisplayName} error");
 
-        context.Result = new ContentResult { StatusCode = 500, Content = "Internal Server Error" };
+        context.Result = new ContentResult
+        {
+            StatusCode = 500,
+            Content = "Internal Server Error"
+        };
+
         context.ExceptionHandled = true;
     }
 }

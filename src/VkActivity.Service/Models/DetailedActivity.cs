@@ -2,8 +2,9 @@
 
 namespace VkActivity.Service.Models;
 
-public class DetailedUserActivity
+public class DetailedActivity
 {
+    public int UserId { get; init; }
     public string? UserName { get; init; }
     public string? Url { get; init; }
 
@@ -33,6 +34,6 @@ public class DetailedUserActivity
     public TimeSpan AvgDailyTime => ActivityDaysCount > 0 ? (TimeInSite + TimeInApp) / ActivityDaysCount : default;
     public TimeSpan MinDailyTime { get; init; }
     public TimeSpan MaxDailyTime { get; init; }
-    public ReadOnlyDictionary<DayOfWeek, TimeSpan> AvgWeekDayActivity { get; } = new ReadOnlyDictionary<DayOfWeek, TimeSpan>(_avgWeekDayActivity);
+    public static ReadOnlyDictionary<DayOfWeek, TimeSpan> AvgWeekDayActivity { get; } = new ReadOnlyDictionary<DayOfWeek, TimeSpan>(_avgWeekDayActivity);
 
 }

@@ -7,6 +7,7 @@ using Moq;
 using UnitTests.Data;
 using VkActivity.Service.Abstractions;
 using VkActivity.Service.Models;
+using VkActivity.Service.Models.VkApi;
 using VkActivity.Service.Services;
 using Xunit;
 

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace VkActivity.Service.Models;
+namespace VkActivity.Service.Models.VkApi;
 
 public class VkApiResponse
 {

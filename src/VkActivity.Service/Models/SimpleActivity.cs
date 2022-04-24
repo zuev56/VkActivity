@@ -1,6 +1,6 @@
 ﻿namespace VkActivity.Service.Models;
 
-public class SimpleUserActivity
+public class SimpleActivity
 {
     public int UserId { get; set; }
     public string? UserName { get; set; }

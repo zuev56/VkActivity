@@ -1,5 +1,5 @@
 ﻿using VkActivity.Service.Abstractions;
-using VkActivity.Service.Models;
+using VkActivity.Service.Models.VkApi;
 using Zs.Common.Services.WebAPI;
 
 namespace VkActivity.Service.Services;
@@ -30,7 +30,7 @@ public class VkIntegration : IVkIntegration
             throw new ArgumentException("UserIds array couldn't be empty", nameof(userIds));
 
         var url = $"{_getUsersUrl}&fields={FIELDS_FOR_GETTING_ACTIVITY}&user_ids={string.Join(',', userIds)}";
-        
+
         return await GetVkUsers(url);
     }
 

@@ -1,6 +1,6 @@
 ﻿namespace VkActivity.Data.Models;
 
-/// <summary> Vk user </summary>
+/// <summary>Vk user (DB)</summary>
 public partial class User
 {
     public int Id { get; set; }
