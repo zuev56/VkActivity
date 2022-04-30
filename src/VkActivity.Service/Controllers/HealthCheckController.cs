@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace VkActivity.Service.Controllers;
 
 [Route("api/[controller]")]
-public class HealthCheckController : Controller
+public sealed class HealthCheckController : Controller
 {
     // TODO: Try HealthCheckApplicationBuilderExtensions _healthCheckApplicationBuilderExtensions;
 

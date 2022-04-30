@@ -6,7 +6,6 @@ using System.Text.Json.Serialization;
 using AutoMapper;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using VkActivity.Data;
@@ -14,7 +13,9 @@ using VkActivity.Data.Abstractions;
 using VkActivity.Data.Repositories;
 using VkActivity.Service;
 using VkActivity.Service.Abstractions;
+using VkActivity.Service.Helpers;
 using VkActivity.Service.Services;
+using Zs.Common.Enums;
 using Zs.Common.Exceptions;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
@@ -22,9 +23,10 @@ using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Scheduler;
 
 [assembly: InternalsVisibleTo("UnitTests")]
+[assembly: InternalsVisibleTo("IntegrationTests")]
 
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(CreateConfiguration(args), "Serilog")
+    .ReadFrom.Configuration(CreateConfiguration(AppEnvironment.Development, args))
     .CreateLogger();
 
 Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, User: {User}, ProcessId: {ProcessId})",
@@ -37,7 +39,7 @@ Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, Us
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration(ConfigureAppConfiguration)
-    .UseSerilog()
+    .UseSerilog((hbc, lc) => lc.ReadFrom.Configuration(hbc.Configuration))
     .ConfigureWebHostDefaults(ConfigureWebHostDefaults)
     .ConfigureServices(ConfigureServices)
     .Build();
@@ -48,15 +50,15 @@ await host.RunAsync();
 
 void ConfigureAppConfiguration(HostBuilderContext context, IConfigurationBuilder builder)
 {
-    var configuration = CreateConfiguration(args);
+    var environment = Enum.Parse<AppEnvironment>(context.HostingEnvironment.EnvironmentName);
+    var configuration = CreateConfiguration(environment, args);
 
     builder.AddConfiguration(configuration);
 }
 
-IConfiguration CreateConfiguration(string[] args)
+IConfiguration CreateConfiguration(AppEnvironment environment, string[] args)
 {
-    // TODO: use ProgramUtilites.GetAppsettingsPath(AppEnvironment.Development) after packages update;
-    var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.Development.json");
+    var configPath = ProgramUtilites.GetAppsettingsPath(environment);
 
     if (!File.Exists(configPath))
         throw new AppsettingsNotFoundException();
@@ -98,26 +100,37 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
         );
     })
     .Configure((context, app) =>
+{
+    //app.UseHttpLogging();
+    app.UseSerilogRequestLogging(opts => opts.EnrichDiagnosticContext = LogHelper.EnrichFromRequest);
+
+    // Configure the HTTP request pipeline.
+    if (!context.HostingEnvironment.IsDevelopment())
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(c => c.SwaggerEndpoint(
-            context.Configuration["Swagger:EndpointUrl"],
-            context.Configuration["Swagger:ApiTitle"] + " " + context.Configuration["Swagger:ApiVersion"])
-        );
+        app.UseExceptionHandler("/Error");
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        //app.UseHsts();
+    }
 
-        app.UseRouting();
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint(
+        context.Configuration["Swagger:EndpointUrl"],
+        context.Configuration["Swagger:ApiTitle"] + " " + context.Configuration["Swagger:ApiVersion"])
+    );
 
-        app.UseAuthorization();
+    app.UseRouting();
 
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllerRoute(
-                name: "Default",
-                pattern: "api/{controller}/{action}/{id?}");
+    app.UseAuthorization();
 
-            endpoints.MapControllers();
-        });
-    })
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllerRoute(
+            name: "Default",
+            pattern: "api/{controller}/{action}/{id?}");
+
+        endpoints.MapControllers();
+    });
+})
     .ConfigureKestrel(serverOptions =>
     {
         // https://docs.microsoft.com/ru-ru/aspnet/core/fundamentals/servers/kestrel/options?view=aspnetcore-6.0
@@ -160,7 +173,7 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 
     services.AddSingleton<IVkIntegration, VkIntegration>(
         sp => new VkIntegration(context.Configuration["Vk:AccessToken"], context.Configuration["Vk:Version"]));
-    
+
     services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
     services.AddScoped<IActivityAnalyzerService, ActivityAnalyzerService>();
 

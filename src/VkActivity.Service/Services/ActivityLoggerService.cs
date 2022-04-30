@@ -11,7 +11,7 @@ using Zs.Common.Models;
 
 namespace VkActivity.Service.Services;
 
-public class ActivityLoggerService : IActivityLoggerService
+internal sealed class ActivityLoggerService : IActivityLoggerService
 {
     private readonly IActivityLogItemsRepository _activityLogRepo;
     private readonly IUsersRepository _usersRepo;

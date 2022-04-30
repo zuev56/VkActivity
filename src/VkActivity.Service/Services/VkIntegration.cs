@@ -4,7 +4,7 @@ using Zs.Common.Services.WebAPI;
 
 namespace VkActivity.Service.Services;
 
-public class VkIntegration : IVkIntegration
+internal sealed class VkIntegration : IVkIntegration
 {
     private readonly string _getUsersUrl;
     private const string FIELDS_FOR_GETTING_ACTIVITY = "online,online_mobile,online_app,last_seen";

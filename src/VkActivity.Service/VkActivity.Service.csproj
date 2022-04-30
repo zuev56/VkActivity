@@ -5,12 +5,26 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
+	
+	<!-- https://stackoverflow.com/questions/41546943/how-to-set-aspnetcore-environment-to-be-considered-for-publishing-an-asp-net-cor
+	Custom property group added to add the environment name during publish
+     The EnvironmentName property is used during the publish
+     for the environment variable in web.config
+    
+	<PropertyGroup Condition=" '$(Configuration)' == '' Or '$(Configuration)' == 'Debug'">
+		<EnvironmentName>Development</EnvironmentName>
+	</PropertyGroup>
 
+	<PropertyGroup Condition=" '$(Configuration)' != '' AND '$(Configuration)' != 'Debug'">
+		<EnvironmentName>Production</EnvironmentName>
+	</PropertyGroup>
+	-->
     <ItemGroup>
         <PackageReference Include="AutoMapper" Version="11.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Hosting.WindowsServices" Version="6.0.4" />
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
 		
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.4">
             <PrivateAssets>all</PrivateAssets>

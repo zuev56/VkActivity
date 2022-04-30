@@ -1,19 +1,19 @@
 ﻿using System.Text.Encodings.Web;
-using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Unicode;
 using VkActivity.Data.Models;
 using VkActivity.Service.Models;
 using VkActivity.Service.Models.Dto;
-using Zs.Common.Extensions;
 using VkActivity.Service.Models.VkApi;
+using Zs.Common.Extensions;
 
 namespace VkActivity.Service;
 
-public static class MapperConfiguration
+internal static class MapperConfiguration
 {
 
-    private static JsonSerializerOptions _jsonSerializerOptions = new()
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         WriteIndented = true,

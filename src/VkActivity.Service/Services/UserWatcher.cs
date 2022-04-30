@@ -1,21 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
-using VkActivity.Service.Abstractions;
-using VkActivity.Service.Models;
+﻿using VkActivity.Service.Abstractions;
 using Zs.Common.Abstractions;
-using Zs.Common.Enums;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Scheduler;
 
 namespace VkActivity.Service.Services;
 
 // TODO: В хранимке vk.sf_cmd_get_not_active_users выводить точное количество времени отсутствия
-
-// TODO: Надо сделать нормальное добавление пользователей:
-//          1. идентификаторы пользователей в БД равны идентификаторам в ВК
-//          2. При первом запуске в БД добавляются отсутствующие идентификаторы из конфига, если такие есть
-//          3. Далее работаем только с пользователями из БД, т.к.возможно их добавление "на лету"
-
-internal class UserWatcher : BackgroundService
+internal sealed class UserWatcher : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IScheduler _scheduler;
@@ -85,19 +76,9 @@ internal class UserWatcher : BackgroundService
             description: "logUserStatus",
             logger: _logger);
 
-        // Это разместить в боте!
-        //var notActiveUsersInformerJob = new SqlJob(
-        //    period: TimeSpan.FromHours(1),
-        //    resultType: QueryResultType.String,
-        //    sqlQuery: $"select vk.sf_cmd_get_not_active_users('{string.Join(',', _configuration.GetSection("Vk:TrackedUserIds").Get<int[]>())}', {_configuration.GetSection("Home:Vk:AlarmAfterInactiveHours").Get<int>()})",
-        //    dbClient: _serviceProvider.GetService<IDbClient>(),
-        //    startUtcDate: DateTime.UtcNow + TimeSpan.FromSeconds(5),
-        //    description: Constants.USER_WATCHER_INFORMING_JOB_NAME);
-
         return new List<IJobBase>()
         {
-            _userActivityLoggerJob,
-            //notActiveUsersInformerJob
+            _userActivityLoggerJob
         };
     }
 
@@ -128,7 +109,5 @@ internal class UserWatcher : BackgroundService
 
             _logger.LogError(logMessage);
         }
-
     }
-
 }

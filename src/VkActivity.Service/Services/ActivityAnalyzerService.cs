@@ -11,7 +11,7 @@ using Zs.Common.Models;
 
 namespace VkActivity.Service.Services;
 
-public class ActivityAnalyzerService : IActivityAnalyzerService
+internal sealed class ActivityAnalyzerService : IActivityAnalyzerService
 {
     private readonly IActivityLogItemsRepository _vkActivityLogRepo;
     private readonly IUsersRepository _vkUsersRepo;

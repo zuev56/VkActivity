@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using VkActivity.Service.Abstractions;
-using VkActivity.Service.Models;
 using VkActivity.Service.Models.Dto;
 using Zs.Common.Extensions;
 
@@ -9,20 +8,22 @@ namespace VkActivity.Service.Controllers;
 
 [Route("api/[controller]")]
 [ServiceFilter(typeof(ApiExceptionFilter))]
+[ServiceFilter(typeof(ApiExceptionFilter))]
 [ApiController] // Реализует проверку модели и возвращает 400, если она не валидна
-public class ActivityLogController : Controller
+public sealed class ActivityLogController : Controller
 {
     private readonly IActivityAnalyzerService _activityAnalyzerService;
     private readonly IMapper _mapper;
 
-    // +/- Сделать другие контроллеры, необходимые для фронтенда
-    // +/- Настроить использование appsettings.Development.json
-    // - Покрыть тестами оставшееся!
-    // - Сделать настройку Kestrel из конфигурационного файла (возможность переопределения заданных в коде параметров)
-    // - Проверить корректность работы логгера активности пользователей
-    // - Убрать уже неактуальный функционал из UserWatcher и т.д после создания отдельного бота.
+    //+/- Сделать другие контроллеры, необходимые для фронтенда
+    //+/- Настроить использование appsettings.Development.json
+    //- Покрыть тестами оставшееся!
+    //- Сделать настройку Kestrel из конфигурационного файла(возможность переопределения заданных в коде параметров)
+    //- Проверить корректность работы логгера активности пользователей
+    //- Убрать уже неактуальный функционал из UserWatcher и т.д после создания отдельного бота.
 
-    
+
+
 
     public ActivityLogController(
         IActivityAnalyzerService activityAnalyzerService,
