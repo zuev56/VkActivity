@@ -1,9 +1,14 @@
 ﻿using System.Text.Json.Serialization;
+using VkActivity.Data.Models;
 
 namespace VkActivity.Service.Models.VkApi;
 
-public class VkApiLastSeen
+// https://dev.vk.com/reference/objects/user#last_seen
+public sealed class VkApiLastSeen
 {
     [JsonPropertyName("time")]
-    public int Time { get; set; }
+    public int UnixTime { get; set; }
+
+    [JsonPropertyName("platform")]
+    public Platform Platform { get; set; }
 }

@@ -11,15 +11,15 @@ namespace VkActivity.Service.Controllers;
 [ApiController]
 public sealed class ListUsersController : Controller
 {
-    private readonly IActivityLoggerService _activityLoggerService;
-    private readonly IActivityAnalyzerService _activityAnalyzerService;
+    private readonly IActivityLogger _activityLoggerService;
+    private readonly IActivityAnalyzer _activityAnalyzerService;
     private readonly ILogger<ListUsersController> _logger;
     private readonly IMapper _mapper;
 
 
     public ListUsersController(
-        IActivityLoggerService activityLoggerService,
-        IActivityAnalyzerService activityAnalyzerService,
+        IActivityLogger activityLoggerService,
+        IActivityAnalyzer activityAnalyzerService,
         IMapper mapper,
         ILogger<ListUsersController> logger)
     {

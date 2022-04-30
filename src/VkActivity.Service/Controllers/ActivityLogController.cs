@@ -12,7 +12,7 @@ namespace VkActivity.Service.Controllers;
 [ApiController] // Реализует проверку модели и возвращает 400, если она не валидна
 public sealed class ActivityLogController : Controller
 {
-    private readonly IActivityAnalyzerService _activityAnalyzerService;
+    private readonly IActivityAnalyzer _activityAnalyzerService;
     private readonly IMapper _mapper;
 
     //+/- Сделать другие контроллеры, необходимые для фронтенда
@@ -21,12 +21,13 @@ public sealed class ActivityLogController : Controller
     //- Сделать настройку Kestrel из конфигурационного файла(возможность переопределения заданных в коде параметров)
     //- Проверить корректность работы логгера активности пользователей
     //- Убрать уже неактуальный функционал из UserWatcher и т.д после создания отдельного бота.
+    //- Сделать обработку деактивированного пользователя deactivated: string [ deleted, banned ]
 
 
 
 
     public ActivityLogController(
-        IActivityAnalyzerService activityAnalyzerService,
+        IActivityAnalyzer activityAnalyzerService,
         IMapper mapper)
     {
         _activityAnalyzerService = activityAnalyzerService ?? throw new ArgumentNullException(nameof(activityAnalyzerService));

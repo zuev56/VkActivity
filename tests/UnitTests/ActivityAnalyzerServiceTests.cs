@@ -27,15 +27,15 @@ namespace UnitTests
             Assert.NotNull(fullTimeUserActivity);
         }
 
-        private IActivityAnalyzerService GetActivityAnalyzerService()
+        private IActivityAnalyzer GetActivityAnalyzerService()
         {
             var postgreSqlInMemory = new PostgreSqlInMemory();
             postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
 
-            return new ActivityAnalyzerService(
+            return new ActivityAnalyzer(
                 postgreSqlInMemory.ActivityLogItemsRepository,
                 postgreSqlInMemory.VkUsersRepository,
-                Mock.Of<ILogger<ActivityAnalyzerService>>());
+                Mock.Of<ILogger<ActivityAnalyzer>>());
         }
     }
 }

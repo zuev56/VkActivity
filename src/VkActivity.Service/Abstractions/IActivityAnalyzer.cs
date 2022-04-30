@@ -4,7 +4,7 @@ using Zs.Common.Abstractions;
 
 namespace VkActivity.Service.Abstractions;
 
-public interface IActivityAnalyzerService
+public interface IActivityAnalyzer
 {
     /// <summary>Get information about user activity in the specified period</summary>
     Task<IOperationResult<SimpleActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate);

@@ -7,8 +7,7 @@ public partial class ActivityLogItem
     public int UserId { get; set; }
     public bool? IsOnline { get; set; }
     public DateTime InsertDate { get; set; }
-    public int? OnlineApp { get; set; }
-    public bool IsOnlineMobile { get; set; }
+    public Platform Platform { get; set; }
     public int LastSeen { get; set; }
     public User? User { get; set; }
 }

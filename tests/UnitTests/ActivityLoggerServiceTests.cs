@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using UnitTests.Data;
 using VkActivity.Service.Abstractions;
-using VkActivity.Service.Models;
 using VkActivity.Service.Models.VkApi;
 using VkActivity.Service.Services;
 using Xunit;
@@ -23,7 +22,7 @@ public class ActivityLoggerServiceTests
     {
         // Arrange
         var activityLoggerService = GetActivityLoggerService();
-        
+
         // Act
         var saveActivityResult = await activityLoggerService.SaveVkUsersActivityAsync();
 
@@ -73,14 +72,14 @@ public class ActivityLoggerServiceTests
 
         // Act
         var addUsersResult = await activityLoggerService.AddNewUsersAsync(newUserIds);
-        
+
         // Assert
         Assert.True(addUsersResult?.IsSuccess);
         Assert.True(addUsersResult?.HasWarnings);
         Assert.Equal(GetTestVkUserIds().Length, addUsersResult!.Value.Count);
     }
 
-    private ActivityLoggerService GetActivityLoggerService(bool vkIntergationWorks = true)
+    private ActivityLogger GetActivityLoggerService(bool vkIntergationWorks = true)
     {
         var postgreSqlInMemory = new PostgreSqlInMemory();
         postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
@@ -88,27 +87,27 @@ public class ActivityLoggerServiceTests
         var vkIntegrationMock = new Mock<IVkIntegration>();
         if (vkIntergationWorks)
         {
-            vkIntegrationMock.Setup(m => m.GetUsersActivityAsync(It.IsAny<int[]>())).ReturnsAsync(GetUsers());
-            vkIntegrationMock.Setup(m => m.GetUsersAsync(It.IsAny<int[]>())).ReturnsAsync(GetUsers());
+            vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(It.IsAny<int[]>())).ReturnsAsync(GetUsers());
+            vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(It.IsAny<int[]>())).ReturnsAsync(GetUsers());
         }
         else
         {
-            vkIntegrationMock.Setup(m => m.GetUsersActivityAsync(It.IsAny<int[]>())).Throws<InvalidOperationException>();
-            vkIntegrationMock.Setup(m => m.GetUsersAsync(It.IsAny<int[]>())).Throws<InvalidOperationException>();
+            vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(It.IsAny<int[]>())).Throws<InvalidOperationException>();
+            vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(It.IsAny<int[]>())).Throws<InvalidOperationException>();
         }
 
-        return new ActivityLoggerService(
+        return new ActivityLogger(
             postgreSqlInMemory.ActivityLogItemsRepository,
             postgreSqlInMemory.VkUsersRepository,
             vkIntegrationMock.Object,
-            Mock.Of<ILogger<ActivityLoggerService>>());
+            Mock.Of<ILogger<ActivityLogger>>());
     }
 
     private List<VkApiUser> GetUsers()
     {
         var testVkUserIds = GetTestVkUserIds();
         var users = new List<VkApiUser>(testVkUserIds.Length);
-        
+
         foreach (var id in testVkUserIds)
             users.Add(new VkApiUser { Id = id });
 

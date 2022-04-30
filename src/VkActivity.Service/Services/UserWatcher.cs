@@ -46,9 +46,9 @@ internal sealed class UserWatcher : BackgroundService
         {
             using (var scope = _scopeFactory.CreateScope())
             {
-                var activityLoggerService = scope.ServiceProvider.GetService<IActivityLoggerService>();
-                var userIds = scope.ServiceProvider.GetService<IConfiguration>()?.GetSection("Vk:InitialUserIds").Get<int[]>();
-                await activityLoggerService!.AddNewUsersAsync(userIds ?? Array.Empty<int>()).ConfigureAwait(false);
+                var activityLogger = scope.ServiceProvider.GetService<IActivityLogger>();
+                var initialUserIds = scope.ServiceProvider.GetService<IConfiguration>()?.GetSection("Vk:InitialUserIds").Get<int[]>();
+                await activityLogger!.AddNewUsersAsync(initialUserIds ?? Array.Empty<int>()).ConfigureAwait(false);
             }
 
             _scheduler.Start(3000, 1000);
@@ -94,7 +94,7 @@ internal sealed class UserWatcher : BackgroundService
         IOperationResult result;
         using (var scope = _scopeFactory.CreateScope())
         {
-            var activityLoggerService = scope.ServiceProvider.GetService<IActivityLoggerService>();
+            var activityLoggerService = scope.ServiceProvider.GetService<IActivityLogger>();
             result = await activityLoggerService!.SaveVkUsersActivityAsync().ConfigureAwait(false);
         }
 

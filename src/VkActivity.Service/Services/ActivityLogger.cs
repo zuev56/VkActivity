@@ -11,18 +11,18 @@ using Zs.Common.Models;
 
 namespace VkActivity.Service.Services;
 
-internal sealed class ActivityLoggerService : IActivityLoggerService
+public sealed class ActivityLogger : IActivityLogger
 {
     private readonly IActivityLogItemsRepository _activityLogRepo;
     private readonly IUsersRepository _usersRepo;
     private readonly IVkIntegration _vkIntegration;
-    private readonly ILogger<ActivityLoggerService> _logger;
+    private readonly ILogger<ActivityLogger> _logger;
 
-    public ActivityLoggerService(
+    public ActivityLogger(
         IActivityLogItemsRepository activityLogRepo,
         IUsersRepository usersRepo,
         IVkIntegration vkIntegration,
-        ILogger<ActivityLoggerService> logger)
+        ILogger<ActivityLogger> logger)
     {
         _activityLogRepo = activityLogRepo ?? throw new ArgumentNullException(nameof(activityLogRepo));
         _usersRepo = usersRepo ?? throw new ArgumentNullException(nameof(usersRepo));
@@ -42,7 +42,7 @@ internal sealed class ActivityLoggerService : IActivityLoggerService
             if (!newUserIds.Any())
                 return ServiceResult<List<User>>.Warning("Users already exist in DB");
 
-            var vkUsers = await _vkIntegration.GetUsersAsync(newUserIds);
+            var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(newUserIds);
             if (vkUsers is null)
                 return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
 
@@ -83,7 +83,7 @@ internal sealed class ActivityLoggerService : IActivityLoggerService
                 return result;
             }
 
-            var vkUsers = await _vkIntegration.GetUsersActivityAsync(userIds).ConfigureAwait(false);
+            var vkUsers = await _vkIntegration.GetUsersWithActivityInfoAsync(userIds).ConfigureAwait(false);
 
             int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
@@ -124,8 +124,7 @@ internal sealed class ActivityLoggerService : IActivityLoggerService
                         {
                             UserId = user.Id,
                             IsOnline = null,
-                            IsOnlineMobile = false,
-                            OnlineApp = null,
+                            Platform = 0,
                             LastSeen = -1,
                             InsertDate = DateTime.UtcNow
                         }
@@ -155,31 +154,30 @@ internal sealed class ActivityLoggerService : IActivityLoggerService
         foreach (var apiUser in apiUsers)
         {
             // When account is deleted or banned or smth else
-            if (apiUser.LastSeenUnix == null)
+            if (apiUser.LastSeen == null)
                 continue;
 
             var lastActivityLogItem = lastActivityLogItems.FirstOrDefault(i => i.UserId == apiUser.Id);
+            var currentPlatform = apiUser.LastSeen.Platform;
             var currentOnlineStatus = apiUser.Online == 1;
             var currentMobileStatus = apiUser.OnlineMobile == 1;
             var currentApp = apiUser.OnlineApp;
 
             if (lastActivityLogItem == null
                 || lastActivityLogItem.IsOnline != currentOnlineStatus
-                || lastActivityLogItem.IsOnlineMobile != currentMobileStatus
-                || lastActivityLogItem.OnlineApp != currentApp)
+                || lastActivityLogItem.Platform != currentPlatform)
             {
                 // Vk corrects LastSeen, so we have to work with logged value, not current API value
-                int lastSeenForLog = apiUser.LastSeenUnix?.Time ?? 0;
-                if (lastActivityLogItem != null && apiUser.LastSeenUnix != null)
-                    lastSeenForLog = Math.Max(lastActivityLogItem.LastSeen, apiUser.LastSeenUnix.Time);
+                int lastSeenForLog = apiUser.LastSeen?.UnixTime ?? 0;
+                if (lastActivityLogItem != null && apiUser.LastSeen != null)
+                    lastSeenForLog = Math.Max(lastActivityLogItem.LastSeen, apiUser.LastSeen.UnixTime);
 
                 activityLogItemsForSave.Add(
                     new ActivityLogItem
                     {
                         UserId = apiUser.Id,
                         IsOnline = currentOnlineStatus,
-                        IsOnlineMobile = currentMobileStatus,
-                        OnlineApp = apiUser.OnlineApp,
+                        Platform = currentPlatform,
                         LastSeen = lastSeenForLog,
                         InsertDate = DateTime.UtcNow
                     });

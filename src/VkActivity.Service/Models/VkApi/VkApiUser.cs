@@ -7,9 +7,9 @@ using Zs.Common.Extensions;
 
 namespace VkActivity.Service.Models.VkApi;
 
-public class VkApiUser
+public sealed class VkApiUser
 {
-    private static JsonSerializerOptions _jsonSerializerOptions = new() 
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         WriteIndented = true,
@@ -35,10 +35,10 @@ public class VkApiUser
     public int OnlineApp { get; set; }
 
     [JsonPropertyName("last_seen")]
-    public VkApiLastSeen? LastSeenUnix { get; set; }
-    public DateTime LastSeen => LastSeenUnix is null
+    public VkApiLastSeen? LastSeen { get; set; }
+    public DateTime LastSeenFromUnixTime => LastSeen is null
         ? DateTime.MinValue
-        : LastSeenUnix.Time.FromUnixEpoch();
+        : LastSeen.UnixTime.FromUnixEpoch();
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? RawData { get; set; }

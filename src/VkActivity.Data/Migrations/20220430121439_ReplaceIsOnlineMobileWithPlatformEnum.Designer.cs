@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VkActivity.Data;
@@ -11,9 +12,10 @@ using VkActivity.Data;
 namespace VkActivity.Data.Migrations
 {
     [DbContext(typeof(VkActivityContext))]
-    partial class VkActivityContextModelSnapshot : ModelSnapshot
+    [Migration("20220430121439_ReplaceIsOnlineMobileWithPlatformEnum")]
+    partial class ReplaceIsOnlineMobileWithPlatformEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

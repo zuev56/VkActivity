@@ -29,7 +29,7 @@ namespace IntegrationTests
             Assert.Empty(saveActivityResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning));
         }
 
-        private IActivityLoggerService GetActivityLoggerService()
+        private IActivityLogger GetActivityLoggerService()
         {
             var postgreSqlInMemory = new PostgreSqlInMemory();
             postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
@@ -37,11 +37,11 @@ namespace IntegrationTests
                 .AddJsonFile(System.IO.Path.GetFullPath(@"..\..\..\..\..\src\VkActivity.Service\appsettings.Development.json"))
                 .Build();
 
-            return new ActivityLoggerService(
+            return new ActivityLogger(
                 postgreSqlInMemory.ActivityLogItemsRepository,
                 postgreSqlInMemory.VkUsersRepository,
                 new VkIntegration(configuration["Vk:AccessToken"], configuration["Vk:Version"]),
-                Mock.Of<ILogger<ActivityLoggerService>>());
+                Mock.Of<ILogger<ActivityLogger>>());
         }
 
     }

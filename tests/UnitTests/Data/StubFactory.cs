@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using VkActivity.Data.Models;
 
 namespace UnitTests.Data;
@@ -47,16 +45,14 @@ internal class StubFactory
         itemId = PrepareId(itemId);
 
         var isOnline = Convert.ToBoolean(Random.Shared.Next(0, 1));
-        var isOnlineMobile = isOnline ? Convert.ToBoolean(Random.Shared.Next(0, 1)) : false;
-        var onlineApp = isOnlineMobile ? Random.Shared.Next(1, 9999) : 0;
+        var platform = (Platform)Convert.ToInt32(Random.Shared.Next(0, 7));
 
         return new ActivityLogItem
         {
             Id = itemId,
             UserId = userId,
             IsOnline = isOnline,
-            OnlineApp = onlineApp,
-            IsOnlineMobile = isOnlineMobile,
+            Platform = platform,
             InsertDate = DateTime.UtcNow
         };
     }

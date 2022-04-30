@@ -35,42 +35,40 @@ public partial class VkActivityContext : DbContext
     {
         modelBuilder.Entity<ActivityLogItem>(b =>
         {
-            b.Property<int>("Id")
+            b.Property(e => e.Id)
             .HasColumnType("int")
             .HasColumnName("id")
             .ValueGeneratedOnAdd()
             .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn);
 
-            b.Property<int>("UserId")
+            b.Property(e => e.UserId)
             .HasColumnType("int")
             .HasColumnName("user_id")
             .IsRequired();
 
-            b.Property<bool?>("IsOnline")
+            b.Property(e => e.IsOnline)
             .HasColumnType("bool")
             .HasColumnName("is_online");
 
-            b.Property<bool>("IsOnlineMobile")
-            .HasColumnType("bool")
-            .HasColumnName("is_online_mobile");
-
-            b.Property<int?>("OnlineApp")
+            b.Property(e => e.Platform)
             .HasColumnType("int")
-            .HasColumnName("online_app");
+            .HasColumnName("platform")
+            .HasConversion(p => (int)p, p => (Platform)p)
+            .IsRequired();
 
-            b.Property<DateTime>("InsertDate")
+            b.Property(e => e.InsertDate)
             .HasColumnType("timestamp with time zone")
             .HasColumnName("insert_date")
             .ValueGeneratedOnAdd()
             .HasDefaultValueSql("now()");
 
-            b.Property<int>("LastSeen")
+            b.Property(e => e.LastSeen)
             .HasColumnType("int")
             .HasColumnName("last_seen");
 
-            b.HasKey("Id");
+            b.HasKey(e => e.Id);
 
-            b.HasIndex("UserId", "LastSeen", "InsertDate");
+            b.HasIndex(e => new { e.UserId, e.LastSeen, e.InsertDate });
 
             b.ToTable("activity_log", "vk");
 
@@ -79,40 +77,40 @@ public partial class VkActivityContext : DbContext
 
         modelBuilder.Entity<User>(b =>
         {
-            b.Property<int>("Id")
+            b.Property(e => e.Id)
             .HasColumnType("int")
             .HasColumnName("id")
             .ValueGeneratedOnAdd()
             .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn);
 
-            b.Property<string>("FirstName")
+            b.Property(e => e.FirstName)
             .HasColumnType("character varying(50)")
             .HasColumnName("first_name")
             .HasMaxLength(50);
 
-            b.Property<string>("LastName")
+            b.Property(e => e.LastName)
             .HasColumnType("character varying(50)")
             .HasColumnName("last_name")
             .HasMaxLength(50);
 
-            b.Property<string>("RawData")
+            b.Property(e => e.RawData)
             .HasColumnType("json")
             .HasColumnName("raw_data")
             .HasMaxLength(50);
 
-            b.Property<DateTime>("InsertDate")
+            b.Property(e => e.InsertDate)
                 .ValueGeneratedOnAdd()
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("insert_date")
                 .HasDefaultValueSql("now()");
 
-            b.Property<DateTime>("UpdateDate")
+            b.Property(e => e.UpdateDate)
                 .ValueGeneratedOnAdd()
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_date")
                 .HasDefaultValueSql("now()");
 
-            b.HasKey("Id");
+            b.HasKey(e => e.Id);
 
             b.ToTable("users", "vk");
         });

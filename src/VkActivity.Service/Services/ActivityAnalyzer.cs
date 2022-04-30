@@ -11,17 +11,17 @@ using Zs.Common.Models;
 
 namespace VkActivity.Service.Services;
 
-internal sealed class ActivityAnalyzerService : IActivityAnalyzerService
+public sealed class ActivityAnalyzer : IActivityAnalyzer
 {
     private readonly IActivityLogItemsRepository _vkActivityLogRepo;
     private readonly IUsersRepository _vkUsersRepo;
-    private readonly ILogger<ActivityAnalyzerService> _logger;
+    private readonly ILogger<ActivityAnalyzer> _logger;
     private readonly DateTime _tmpMinLogDate = new(2020, 10, 01);
 
-    public ActivityAnalyzerService(
+    public ActivityAnalyzer(
         IActivityLogItemsRepository vkActivityLogRepo,
         IUsersRepository vkUsersRepo,
-        ILogger<ActivityAnalyzerService> logger)
+        ILogger<ActivityAnalyzer> logger)
     {
         _vkActivityLogRepo = vkActivityLogRepo ?? throw new ArgumentNullException(nameof(vkActivityLogRepo));
         _vkUsersRepo = vkUsersRepo ?? throw new ArgumentNullException(nameof(vkUsersRepo));
@@ -50,8 +50,8 @@ internal sealed class ActivityAnalyzerService : IActivityAnalyzerService
                 UserName = $"{user.FirstName} {user.LastName}",
                 AnalyzedDaysCount = (int)(orderedLogForUser.Max(l => l.InsertDate.Date) - orderedLogForUser.Min(l => l.InsertDate.Date)).TotalDays,
                 ActivityDaysCount = orderedLogForUser.Select(l => l.InsertDate.Date).Distinct().Count(),
-                VisitsFromSite = orderedLogForUser.Count(l => l.IsOnline == true && !l.IsOnlineMobile),
-                VisitsFromApp = orderedLogForUser.Count(l => l.IsOnline == true && l.IsOnlineMobile),
+                VisitsFromSite = orderedLogForUser.Count(l => l.IsOnline == true && IsWebSite(l.Platform)),
+                VisitsFromApp = orderedLogForUser.Count(l => l.IsOnline == true && !IsWebSite(l.Platform)),
                 //ActivityCalendar  = GetActivityForEveryDay(orderedLogForUser), Пока не используется
                 TimeInSite = TimeSpan.FromSeconds(GetActivitySeconds(orderedLogForUser.ToList(), Device.PC)),
                 TimeInApp = TimeSpan.FromSeconds(GetActivitySeconds(orderedLogForUser.ToList(), Device.Mobile)),
@@ -66,6 +66,10 @@ internal sealed class ActivityAnalyzerService : IActivityAnalyzerService
             return ServiceResult<DetailedActivity>.Error("Failed to get detailed user activity");
         }
     }
+
+    private bool IsWebSite(Platform platform)
+        => platform == Platform.MobileSiteVersion || platform == Platform.FullSiteVersion;
+
 
     /// <inheritdoc/>
     public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(string filterText, DateTime fromDate, DateTime toDate)
@@ -207,12 +211,13 @@ internal sealed class ActivityAnalyzerService : IActivityAnalyzerService
             secondsADay += GetActivitySeconds(dailyLog, Device.All);
 
             // Фиксируем, как закончился предыдущий день
+            // TODO: исправить! FromPC - только если Platform.FullSiteVersion. А лучше конкретизировать платформу
             prevDayEndedOnlineFromPC = false;
             prevDayEndedOnlineFromMobile = false;
             var last = dailyLog.Last();
             if (last.IsOnline == true)
             {
-                if (last.IsOnlineMobile) prevDayEndedOnlineFromMobile = true;
+                if (!IsWebSite(last.Platform)) prevDayEndedOnlineFromMobile = true;
                 else prevDayEndedOnlineFromPC = true;
 
                 secondsADay += (day + TimeSpan.FromDays(1)).ToUnixEpoch() - last.LastSeen;
@@ -251,20 +256,24 @@ internal sealed class ActivityAnalyzerService : IActivityAnalyzerService
         //  - Предыдущий !IsOnline          -> Текущий IsOnline + Mobile
         //  - Предыдущий !IsOnline          -> Текущий IsOnline + !Mobile
 
+        // TODO: обработать для каждого типа Platform
+
         int seconds = 0;
         for (int i = 1; i < orderedLog.Count; i++)
         {
             var prev = orderedLog[i - 1];
             var cur = orderedLog[i];
+            var prevIsOnlineMobile = IsWebSite(prev.Platform);
+            var curIsOnlineMobile = IsWebSite(cur.Platform);
 
             switch (device)
             {
                 case Device.PC:
-                    if (prev.IsOnline == true && !prev.IsOnlineMobile && (cur.IsOnline == true && cur.IsOnlineMobile || cur.IsOnline == false))
+                    if (prev.IsOnline == true && !prevIsOnlineMobile && (cur.IsOnline == true && curIsOnlineMobile || cur.IsOnline == false))
                         seconds += cur.LastSeen - prev.LastSeen;
                     break;
                 case Device.Mobile:
-                    if (prev.IsOnline == true && prev.IsOnlineMobile && (cur.IsOnline == true && !cur.IsOnlineMobile || cur.IsOnline == false))
+                    if (prev.IsOnline == true && prevIsOnlineMobile && (cur.IsOnline == true && !curIsOnlineMobile || cur.IsOnline == false))
                         seconds += cur.LastSeen - prev.LastSeen;
                     break;
                 case Device.All:

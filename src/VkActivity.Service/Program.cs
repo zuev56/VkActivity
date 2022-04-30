@@ -25,8 +25,9 @@ using Zs.Common.Services.Scheduler;
 [assembly: InternalsVisibleTo("UnitTests")]
 [assembly: InternalsVisibleTo("IntegrationTests")]
 
+// TODO: recognize environment and pass to CreateConfiguration
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(CreateConfiguration(AppEnvironment.Development, args))
+    .ReadFrom.Configuration(CreateConfiguration(args))
     .CreateLogger();
 
 Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, User: {User}, ProcessId: {ProcessId})",
@@ -39,7 +40,7 @@ Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, Us
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration(ConfigureAppConfiguration)
-    .UseSerilog((hbc, lc) => lc.ReadFrom.Configuration(hbc.Configuration))
+    .UseSerilog()
     .ConfigureWebHostDefaults(ConfigureWebHostDefaults)
     .ConfigureServices(ConfigureServices)
     .Build();
@@ -51,12 +52,12 @@ await host.RunAsync();
 void ConfigureAppConfiguration(HostBuilderContext context, IConfigurationBuilder builder)
 {
     var environment = Enum.Parse<AppEnvironment>(context.HostingEnvironment.EnvironmentName);
-    var configuration = CreateConfiguration(environment, args);
+    var configuration = CreateConfiguration(args, environment);
 
     builder.AddConfiguration(configuration);
 }
 
-IConfiguration CreateConfiguration(AppEnvironment environment, string[] args)
+IConfiguration CreateConfiguration(string[] args, AppEnvironment environment = default)
 {
     var configPath = ProgramUtilites.GetAppsettingsPath(environment);
 
@@ -174,8 +175,8 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddSingleton<IVkIntegration, VkIntegration>(
         sp => new VkIntegration(context.Configuration["Vk:AccessToken"], context.Configuration["Vk:Version"]));
 
-    services.AddScoped<IActivityLoggerService, ActivityLoggerService>();
-    services.AddScoped<IActivityAnalyzerService, ActivityAnalyzerService>();
+    services.AddScoped<IActivityLogger, ActivityLogger>();
+    services.AddScoped<IActivityAnalyzer, ActivityAnalyzer>();
 
     services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
     services.AddScoped<IUsersRepository, UsersRepository>();
