@@ -17,33 +17,26 @@ public sealed class VkApiUser
     };
 
     [JsonPropertyName("id")]
-    public int Id { get; set; }
+    public int Id { get; init; }
 
     [JsonPropertyName("first_name")]
-    public string? FirstName { get; set; }
+    public string? FirstName { get; init; }
 
     [JsonPropertyName("last_name")]
-    public string? LastName { get; set; }
+    public string? LastName { get; init; }
 
     [JsonPropertyName("online")]
-    public int Online { get; set; }
-
-    [JsonPropertyName("online_mobile")]
-    public int OnlineMobile { get; set; }
-
-    [JsonPropertyName("online_app")]
-    public int OnlineApp { get; set; }
+    public int Online { get; init; }
 
     [JsonPropertyName("last_seen")]
-    public VkApiLastSeen? LastSeen { get; set; }
-    public DateTime LastSeenFromUnixTime => LastSeen is null
-        ? DateTime.MinValue
-        : LastSeen.UnixTime.FromUnixEpoch();
+    public VkApiLastSeen? LastSeen { get; init; }
 
     [JsonExtensionData]
-    public Dictionary<string, JsonElement>? RawData { get; set; }
+    public Dictionary<string, JsonElement>? RawData { get; init; }
 
+    //public string ToJson() => JsonSerializer.Serialize(this, _jsonSerializerOptions).NormalizeJsonString();
 
+    // TODO: move to mapper
     public static explicit operator User(VkApiUser apiVkUser)
     {
         return new User()

@@ -5,5 +5,5 @@ namespace VkActivity.Service.Models.VkApi;
 public sealed class VkApiResponse
 {
     [JsonPropertyName("response")]
-    public List<VkApiUser>? Users { get; set; }
+    public List<VkApiUser>? Users { get; init; }
 }

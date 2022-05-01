@@ -30,19 +30,21 @@ public sealed class ActivityLogger : IActivityLogger
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<IOperationResult<List<User>>> AddNewUsersAsync(params int[] userIds)
+
+    /// <param name="userIds">User IDs or ScreenNames</param>
+    public async Task<IOperationResult<List<User>>> AddNewUsersAsync(params string[] screenNames)
     {
         var resultUsersList = new List<User>();
         var result = ServiceResult<List<User>>.Success(resultUsersList);
         try
         {
-            var existingDbUsers = await _usersRepo.FindAllByIdsAsync(userIds).ConfigureAwait(false);
-            var newUserIds = userIds.Except(existingDbUsers.Select(u => u.Id)).ToArray();
+            (int[] userIds, int[] newUserIds) = await SeparateNewUserIdsAsync(screenNames).ConfigureAwait(false);
 
             if (!newUserIds.Any())
                 return ServiceResult<List<User>>.Warning("Users already exist in DB");
 
-            var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(newUserIds);
+            var newUserStringIds = newUserIds.Select(x => x.ToString()).ToArray();
+            var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(newUserStringIds).ConfigureAwait(false);
             if (vkUsers is null)
                 return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
 
@@ -69,6 +71,18 @@ public sealed class ActivityLogger : IActivityLogger
         }
     }
 
+    private async Task<(int[] userIds, int[] newUserIds)> SeparateNewUserIdsAsync(string[] sourceScreenNames)
+    {
+        var vkApiUsers = await _vkIntegration.GetUsersWithActivityInfoAsync(sourceScreenNames).ConfigureAwait(false);
+        var userIds = vkApiUsers.Select(u => u.Id).ToArray();
+
+        var existingDbUsers = await _usersRepo.FindAllByIdsAsync(userIds).ConfigureAwait(false);
+
+        var newUserIds = userIds.Except(existingDbUsers.Select(u => u.Id)).ToArray();
+
+        return (userIds, newUserIds);
+    }
+
     /// <inheritdoc/>
     public async Task<IOperationResult> SaveVkUsersActivityAsync()
     {
@@ -83,7 +97,8 @@ public sealed class ActivityLogger : IActivityLogger
                 return result;
             }
 
-            var vkUsers = await _vkIntegration.GetUsersWithActivityInfoAsync(userIds).ConfigureAwait(false);
+            var userStringIds = userIds.Select(id => id.ToString()).ToArray();
+            var vkUsers = await _vkIntegration.GetUsersWithActivityInfoAsync(userStringIds).ConfigureAwait(false);
 
             int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
@@ -160,8 +175,6 @@ public sealed class ActivityLogger : IActivityLogger
             var lastActivityLogItem = lastActivityLogItems.FirstOrDefault(i => i.UserId == apiUser.Id);
             var currentPlatform = apiUser.LastSeen.Platform;
             var currentOnlineStatus = apiUser.Online == 1;
-            var currentMobileStatus = apiUser.OnlineMobile == 1;
-            var currentApp = apiUser.OnlineApp;
 
             if (lastActivityLogItem == null
                 || lastActivityLogItem.IsOnline != currentOnlineStatus

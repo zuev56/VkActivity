@@ -1,5 +1,6 @@
 ﻿using System;
 using VkActivity.Data.Models;
+using Zs.Common.Extensions;
 
 namespace UnitTests.Data;
 
@@ -8,20 +9,58 @@ internal class StubFactory
     internal static User CreateVkUser(int userId = 0)
     {
         userId = PrepareId(userId);
+        var firstName = $"TestVkUserFirstName_{userId}";
+        var lastName = $"TestVkUserLastName_{userId}";
 
         return new User
         {
             Id = userId,
-            FirstName = $"TestVkUserFirstName_{userId}",
-            LastName = $"TestVkUserLastName_{userId}",
-            RawData = @"{
-                            ""can_access_closed"": true,
-                            ""first_name"": ""TestVkUserFirstName"",
-                            ""id"": 123456,
-                            ""is_closed"": false,
-                            ""last_name"": ""TestVkUserLastName"",
-                            ""online"": 0
-                        }",
+            FirstName = firstName,
+            LastName = lastName,
+            RawData = $@"{{
+                ""blacklisted"": {Random.Shared.Next(0, 1)},
+                ""blacklisted_by_me"": {Random.Shared.Next(0, 1)},
+                ""can_access_closed"": true,
+                ""can_be_invited_group"": false,
+                ""can_post"": {Random.Shared.Next(0, 1)},
+                ""can_see_all_posts"": {Random.Shared.Next(0, 1)},
+                ""can_see_audio"": {Random.Shared.Next(0, 1)},
+                ""can_send_friend_request"": {Random.Shared.Next(0, 1)},
+                ""can_write_private_message"": {Random.Shared.Next(0, 1)},
+                ""country"": {{
+                  ""id"": 1,
+                  ""title"": ""Россия""
+                }},
+                ""domain"": ""id{userId}"",
+                ""first_name"": ""{firstName}"",
+                ""followers_count"": {Random.Shared.Next(0, 150)},
+                ""friend_status"": {Random.Shared.Next(0, 1)},
+                ""has_mobile"": {Random.Shared.Next(0, 1)},
+                ""has_photo"": {Random.Shared.Next(0, 1)},
+                ""id"": {userId},
+                ""is_closed"": false,
+                ""is_friend"": {Random.Shared.Next(0, 1)},
+                ""is_hidden_from_feed"": {Random.Shared.Next(0, 1)},
+                ""last_name"": ""{lastName}"",
+                ""last_seen"": {{
+                  ""platform"": {Random.Shared.Next(1, 7)},
+                  ""time"": {(DateTime.UtcNow - TimeSpan.FromMinutes(Random.Shared.Next(0, 10))).ToUnixEpoch()}
+                }},
+                ""nickname"": """",
+                ""occupation"": {{
+                  ""id"": 62296,
+                  ""name"": ""КФ ПетрГУ"",
+                  ""type"": ""university""
+                }},
+                ""online"": {Random.Shared.Next(0, 1)},
+                ""photo_50"": ""https://sun9-87.userapi.com/s/v1/if1/825Nv7C4JARdESnx6PDnEbPWuvNBbi7tPe4oOuRlGco7xqacQvOXVKHjtwhDvc8-Hh5fIaJ2.jpg?size=50x50&quality=96&crop=0,299,1620,1620&ava=1"",
+                ""screen_name"": ""id{userId}"",
+                ""sex"": {Random.Shared.Next(1, 2)},
+                ""site"": """",
+                ""skype"": """",
+                ""status"": """",
+                ""verified"": {Random.Shared.Next(0, 1)}
+            }}",
             InsertDate = DateTime.UtcNow,
             UpdateDate = DateTime.UtcNow
         };

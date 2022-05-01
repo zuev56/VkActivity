@@ -7,8 +7,8 @@ namespace VkActivity.Service.Models.VkApi;
 public sealed class VkApiLastSeen
 {
     [JsonPropertyName("time")]
-    public int UnixTime { get; set; }
+    public int UnixTime { get; init; }
 
     [JsonPropertyName("platform")]
-    public Platform Platform { get; set; }
+    public Platform Platform { get; init; }
 }

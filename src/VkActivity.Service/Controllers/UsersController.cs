@@ -51,7 +51,7 @@ public sealed class ListUsersController : Controller
     /// <param name="vkUserIds"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<IActionResult> AddNewUsers([FromBody] int[] vkUserIds)
+    public async Task<IActionResult> AddNewUsers([FromBody] string[] vkUserIds)
     {
         if (vkUserIds == null || vkUserIds.Length == 0)
             return BadRequest("No VK user IDs to add");
