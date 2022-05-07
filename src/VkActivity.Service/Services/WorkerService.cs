@@ -1,4 +1,5 @@
-﻿using VkActivity.Service.Abstractions;
+﻿using VkActivity.Data.Abstractions;
+using VkActivity.Service.Abstractions;
 using Zs.Common.Abstractions;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Scheduler;
@@ -6,22 +7,22 @@ using Zs.Common.Services.Scheduler;
 namespace VkActivity.Service.Services;
 
 // TODO: В хранимке vk.sf_cmd_get_not_active_users выводить точное количество времени отсутствия
-internal sealed class UserWatcher : BackgroundService
+internal sealed class WorkerService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IScheduler _scheduler;
     private readonly IConfiguration _configuration;
-    private readonly ILogger<UserWatcher> _logger;
+    private readonly ILogger<WorkerService> _logger;
 
     private IJob? _userActivityLoggerJob;
     private bool _isFirstStep = true;
 
 
-    public UserWatcher(
+    public WorkerService(
         IServiceScopeFactory serviceScopeFactory,
         IScheduler scheduler,
         IConfiguration configuration,
-        ILogger<UserWatcher> logger)
+        ILogger<WorkerService> logger)
     {
         try
         {
@@ -34,8 +35,8 @@ internal sealed class UserWatcher : BackgroundService
         }
         catch (Exception ex)
         {
-            var tiex = new TypeInitializationException(typeof(UserWatcher).FullName, ex);
-            _logger?.LogError(tiex, $"{nameof(UserWatcher)} initialization error");
+            var tiex = new TypeInitializationException(typeof(WorkerService).FullName, ex);
+            _logger?.LogError(tiex, $"{nameof(WorkerService)} initialization error");
             throw;
         }
     }
@@ -46,39 +47,45 @@ internal sealed class UserWatcher : BackgroundService
         {
             using (var scope = _scopeFactory.CreateScope())
             {
-                var activityLogger = scope.ServiceProvider.GetService<IActivityLogger>();
-                var initialUserIds = scope.ServiceProvider.GetService<IConfiguration>()?.GetSection("Vk:InitialUserIds").Get<string[]>();
-                await activityLogger!.AddNewUsersAsync(initialUserIds ?? Array.Empty<string>()).ConfigureAwait(false);
+                var userManager = scope.ServiceProvider.GetService<IUserManager>();
+                var initialUserIds = scope.ServiceProvider.GetService<IConfiguration>()?.GetSection(AppSettings.Vk.InitialUserIds).Get<string[]>();
+                await userManager!.AddUsersAsync(initialUserIds ?? Array.Empty<string>()).ConfigureAwait(false);
             }
 
             _scheduler.Start(3000, 1000);
 
-            _logger.LogInformation($"{nameof(UserWatcher)} started");
+            _logger.LogInformation($"{nameof(WorkerService)} started");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"{nameof(UserWatcher)} starting error");
+            _logger.LogError(ex, $"{nameof(WorkerService)} starting error");
             throw;
         }
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"{nameof(UserWatcher)} stopped");
+        _logger.LogInformation($"{nameof(WorkerService)} stopped");
         return Task.CompletedTask;
     }
 
     private List<IJobBase> CreateJobs()
     {
         _userActivityLoggerJob = new ProgramJob(
-            period: TimeSpan.FromMilliseconds(_configuration.GetSection("Vk:ActivityLogIntervalMs").Get<int>()),
+            period: TimeSpan.FromMilliseconds(_configuration.GetSection(AppSettings.Vk.ActivityLogIntervalSec).Get<int>()),
             method: SaveVkUsersActivityAsync,
-            description: "logUserStatus",
+            logger: _logger);
+
+        var userDataUpdaterJob = new ProgramJob(
+            period: TimeSpan.FromHours(_configuration.GetSection(AppSettings.Vk.UsersDataUpdateIntervalHours).Get<int>()),
+            startUtcDate: DateTime.UtcNow.Date.AddDays(1),
+            method: UpdateUsersDataAsync,
             logger: _logger);
 
         return new List<IJobBase>()
         {
-            _userActivityLoggerJob
+            _userActivityLoggerJob,
+            userDataUpdaterJob
         };
     }
 
@@ -110,4 +117,19 @@ internal sealed class UserWatcher : BackgroundService
             _logger.LogError(logMessage);
         }
     }
+
+    private async Task UpdateUsersDataAsync()
+    {
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            var usersRepo = scope.ServiceProvider.GetService<IUsersRepository>();
+            var userIds = await usersRepo!.FindAllIdsAsync().ConfigureAwait(false);
+            var userScreenNames = userIds.Select(id => id.ToString()).ToArray();
+
+            var vkIntegration = scope.ServiceProvider.GetService<IVkIntegration>();
+            var users = await vkIntegration!.GetUsersWithFullInfoAsync(userScreenNames).ConfigureAwait(false);
+        }
+    }
+
+
 }

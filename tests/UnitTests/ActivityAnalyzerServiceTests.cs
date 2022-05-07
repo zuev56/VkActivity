@@ -7,35 +7,34 @@ using VkActivity.Service.Abstractions;
 using VkActivity.Service.Services;
 using Xunit;
 
-namespace UnitTests
+namespace UnitTests;
+
+public class ActivityAnalyzerServiceTests
 {
-    public class ActivityAnalyzerServiceTests
+    private const int _dbEntitiesAmount = 1000;
+
+    [Fact]
+    public async Task GetFullTimeUserStatisticsAsync_CorrectUserId_ReturnsNotNull()
     {
-        private const int _dbEntitiesAmount = 1000;
+        // Arrange
+        var activityAnalyzerService = GetActivityAnalyzerService();
+        var userId = Random.Shared.Next(1, _dbEntitiesAmount);
 
-        [Fact]
-        public async Task GetFullTimeUserStatisticsAsync_CorrectUserId_ReturnsNotNull()
-        {
-            // Arrange
-            var activityAnalyzerService = GetActivityAnalyzerService();
-            var userId = Random.Shared.Next(1, _dbEntitiesAmount);
+        // Act
+        var fullTimeUserActivity = await activityAnalyzerService.GetFullTimeActivityAsync(userId);
 
-            // Act
-            var fullTimeUserActivity = await activityAnalyzerService.GetFullTimeActivityAsync(userId);
+        // Assert
+        Assert.NotNull(fullTimeUserActivity);
+    }
 
-            // Assert
-            Assert.NotNull(fullTimeUserActivity);
-        }
+    private IActivityAnalyzer GetActivityAnalyzerService()
+    {
+        var postgreSqlInMemory = new PostgreSqlInMemory();
+        postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
 
-        private IActivityAnalyzer GetActivityAnalyzerService()
-        {
-            var postgreSqlInMemory = new PostgreSqlInMemory();
-            postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
-
-            return new ActivityAnalyzer(
-                postgreSqlInMemory.ActivityLogItemsRepository,
-                postgreSqlInMemory.VkUsersRepository,
-                Mock.Of<ILogger<ActivityAnalyzer>>());
-        }
+        return new ActivityAnalyzer(
+            postgreSqlInMemory.ActivityLogItemsRepository,
+            postgreSqlInMemory.VkUsersRepository,
+            Mock.Of<ILogger<ActivityAnalyzer>>());
     }
 }

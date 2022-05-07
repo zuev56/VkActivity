@@ -6,7 +6,7 @@
 --AS
 --     SELECT l.id as activity_log_id,
 --            (u.first_name::text || ' '::text) || u.last_name::text as user_name,
---            u.id as user_id,
+--            u.id as user_id,s
 --            l.is_online::int as online,
 --            l.is_online,
 --            --l.platform,

@@ -17,7 +17,6 @@ using VkActivity.Service.Helpers;
 using VkActivity.Service.Services;
 using Zs.Common.Enums;
 using Zs.Common.Exceptions;
-using Zs.Common.Extensions;
 using Zs.Common.Models;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Scheduler;
@@ -92,11 +91,11 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options
-           => options.SwaggerDoc(context.Configuration["Swagger:ApiVersion"],
+           => options.SwaggerDoc(context.Configuration[AppSettings.Swagger.ApiVersion],
             new OpenApiInfo
             {
-                Title = context.Configuration["Swagger:ApiTitle"],
-                Version = context.Configuration["Swagger:ApiVersion"]
+                Title = context.Configuration[AppSettings.Swagger.ApiTitle],
+                Version = context.Configuration[AppSettings.Swagger.ApiVersion]
             })
         );
     })
@@ -115,8 +114,8 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint(
-        context.Configuration["Swagger:EndpointUrl"],
-        context.Configuration["Swagger:ApiTitle"] + " " + context.Configuration["Swagger:ApiVersion"])
+        context.Configuration[AppSettings.Swagger.EndpointUrl],
+        context.Configuration[AppSettings.Swagger.ApiTitle] + " " + context.Configuration[AppSettings.Swagger.ApiVersion])
     );
 
     app.UseRouting();
@@ -159,7 +158,7 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 {
     services.AddDbContext<VkActivityContext>(options =>
-        options.UseNpgsql(context.Configuration.GetSecretValue("ConnectionStrings:Default")));
+        options.UseNpgsql(context.Configuration.GetConnectionString(AppSettings.ConnectionStrings.Default)));
 
     // For repositories
     services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
@@ -173,7 +172,7 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddSingleton<IScheduler, Scheduler>();
 
     services.AddSingleton<IVkIntegration, VkIntegration>(
-        sp => new VkIntegration(context.Configuration["Vk:AccessToken"], context.Configuration["Vk:Version"]));
+        sp => new VkIntegration(context.Configuration[AppSettings.Vk.AccessToken], context.Configuration[AppSettings.Vk.Version]));
 
     services.AddScoped<IActivityLogger, ActivityLogger>();
     services.AddScoped<IActivityAnalyzer, ActivityAnalyzer>();
@@ -182,5 +181,5 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddScoped<IUsersRepository, UsersRepository>();
 
 
-    services.AddHostedService<UserWatcher>();
+    services.AddHostedService<WorkerService>();
 }

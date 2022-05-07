@@ -11,20 +11,20 @@ namespace VkActivity.Service.Controllers;
 [ApiController]
 public sealed class ListUsersController : Controller
 {
-    private readonly IActivityLogger _activityLoggerService;
-    private readonly IActivityAnalyzer _activityAnalyzerService;
+    private readonly IActivityAnalyzer _activityAnalyzer;
+    private readonly IUserManager _userManager;
     private readonly ILogger<ListUsersController> _logger;
     private readonly IMapper _mapper;
 
 
     public ListUsersController(
-        IActivityLogger activityLoggerService,
-        IActivityAnalyzer activityAnalyzerService,
+        IActivityAnalyzer activityAnalyzer,
+        IUserManager userManager,
         IMapper mapper,
         ILogger<ListUsersController> logger)
     {
-        _activityLoggerService = activityLoggerService ?? throw new ArgumentNullException(nameof(activityLoggerService));
-        _activityAnalyzerService = activityAnalyzerService ?? throw new ArgumentNullException(nameof(activityAnalyzerService));
+        _activityAnalyzer = activityAnalyzer ?? throw new ArgumentNullException(nameof(activityAnalyzer));
+        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger;
     }
@@ -39,7 +39,7 @@ public sealed class ListUsersController : Controller
     [HttpGet]
     public async Task<IActionResult> GetUsersWithActivity(string filterText, DateTime fromDate, DateTime toDate)
     {
-        var usersWithActivityResult = await _activityAnalyzerService.GetUsersWithActivityAsync(filterText, fromDate, toDate);
+        var usersWithActivityResult = await _activityAnalyzer.GetUsersWithActivityAsync(filterText, fromDate, toDate);
         usersWithActivityResult.AssertResultIsSuccessful();
 
         return Ok(_mapper.Map<List<ListUserDto>>(usersWithActivityResult.Value));
@@ -56,7 +56,7 @@ public sealed class ListUsersController : Controller
         if (vkUserIds == null || vkUserIds.Length == 0)
             return BadRequest("No VK user IDs to add");
 
-        var addUsersResult = await _activityLoggerService.AddNewUsersAsync(vkUserIds).ConfigureAwait(false);
+        var addUsersResult = await _userManager.AddUsersAsync(vkUserIds).ConfigureAwait(false);
 
         return addUsersResult.IsSuccess
             ? Ok(addUsersResult)

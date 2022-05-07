@@ -8,8 +8,8 @@ namespace VkActivity.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("DROP VIEW vk.v_activity_log;");
-            migrationBuilder.Sql("DROP VIEW vk.v_compare_with_prod");
+            //migrationBuilder.Sql("DROP VIEW vk.v_activity_log;");
+            //migrationBuilder.Sql("DROP VIEW vk.v_compare_with_prod");
 
             migrationBuilder.DropColumn(
                 name: "is_online_mobile",
@@ -29,6 +29,7 @@ namespace VkActivity.Data.Migrations
                 nullable: false,
                 defaultValue: 0);
 
+            migrationBuilder.Sql(VkActivityContext.GetOtherSqlScripts(@"..\VkActivity.Service\appsettings.Development.json"));
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
