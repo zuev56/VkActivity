@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,7 +15,6 @@ using VkActivity.Service.Abstractions;
 using VkActivity.Service.Helpers;
 using VkActivity.Service.Services;
 using Zs.Common.Enums;
-using Zs.Common.Exceptions;
 using Zs.Common.Models;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Scheduler;
@@ -61,7 +59,7 @@ IConfiguration CreateConfiguration(string[] args, AppEnvironment environment = d
     var configPath = ProgramUtilites.GetAppsettingsPath(environment);
 
     if (!File.Exists(configPath))
-        throw new AppsettingsNotFoundException();
+        throw new FileNotFoundException("Configuration file not found", configPath);
 
     var configuration = new ConfigurationManager();
     configuration.AddJsonFile(configPath, optional: false, reloadOnChange: true);
@@ -100,38 +98,38 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
         );
     })
     .Configure((context, app) =>
-{
-    //app.UseHttpLogging();
-    app.UseSerilogRequestLogging(opts => opts.EnrichDiagnosticContext = LogHelper.EnrichFromRequest);
-
-    // Configure the HTTP request pipeline.
-    if (!context.HostingEnvironment.IsDevelopment())
     {
-        app.UseExceptionHandler("/Error");
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        //app.UseHsts();
-    }
+        //app.UseHttpLogging();
+        app.UseSerilogRequestLogging(opts => opts.EnrichDiagnosticContext = LogHelper.EnrichFromRequest);
 
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint(
-        context.Configuration[AppSettings.Swagger.EndpointUrl],
-        context.Configuration[AppSettings.Swagger.ApiTitle] + " " + context.Configuration[AppSettings.Swagger.ApiVersion])
-    );
+        // Configure the HTTP request pipeline.
+        if (!context.HostingEnvironment.IsDevelopment())
+        {
+            app.UseExceptionHandler("/Error");
+            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            //app.UseHsts();
+        }
 
-    app.UseRouting();
+        app.UseSwagger();
+        app.UseSwaggerUI(c => c.SwaggerEndpoint(
+            context.Configuration[AppSettings.Swagger.EndpointUrl],
+            context.Configuration[AppSettings.Swagger.ApiTitle] + " " + context.Configuration[AppSettings.Swagger.ApiVersion])
+        );
 
-    app.UseAuthorization();
+        app.UseRouting();
 
-    app.UseEndpoints(endpoints =>
-    {
-        endpoints.MapControllerRoute(
-            name: "Default",
-            pattern: "api/{controller}/{action}/{id?}");
+        app.UseAuthorization();
 
-        endpoints.MapControllers();
-    });
-})
-    .ConfigureKestrel(serverOptions =>
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllerRoute(
+                name: "Default",
+                pattern: "api/{controller}/{action}/{id?}");
+
+            endpoints.MapControllers();
+        });
+    })
+    .ConfigureKestrel((context, serverOptions) =>
     {
         // https://docs.microsoft.com/ru-ru/aspnet/core/fundamentals/servers/kestrel/options?view=aspnetcore-6.0
 
@@ -145,7 +143,7 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
         serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
         serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(1);
 
-        serverOptions.Listen(IPAddress.Loopback, 5000);
+        //serverOptions.Listen(IPAddress.Loopback, 5010);
         //serverOptions.Listen(IPAddress.Loopback, 5001,
         //    listenOptions =>
         //    {
@@ -174,6 +172,7 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddSingleton<IVkIntegration, VkIntegration>(
         sp => new VkIntegration(context.Configuration[AppSettings.Vk.AccessToken], context.Configuration[AppSettings.Vk.Version]));
 
+    services.AddScoped<IUserManager, UserManager>();
     services.AddScoped<IActivityLogger, ActivityLogger>();
     services.AddScoped<IActivityAnalyzer, ActivityAnalyzer>();
 

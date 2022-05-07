@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -22,7 +21,8 @@ namespace VkActivity.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     first_name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     last_name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    raw_data = table.Column<string>(type: "json", maxLength: 50, nullable: true),
+                    raw_data = table.Column<string>(type: "json", nullable: true),
+                    raw_data_history = table.Column<string>(type: "json", nullable: true),
                     update_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     insert_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
@@ -41,8 +41,7 @@ namespace VkActivity.Data.Migrations
                     user_id = table.Column<int>(type: "int", nullable: false),
                     is_online = table.Column<bool>(type: "bool", nullable: true),
                     insert_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
-                    online_app = table.Column<int>(type: "int", nullable: true),
-                    is_online_mobile = table.Column<bool>(type: "bool", nullable: false),
+                    platform = table.Column<int>(type: "int", nullable: false),
                     last_seen = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>

@@ -95,8 +95,11 @@ public partial class VkActivityContext : DbContext
 
             b.Property(e => e.RawData)
             .HasColumnType("json")
-            .HasColumnName("raw_data")
-            .HasMaxLength(50);
+            .HasColumnName("raw_data");
+
+            b.Property(e => e.RawDataHistory)
+            .HasColumnType("json")
+            .HasColumnName("raw_data_history");
 
             b.Property(e => e.InsertDate)
                 .ValueGeneratedOnAdd()

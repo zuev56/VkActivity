@@ -12,7 +12,6 @@ namespace VkActivity.Service;
 
 internal static class MapperConfiguration
 {
-
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -26,6 +25,7 @@ internal static class MapperConfiguration
         {
             config.CreateMap<VkApiUser, User>()
                 .ForMember(destination => destination.RawData, member => member.MapFrom(i => JsonSerializer.Serialize(i, _jsonSerializerOptions).NormalizeJsonString()))
+                .ForMember(destination => destination.RawDataHistory, member => member.MapFrom(i => JsonSerializer.Serialize(i, _jsonSerializerOptions).NormalizeJsonString()))
                 .ForMember(destination => destination.InsertDate, member => member.MapFrom(_ => DateTime.UtcNow))
                 .ForMember(destination => destination.UpdateDate, member => member.MapFrom(_ => DateTime.UtcNow));
 

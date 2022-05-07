@@ -88,9 +88,12 @@ namespace VkActivity.Data.Migrations
                         .HasColumnName("last_name");
 
                     b.Property<string>("RawData")
-                        .HasMaxLength(50)
                         .HasColumnType("json")
                         .HasColumnName("raw_data");
+
+                    b.Property<string>("RawDataHistory")
+                        .HasColumnType("json")
+                        .HasColumnName("raw_data_history");
 
                     b.Property<DateTime>("UpdateDate")
                         .ValueGeneratedOnAdd()

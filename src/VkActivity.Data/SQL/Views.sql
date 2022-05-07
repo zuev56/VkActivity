@@ -2,28 +2,25 @@
 
 --DROP VIEW vk.v_activity_log;
 
---CREATE OR REPLACE VIEW vk.v_activity_log
---AS
---     SELECT l.id as activity_log_id,
---            (u.first_name::text || ' '::text) || u.last_name::text as user_name,
---            u.id as user_id,s
---            l.is_online::int as online,
---            l.is_online,
---            --l.platform,
---            --l.is_online_mobile::int as mobile,
---            --l.is_online_mobile,
---            to_char(l.insert_date, 'DD.MM.YYYY HH24:MI:SS') as date,
---            to__date
---       FROM vk.activity_log l
---  LEFT JOIN vk.users _date
---       FROM vk.activity_log l
---  LEFT JOIN vk.users u ON l.user_id = u.id;
---
---  GRANT ALL ON vk.v_activity_log TO app;
+CREATE OR REPLACE VIEW vk.v_activity_log
+AS
+   SELECT l.id as activity_log_id,
+          (u.first_name::text || ' '::text) || u.last_name::text as user_name,
+          u.id as user_id,
+          l.is_online::int as online,
+          l.is_online,
+          l.platform,
+          to_char(l.insert_date, 'DD.MM.YYYY HH24:MI:SS') as date,
+          to_timestamp(l.last_seen) as last_seen,
+          l.insert_date
+     FROM vk.activity_log l
+LEFT JOIN vk.users u ON l.user_id = u.id;
+
+GRANT ALL ON vk.v_activity_log TO app;
 
 
 --CREATE OR REPLACE VIEW vk.v_compare_with_prod
--- AS
+--AS
 -- SELECT sq.source AS src,
 --    (((('All:'::text || sq.allr) || ';  Online:'::text) || sq.online) || ';  OnlineMob:'::text) || sq.online_mobile AS "values"
 --   FROM ( WITH data AS (

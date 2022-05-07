@@ -2,9 +2,10 @@
 
 public static class AppSettings
 {
+    public const string Kestrel = nameof(Kestrel);
     public static class ConnectionStrings
     {
-        public const string Default = $"{nameof(ConnectionStrings)}:{nameof(Default)}";
+        public const string Default = nameof(Default);
     }
 
     public static class Vk

@@ -12,8 +12,8 @@ using VkActivity.Data;
 namespace VkActivity.Data.Migrations
 {
     [DbContext(typeof(VkActivityContext))]
-    [Migration("20220430121439_ReplaceIsOnlineMobileWithPlatformEnum")]
-    partial class ReplaceIsOnlineMobileWithPlatformEnum
+    [Migration("20220507082838_InitialVkActivityContext")]
+    partial class InitialVkActivityContext
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -90,9 +90,12 @@ namespace VkActivity.Data.Migrations
                         .HasColumnName("last_name");
 
                     b.Property<string>("RawData")
-                        .HasMaxLength(50)
                         .HasColumnType("json")
                         .HasColumnName("raw_data");
+
+                    b.Property<string>("RawDataHistory")
+                        .HasColumnType("json")
+                        .HasColumnName("raw_data_history");
 
                     b.Property<DateTime>("UpdateDate")
                         .ValueGeneratedOnAdd()
