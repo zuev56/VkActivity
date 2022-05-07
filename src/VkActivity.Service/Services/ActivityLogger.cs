@@ -51,7 +51,7 @@ public sealed class ActivityLogger : IActivityLogger
             if (userIds.Except(newUserIds).Any())
                 result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', userIds.Except(newUserIds))}", InfoMessageType.Warning);
 
-            var usersForSave = vkUsers.Select(u => (User)u);
+            var usersForSave = vkUsers.Select(u => Mapper.ToUser(u));
             var savedSuccessfully = usersForSave.Any()
                 ? await _usersRepo.SaveRangeAsync(usersForSave).ConfigureAwait(false)
                 : true;
@@ -174,10 +174,10 @@ public sealed class ActivityLogger : IActivityLogger
 
             var lastActivityLogItem = lastActivityLogItems.FirstOrDefault(i => i.UserId == apiUser.Id);
             var currentPlatform = apiUser.LastSeen.Platform;
-            var currentOnlineStatus = apiUser.Online == 1;
+            var currentIsOnline = apiUser.IsOnline == 1;
 
             if (lastActivityLogItem == null
-                || lastActivityLogItem.IsOnline != currentOnlineStatus
+                || lastActivityLogItem.IsOnline != currentIsOnline
                 || lastActivityLogItem.Platform != currentPlatform)
             {
                 // Vk corrects LastSeen, so we have to work with logged value, not current API value
@@ -189,7 +189,7 @@ public sealed class ActivityLogger : IActivityLogger
                     new ActivityLogItem
                     {
                         UserId = apiUser.Id,
-                        IsOnline = currentOnlineStatus,
+                        IsOnline = currentIsOnline,
                         Platform = currentPlatform,
                         LastSeen = lastSeenForLog,
                         InsertDate = DateTime.UtcNow

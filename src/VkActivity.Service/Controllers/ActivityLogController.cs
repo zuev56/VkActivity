@@ -1,7 +1,5 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using VkActivity.Service.Abstractions;
-using VkActivity.Service.Models.Dto;
 using Zs.Common.Extensions;
 
 namespace VkActivity.Service.Controllers;
@@ -13,7 +11,6 @@ namespace VkActivity.Service.Controllers;
 public sealed class ActivityLogController : Controller
 {
     private readonly IActivityAnalyzer _activityAnalyzerService;
-    private readonly IMapper _mapper;
 
     //+/- Сделать другие контроллеры, необходимые для фронтенда
     //+/- Настроить использование appsettings.Development.json
@@ -26,12 +23,9 @@ public sealed class ActivityLogController : Controller
 
 
 
-    public ActivityLogController(
-        IActivityAnalyzer activityAnalyzerService,
-        IMapper mapper)
+    public ActivityLogController(IActivityAnalyzer activityAnalyzerService)
     {
         _activityAnalyzerService = activityAnalyzerService ?? throw new ArgumentNullException(nameof(activityAnalyzerService));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet("{userId:int}period/{fromDate:DateTime}/{toDate:DateTime}")]
@@ -40,8 +34,9 @@ public sealed class ActivityLogController : Controller
     {
         var periodStatisticsResult = await _activityAnalyzerService.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
         periodStatisticsResult.AssertResultIsSuccessful();
+        var periodInfoDto = Mapper.ToPeriodInfoDto(periodStatisticsResult.Value);
 
-        return Ok(_mapper.Map<PeriodInfoDto>(periodStatisticsResult.Value));
+        return Ok(periodInfoDto);
     }
 
     [HttpGet("{userId:int}/fulltime")]
@@ -49,8 +44,9 @@ public sealed class ActivityLogController : Controller
     {
         var fullTimeStatistictResult = await _activityAnalyzerService.GetFullTimeActivityAsync(userId);
         fullTimeStatistictResult.AssertResultIsSuccessful();
+        var fullTimeInfoDto = Mapper.ToFullTimeInfoDto(fullTimeStatistictResult.Value);
 
-        return Ok(_mapper.Map<FullTimeInfoDto>(fullTimeStatistictResult.Value));
+        return Ok(fullTimeInfoDto);
     }
 
 

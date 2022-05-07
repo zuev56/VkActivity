@@ -1,7 +1,5 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using VkActivity.Service.Abstractions;
-using VkActivity.Service.Models.Dto;
 using Zs.Common.Extensions;
 
 namespace VkActivity.Service.Controllers;
@@ -13,20 +11,15 @@ public sealed class ListUsersController : Controller
 {
     private readonly IActivityAnalyzer _activityAnalyzer;
     private readonly IUserManager _userManager;
-    private readonly ILogger<ListUsersController> _logger;
-    private readonly IMapper _mapper;
 
 
     public ListUsersController(
         IActivityAnalyzer activityAnalyzer,
         IUserManager userManager,
-        IMapper mapper,
         ILogger<ListUsersController> logger)
     {
         _activityAnalyzer = activityAnalyzer ?? throw new ArgumentNullException(nameof(activityAnalyzer));
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        _logger = logger;
     }
 
     /// <summary>
@@ -41,8 +34,9 @@ public sealed class ListUsersController : Controller
     {
         var usersWithActivityResult = await _activityAnalyzer.GetUsersWithActivityAsync(filterText, fromDate, toDate);
         usersWithActivityResult.AssertResultIsSuccessful();
+        var userDtos = usersWithActivityResult.Value.Select(Mapper.ToListUserDto);
 
-        return Ok(_mapper.Map<List<ListUserDto>>(usersWithActivityResult.Value));
+        return Ok(userDtos);
     }
 
     /// <summary>

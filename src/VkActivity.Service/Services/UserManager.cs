@@ -27,6 +27,8 @@ namespace VkActivity.Service.Services
         /// <param name="userIds">User IDs or ScreenNames</param>
         public async Task<IOperationResult<List<User>>> AddUsersAsync(params string[] screenNames)
         {
+            ArgumentNullException.ThrowIfNull(nameof(screenNames));
+
             var resultUsersList = new List<User>();
             var result = ServiceResult<List<User>>.Success(resultUsersList);
             try
@@ -44,10 +46,9 @@ namespace VkActivity.Service.Services
                 if (userIds.Except(newUserIds).Any())
                     result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', userIds.Except(newUserIds))}", InfoMessageType.Warning);
 
-                var usersForSave = vkUsers.Select(u => (User)u);
-                var savedSuccessfully = usersForSave.Any()
-                    ? await _usersRepo.SaveRangeAsync(usersForSave).ConfigureAwait(false)
-                    : true;
+                var usersForSave = vkUsers.Select(u => Mapper.ToUser(u));
+                var savedSuccessfully = !usersForSave.Any()
+                    || await _usersRepo.SaveRangeAsync(usersForSave).ConfigureAwait(false);
 
                 if (savedSuccessfully)
                 {
@@ -76,8 +77,21 @@ namespace VkActivity.Service.Services
             return (userIds, newUserIds);
         }
 
-        public Task<IOperationResult<List<User>>> UpdateUsersAsync(params int[] userIds)
+        public async Task<IOperationResult<List<User>>> UpdateUsersAsync(params int[] userIds)
         {
+            ArgumentNullException.ThrowIfNull(nameof(userIds));
+
+            var existingDbUserIds = await _usersRepo.FindExistingIdsAsync(userIds).ConfigureAwait(false);
+            var userIdsToUpdate = existingDbUserIds.Select(id => id.ToString()).ToArray();
+
+            var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(userIdsToUpdate).ConfigureAwait(false);
+            if (vkUsers is null)
+                return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
+
+            foreach (var user in vkUsers)
+            {
+
+            }
             throw new NotImplementedException();
         }
 

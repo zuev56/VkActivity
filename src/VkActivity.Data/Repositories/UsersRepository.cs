@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
@@ -37,7 +35,20 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
     {
         await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
         {
-            return await context.VkUsers!.Select(u => u.Id).ToArrayAsync().ConfigureAwait(false);
+            return await context.VkUsers!
+                .Select(u => u.Id).ToArrayAsync()
+                .ConfigureAwait(false);
+        }
+    }
+
+    public async Task<int[]> FindExistingIdsAsync(int[] userIds, CancellationToken cancellationToken = default)
+    {
+        await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return await context.VkUsers!
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => u.Id).ToArrayAsync()
+                .ConfigureAwait(false);
         }
     }
 }

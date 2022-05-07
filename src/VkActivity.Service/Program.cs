@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AutoMapper;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -85,6 +84,7 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
         {
             o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            //o.JsonSerializerOptions.Converters.Add(new JsonBooleanConverter()); Can't setup in tests
         });
 
         services.AddEndpointsApiExplorer();
@@ -160,10 +160,6 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 
     // For repositories
     services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
-
-    var mapperConfig = VkActivity.Service.MapperConfiguration.CreateMapperConfiguration();
-    mapperConfig.AssertConfigurationIsValid();
-    services.AddScoped<IMapper, Mapper>(sp => new Mapper(mapperConfig));
 
     services.AddScoped<ApiExceptionFilter>();
 
