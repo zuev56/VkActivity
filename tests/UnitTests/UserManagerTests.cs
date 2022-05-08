@@ -17,10 +17,10 @@ public class UserManagerTests
     public async Task AddNewUsersAsync_OnlyNewUserIds_ReturnsSuccess()
     {
         // Arrange
-        var activityLoggerService = StubFactory.GetActivityLoggerService(_userIdSet);
+        var userManager = StubFactory.GetUserManager(_userIdSet);
 
         // Act
-        var addUsersResult = await activityLoggerService.AddNewUsersAsync(_userIdSet.NewUserStringIds);
+        var addUsersResult = await userManager.AddUsersAsync(_userIdSet.NewUserStringIds);
 
         // Assert
         Assert.True(addUsersResult?.IsSuccess);
@@ -33,10 +33,10 @@ public class UserManagerTests
     public async Task AddNewUsersAsync_WithExistingUserIds_ReturnsSuccessWithWarning()
     {
         // Arrange
-        var activityLoggerService = StubFactory.GetActivityLoggerService(_userIdSet);
+        var userManager = StubFactory.GetUserManager(_userIdSet);
 
         // Act
-        var addUsersResult = await activityLoggerService.AddNewUsersAsync(_userIdSet.NewAndExistingUserStringIds);
+        var addUsersResult = await userManager.AddUsersAsync(_userIdSet.NewAndExistingUserStringIds);
 
         // Assert
         Assert.True(addUsersResult?.IsSuccess);
@@ -48,10 +48,10 @@ public class UserManagerTests
     public async Task AddNewUsersAsync_VkIntegrationNotWorks_ReturnsError()
     {
         // Arrange
-        var activityLoggerService = StubFactory.GetActivityLoggerService(_userIdSet, vkIntergationWorks: false);
+        var userManager = StubFactory.GetUserManager(_userIdSet, vkIntergationWorks: false);
 
         // Act
-        var addUsersResult = await activityLoggerService.AddNewUsersAsync(_userIdSet.NewUserStringIds);
+        var addUsersResult = await userManager.AddUsersAsync(_userIdSet.NewUserStringIds);
 
         // Assert
         Assert.False(addUsersResult?.IsSuccess);
@@ -59,4 +59,22 @@ public class UserManagerTests
         Assert.Empty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning));
         Assert.Empty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Info));
     }
+
+
+    [Fact]
+    public async Task UpdateUsersAsync__ReturnsSuccess()
+    {
+        // Arrange
+        var userManager = StubFactory.GetUserManager(_userIdSet);
+        var usersToUpdate = StubFactory.GetUsersToUpdate(_userIdSet.ChangedUserIds);
+
+        // Act
+        var updateUsersResult = await userManager.UpdateUsersAsync(_userIdSet.ChangedUserIds);
+
+        // Assert
+        Assert.True(updateUsersResult?.IsSuccess);
+        Assert.False(updateUsersResult?.HasWarnings);
+        Assert.Empty(updateUsersResult?.Messages);
+    }
+
 }

@@ -14,18 +14,27 @@ namespace UnitTests.Data;
 
 internal class StubFactory
 {
-    internal static User CreateVkUser_v5_131(int userId = 0)
+    internal static User CreateUser(int userId = 0)
     {
         userId = PrepareId(userId);
-        var firstName = $"TestVkUserFirstName_{userId}";
-        var lastName = $"TestVkUserLastName_{userId}";
+        (var firstName, var lastName, var json) = GetVkUserFullInfo_v5_131(userId);
 
         return new User
         {
             Id = userId,
             FirstName = firstName,
             LastName = lastName,
-            RawData = $@"{{
+            RawData = json,
+            InsertDate = DateTime.UtcNow,
+            UpdateDate = DateTime.UtcNow
+        };
+    }
+
+    private static (string FirstName, string LastName, string Json) GetVkUserFullInfo_v5_131(int userId)
+    {
+        var firstName = $"TestVkUserFirstName_{userId}";
+        var lastName = $"TestVkUserLastName_{userId}";
+        var json = $@"{{
                 ""blacklisted"": {Random.Shared.Next(0, 1)},
                 ""blacklisted_by_me"": {Random.Shared.Next(0, 1)},
                 ""can_access_closed"": true,
@@ -68,21 +77,40 @@ internal class StubFactory
                 ""skype"": """",
                 ""status"": """",
                 ""verified"": {Random.Shared.Next(0, 1)}
-            }}",
-            InsertDate = DateTime.UtcNow,
-            UpdateDate = DateTime.UtcNow
-        };
+            }}";
+
+        return (firstName, lastName, json);
+    }
+
+    private static string GetVkUserActivityInfoJson_v5_131(int userId)
+    {
+        var firstName = $"TestVkUserFirstName_{userId}";
+        var lastName = $"TestVkUserLastName_{userId}";
+        var json = $@"{{
+                    ""id"": {userId},
+                    ""first_name"": ""{firstName}"",
+                    ""last_name"": ""{lastName}"",
+                    ""can_access_closed"": true,
+                    ""is_closed"": false,
+                    ""online"": {Random.Shared.Next(0, 1)},
+                    ""last_seen"":{{
+                        ""platform"": {Random.Shared.Next(1, 7)},
+                        ""time"": {(DateTime.UtcNow - TimeSpan.FromMinutes(Random.Shared.Next(0, 10))).ToUnixEpoch()}
+                    }}
+                }}";
+
+        return json;
     }
 
     private static int PrepareId(int id)
         => id != 0 ? id : Random.Shared.Next(1, 9999);
 
-    internal static User[] CreateVkUsers(int amount)
+    internal static User[] CreateUsers(int amount)
     {
         var users = new User[amount];
 
         for (int i = 0; i < amount; i++)
-            users[i] = CreateVkUser_v5_131(i + 1);
+            users[i] = CreateUser(i + 1);
 
         return users;
     }
@@ -114,28 +142,39 @@ internal class StubFactory
         return activityLogItems;
     }
 
-    internal static ActivityLogger GetActivityLoggerService(UserIdSet userIdSet, bool vkIntergationWorks = true)
+    internal static IActivityLogger GetActivityLogger(UserIdSet userIdSet, bool vkIntergationWorks = true)
     {
         var postgreSqlInMemory = new PostgreSqlInMemory();
         postgreSqlInMemory.FillWithFakeData(userIdSet.InitialUsersAmount);
 
+        var vkIntegrationMock = CreateVkIntegrationMock(userIdSet, vkIntergationWorks);
+
+        return new ActivityLogger(
+            postgreSqlInMemory.ActivityLogItemsRepository,
+            postgreSqlInMemory.VkUsersRepository,
+            vkIntegrationMock.Object,
+            Mock.Of<ILogger<ActivityLogger>>());
+    }
+
+    private static Mock<IVkIntegration> CreateVkIntegrationMock(UserIdSet userIdSet, bool vkIntergationWorks)
+    {
         var vkIntegrationMock = new Mock<IVkIntegration>();
         if (vkIntergationWorks)
         {
             vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(userIdSet.InitialUserStringIds))
-                .ReturnsAsync(GetUsersWithActivity(userIdSet.InitialUserIds));
+                .ReturnsAsync(GetApiUsers(userIdSet.InitialUserIds, id => GetVkUserActivityInfoJson_v5_131(id)));
             vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(userIdSet.NewUserStringIds))
-                .ReturnsAsync(GetUsersWithActivity(userIdSet.NewUserIds));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewUserIds, id => GetVkUserActivityInfoJson_v5_131(id)));
             vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(userIdSet.NewAndExistingUserStringIds))
-                .ReturnsAsync(GetUsersWithActivity(userIdSet.NewAndExistingUserIds));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewAndExistingUserIds, id => GetVkUserActivityInfoJson_v5_131(id)));
 
 #warning GetUsersWithFullInfoAsync returns UsersWithActivityInfo
             vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.InitialUserStringIds))
-                .ReturnsAsync(GetUsersWithActivity(userIdSet.InitialUserIds));
+                .ReturnsAsync(GetApiUsers(userIdSet.InitialUserIds, id => GetVkUserFullInfo_v5_131(id).Json));
             vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.NewUserStringIds))
-                .ReturnsAsync(GetUsersWithActivity(userIdSet.NewUserIds));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewUserIds, id => GetVkUserFullInfo_v5_131(id).Json));
             vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.NewAndExistingUserStringIds))
-                .ReturnsAsync(GetUsersWithActivity(userIdSet.NewAndExistingUserIds));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewAndExistingUserIds, id => GetVkUserFullInfo_v5_131(id).Json));
         }
         else
         {
@@ -145,33 +184,32 @@ internal class StubFactory
                 .Throws<InvalidOperationException>();
         }
 
-        return new ActivityLogger(
-            postgreSqlInMemory.ActivityLogItemsRepository,
-            postgreSqlInMemory.VkUsersRepository,
-            vkIntegrationMock.Object,
-            Mock.Of<ILogger<ActivityLogger>>());
+        return vkIntegrationMock;
     }
 
-    private static List<VkApiUser> GetUsersWithActivity(int[] userIds)
+    internal static IUserManager GetUserManager(UserIdSet userIdSet, bool vkIntergationWorks = true)
+    {
+        var postgreSqlInMemory = new PostgreSqlInMemory();
+        postgreSqlInMemory.FillWithFakeData(userIdSet.InitialUsersAmount);
+
+        var vkIntegrationMock = CreateVkIntegrationMock(userIdSet, vkIntergationWorks);
+
+        return new UserManager(
+            postgreSqlInMemory.VkUsersRepository,
+            vkIntegrationMock.Object,
+            Mock.Of<ILogger<UserManager>>());
+
+    }
+
+    private static List<VkApiUser> GetApiUsers(int[] userIds, Func<int, string> getApiUserJson)
     {
         var users = new List<VkApiUser>(userIds.Length);
 
         var sbUsersJsonArray = new StringBuilder("[");
         foreach (var id in userIds)
         {
-            sbUsersJsonArray.Append(
-               $@"{{
-                    ""id"": {id},
-                    ""first_name"": ""FirstName_{id}"",
-                    ""last_name"": ""LastName_{id}"",
-                    ""can_access_closed"": true,
-                    ""is_closed"": false,
-                    ""online"": {Random.Shared.Next(0, 1)},
-                    ""last_seen"":{{
-                        ""platform"": {Random.Shared.Next(1, 7)},
-                        ""time"":1651338052
-                    }}
-                }},");
+            var vkUserJson = getApiUserJson.Invoke(id);
+            sbUsersJsonArray.Append(vkUserJson).Append(',');
         }
         sbUsersJsonArray.Insert(sbUsersJsonArray.Length - 1, ']');
 
@@ -183,5 +221,18 @@ internal class StubFactory
 
         return users;
     }
+
+    internal static List<VkApiUser> GetUsersToUpdate(int[] userIds)
+    {
+        throw new NotImplementedException();
+
+        //foreach (var id in userIds)
+        //{
+        //    var userFullInfoJson = GetVkUserFullInfo_v5_131(id).Json;
+        //
+        //}
+
+    }
+
 
 }

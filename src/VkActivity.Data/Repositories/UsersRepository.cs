@@ -1,7 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
+using Zs.Common.Extensions;
+using Zs.Common.Models;
 
 namespace VkActivity.Data.Repositories;
 
@@ -50,5 +53,39 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
                 .Select(u => u.Id).ToArrayAsync()
                 .ConfigureAwait(false);
         }
+    }
+
+    public async Task<ServiceResult> UpdateRangeAsync(IEnumerable<User> users, CancellationToken cancellationToken)
+    {
+        var userIds = users.Select(u => u.Id);
+        await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var dbUsers = context.VkUsers!.Where(u => userIds.Contains(u.Id));
+
+            foreach (var dbUser in dbUsers)
+            {
+                var user = users.First(u => u.Id == dbUser.Id);
+                if (!dbUser.Equals(user))
+                {
+                    UpdateUserFromOther(dbUser, user);
+                }
+            }
+
+            var saved = await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            return ServiceResult.Success();
+        }
+    }
+
+    private void UpdateUserFromOther(User target, User source)
+    {
+        var rawDataHistory = JsonSerializer.Deserialize<JsonElement>(target.RawDataHistory ?? "").EnumerateArray().ToList();
+        rawDataHistory.Add(JsonSerializer.Deserialize<JsonElement>(target.RawData!));
+        target.RawDataHistory = JsonSerializer.Serialize(rawDataHistory).NormalizeJsonString();
+
+        target.FirstName = source.FirstName;
+        target.LastName = source.LastName;
+        target.RawData = source.RawData;
+        target.UpdateDate = DateTime.UtcNow;
     }
 }

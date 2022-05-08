@@ -11,6 +11,7 @@ internal class UserIdSet
     public string[] NewUserStringIds { get; }
     public int[] NewAndExistingUserIds { get; }
     public string[] NewAndExistingUserStringIds { get; }
+    public int[] ChangedUserIds { get; }
 
     private UserIdSet(int initialUsersAmount, int subluistAmountDivider)
     {
@@ -24,6 +25,7 @@ internal class UserIdSet
         NewUserStringIds = NewUserIds.Select(x => x.ToString()).ToArray();
         NewAndExistingUserIds = InitialUserIds.Take(existingUsersAmountWhenAddNew).Union(NewUserIds).ToArray();
         NewAndExistingUserStringIds = NewAndExistingUserIds.Select(x => x.ToString()).ToArray();
+        ChangedUserIds = NewUserIds;
     }
 
     public static UserIdSet Create(int initialUsersAmount, int subluistAmountDivider = 10)

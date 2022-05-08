@@ -12,12 +12,12 @@ namespace VkActivity.Service.Services
     {
         private readonly IUsersRepository _usersRepo;
         private readonly IVkIntegration _vkIntegration;
-        private readonly ILogger<ActivityLogger> _logger;
+        private readonly ILogger<UserManager> _logger;
 
         public UserManager(
             IUsersRepository usersRepo,
             IVkIntegration vkIntegration,
-            ILogger<ActivityLogger> logger)
+            ILogger<UserManager> logger)
         {
             _usersRepo = usersRepo ?? throw new ArgumentNullException(nameof(usersRepo));
             _vkIntegration = vkIntegration ?? throw new ArgumentNullException(nameof(vkIntegration));
@@ -77,7 +77,7 @@ namespace VkActivity.Service.Services
             return (userIds, newUserIds);
         }
 
-        public async Task<IOperationResult<List<User>>> UpdateUsersAsync(params int[] userIds)
+        public async Task<IOperationResult> UpdateUsersAsync(params int[] userIds)
         {
             ArgumentNullException.ThrowIfNull(nameof(userIds));
 
@@ -88,12 +88,9 @@ namespace VkActivity.Service.Services
             if (vkUsers is null)
                 return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
 
-            foreach (var user in vkUsers)
-            {
+            var dbUsers = vkUsers.Select(u => Mapper.ToUser(u));
 
-            }
-            throw new NotImplementedException();
+            return await _usersRepo.UpdateRangeAsync(dbUsers).ConfigureAwait(false);
         }
-
     }
 }

@@ -30,47 +30,6 @@ public sealed class ActivityLogger : IActivityLogger
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-
-    /// <param name="userIds">User IDs or ScreenNames</param>
-    public async Task<IOperationResult<List<User>>> AddNewUsersAsync(params string[] screenNames)
-    {
-        var resultUsersList = new List<User>();
-        var result = ServiceResult<List<User>>.Success(resultUsersList);
-        try
-        {
-            (int[] userIds, int[] newUserIds) = await SeparateNewUserIdsAsync(screenNames).ConfigureAwait(false);
-
-            if (!newUserIds.Any())
-                return ServiceResult<List<User>>.Warning("Users already exist in DB");
-
-            var newUserStringIds = newUserIds.Select(x => x.ToString()).ToArray();
-            var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(newUserStringIds).ConfigureAwait(false);
-            if (vkUsers is null)
-                return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
-
-            if (userIds.Except(newUserIds).Any())
-                result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', userIds.Except(newUserIds))}", InfoMessageType.Warning);
-
-            var usersForSave = vkUsers.Select(u => Mapper.ToUser(u));
-            var savedSuccessfully = usersForSave.Any()
-                ? await _usersRepo.SaveRangeAsync(usersForSave).ConfigureAwait(false)
-                : true;
-
-            if (savedSuccessfully)
-            {
-                resultUsersList.AddRange(usersForSave);
-                return result;
-            }
-            else
-                return ServiceResult<List<User>>.Error("User saving failed");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogErrorIfNeed(ex, "New users saving failed");
-            return ServiceResult<List<User>>.Error("New users saving failed");
-        }
-    }
-
     private async Task<(int[] userIds, int[] newUserIds)> SeparateNewUserIdsAsync(string[] sourceScreenNames)
     {
         var vkApiUsers = await _vkIntegration.GetUsersWithActivityInfoAsync(sourceScreenNames).ConfigureAwait(false);

@@ -14,7 +14,7 @@ public class ActivityLoggerTests
     public async Task SaveVkUsersActivityAsync_ReturnsSuccess()
     {
         // Arrange
-        var activityLoggerService = StubFactory.GetActivityLoggerService(_userIdSet);
+        var activityLoggerService = StubFactory.GetActivityLogger(_userIdSet);
 
         // Act
         var saveActivityResult = await activityLoggerService.SaveVkUsersActivityAsync();
@@ -28,7 +28,7 @@ public class ActivityLoggerTests
     public async Task SaveVkUsersActivityAsync_VkIntegrationFailed_ReturnsError()
     {
         // Arrange
-        var activityLoggerService = StubFactory.GetActivityLoggerService(_userIdSet, vkIntergationWorks: false);
+        var activityLoggerService = StubFactory.GetActivityLogger(_userIdSet, vkIntergationWorks: false);
 
         // Act
         var saveActivityResult = await activityLoggerService.SaveVkUsersActivityAsync();

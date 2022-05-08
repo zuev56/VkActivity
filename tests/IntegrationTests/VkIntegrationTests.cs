@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -63,7 +62,7 @@ public class VkIntegrationTests
         }
         sw.Stop();
 
-        Assert.True(sw.Elapsed > attempts * TimeSpan.FromSeconds(0.35));
+        Assert.True(sw.Elapsed > attempts * VkIntegration.ApiAccessMinInterval);
     }
 
     private IVkIntegration GetVkIntegration()

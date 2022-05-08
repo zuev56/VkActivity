@@ -27,7 +27,7 @@ internal sealed class VkIntegration : IVkIntegration
     private static DateTime _lastApiAccessTime = DateTime.UtcNow;
 
     private readonly HttpClient _httpClient = new();
-    private static readonly TimeSpan _apiAccessMinInterval = TimeSpan.FromSeconds(0.35);
+    public static readonly TimeSpan ApiAccessMinInterval = TimeSpan.FromSeconds(0.35);
 
     public VkIntegration(string token, string version)
     {
@@ -66,8 +66,8 @@ internal sealed class VkIntegration : IVkIntegration
         {
             try
             {
-                if (DateTime.UtcNow.Subtract(_lastApiAccessTime) < _apiAccessMinInterval)
-                    await Task.Delay(_apiAccessMinInterval).ConfigureAwait(false);
+                if (DateTime.UtcNow.Subtract(_lastApiAccessTime) < ApiAccessMinInterval)
+                    await Task.Delay(ApiAccessMinInterval).ConfigureAwait(false);
 
                 var response = await _httpClient.GetAsync<TResponse>(url).ConfigureAwait(false);
 
