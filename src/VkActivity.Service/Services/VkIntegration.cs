@@ -13,11 +13,9 @@ internal sealed class VkIntegration : IVkIntegration
     private readonly string _getUsersUrl;
     private readonly string _getFriendsUrl;
     private const string FieldsForGettingUserActivity = "online,last_seen";
-    private const string FieldsForGettingFullUserInfo = "activities,about,blacklisted,blacklisted_by_me,books,bdate,can_be_invited_group,can_post," +
-        "can_see_all_posts,can_see_audio,can_send_friend_request,can_write_private_message,career,connections,contacts,city,country,domain,education," +
-        "exports,followers_count,friend_status,has_photo,has_mobile,home_town,photo_50,sex,site,schools,screen_name,status,verified,games,interests," +
-        "is_favorite,is_friend,is_hidden_from_feed,last_seen,maiden_name,military,movies,music,nickname,occupation,online,personal,quotes,relation," +
-        "relatives,timezone,tv,universities";
+    private const string FieldsForGettingFullUserInfo = "activities,about,books,bdate,career,connections,contacts,city,country," +
+        "domain,education,exports,has_photo,has_mobile,home_town,photo_50,sex,site,schools,screen_name,verified,games,interests," +
+        "maiden_name,military,movies,music,nickname,occupation,personal,quotes,relation,relatives,timezone,tv,universities";
 
     // screen_name - короткое имя страницы
     // domain - короткий адрес страницы (например, andrew, id35828305)

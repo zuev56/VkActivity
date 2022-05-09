@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -14,10 +15,16 @@ namespace UnitTests.Data;
 
 internal class StubFactory
 {
+    private static string CreateFirstName(int id) => $"TestVkUserFirstName_{id}";
+    private static string CreateLastName(int id) => $"TestVkUserLastName_{id}";
+
     internal static User CreateUser(int userId = 0)
     {
+        var firstName = CreateFirstName(userId);
+        var lastName = CreateLastName(userId);
         userId = PrepareId(userId);
-        (var firstName, var lastName, var json) = GetVkUserFullInfo_v5_131(userId);
+
+        var json = GetApiUserFullInfoJson_v5_131(userId);
 
         return new User
         {
@@ -30,63 +37,43 @@ internal class StubFactory
         };
     }
 
-    private static (string FirstName, string LastName, string Json) GetVkUserFullInfo_v5_131(int userId)
+    private static string GetApiUserFullInfoJson_v5_131(int userId)
     {
-        var firstName = $"TestVkUserFirstName_{userId}";
-        var lastName = $"TestVkUserLastName_{userId}";
-        var json = $@"{{
-                ""blacklisted"": {Random.Shared.Next(0, 1)},
-                ""blacklisted_by_me"": {Random.Shared.Next(0, 1)},
+        var firstName = CreateFirstName(userId);
+        var lastName = CreateLastName(userId);
+        return $@"{{
+                ""id"": {userId},
+                ""first_name"": ""{firstName}"",
+                ""last_name"": ""{lastName}"",
                 ""can_access_closed"": true,
-                ""can_be_invited_group"": false,
-                ""can_post"": {Random.Shared.Next(0, 1)},
-                ""can_see_all_posts"": {Random.Shared.Next(0, 1)},
-                ""can_see_audio"": {Random.Shared.Next(0, 1)},
-                ""can_send_friend_request"": {Random.Shared.Next(0, 1)},
-                ""can_write_private_message"": {Random.Shared.Next(0, 1)},
+                ""is_closed"": false,
+                ""sex"": {Random.Shared.Next(1, 2)},
+                ""screen_name"": ""id{userId}"",
+                ""photo_50"": ""https://vk.com/images/camera_50.png"",
+                ""verified"": {Random.Shared.Next(0, 1)},
+                ""nickname"": """",
+                ""domain"": ""id{userId}"",
                 ""country"": {{
                   ""id"": 1,
                   ""title"": ""Россия""
                 }},
-                ""domain"": ""id{userId}"",
-                ""first_name"": ""{firstName}"",
-                ""followers_count"": {Random.Shared.Next(0, 150)},
-                ""friend_status"": {Random.Shared.Next(0, 1)},
                 ""has_mobile"": {Random.Shared.Next(0, 1)},
                 ""has_photo"": {Random.Shared.Next(0, 1)},
-                ""id"": {userId},
-                ""is_closed"": false,
-                ""is_friend"": {Random.Shared.Next(0, 1)},
-                ""is_hidden_from_feed"": {Random.Shared.Next(0, 1)},
-                ""last_name"": ""{lastName}"",
-                ""last_seen"": {{
-                  ""platform"": {Random.Shared.Next(1, 7)},
-                  ""time"": {(DateTime.UtcNow - TimeSpan.FromMinutes(Random.Shared.Next(0, 10))).ToUnixEpoch()}
-                }},
-                ""nickname"": """",
+                ""skype"": """",
+                ""site"": """",
                 ""occupation"": {{
                   ""id"": 62296,
                   ""name"": ""КФ ПетрГУ"",
                   ""type"": ""university""
-                }},
-                ""online"": {Random.Shared.Next(0, 1)},
-                ""photo_50"": ""https://sun9-87.userapi.com/s/v1/if1/825Nv7C4JARdESnx6PDnEbPWuvNBbi7tPe4oOuRlGco7xqacQvOXVKHjtwhDvc8-Hh5fIaJ2.jpg?size=50x50&quality=96&crop=0,299,1620,1620&ava=1"",
-                ""screen_name"": ""id{userId}"",
-                ""sex"": {Random.Shared.Next(1, 2)},
-                ""site"": """",
-                ""skype"": """",
-                ""status"": """",
-                ""verified"": {Random.Shared.Next(0, 1)}
+                }}
             }}";
-
-        return (firstName, lastName, json);
     }
 
-    private static string GetVkUserActivityInfoJson_v5_131(int userId)
+    private static string GetApiUserActivityInfoJson_v5_131(int userId)
     {
-        var firstName = $"TestVkUserFirstName_{userId}";
-        var lastName = $"TestVkUserLastName_{userId}";
-        var json = $@"{{
+        var firstName = CreateFirstName(userId);
+        var lastName = CreateLastName(userId);
+        return $@"{{
                     ""id"": {userId},
                     ""first_name"": ""{firstName}"",
                     ""last_name"": ""{lastName}"",
@@ -98,8 +85,6 @@ internal class StubFactory
                         ""time"": {(DateTime.UtcNow - TimeSpan.FromMinutes(Random.Shared.Next(0, 10))).ToUnixEpoch()}
                     }}
                 }}";
-
-        return json;
     }
 
     private static int PrepareId(int id)
@@ -162,19 +147,21 @@ internal class StubFactory
         if (vkIntergationWorks)
         {
             vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(userIdSet.InitialUserStringIds))
-                .ReturnsAsync(GetApiUsers(userIdSet.InitialUserIds, id => GetVkUserActivityInfoJson_v5_131(id)));
+                .ReturnsAsync(GetApiUsers(userIdSet.InitialUserIds, id => GetApiUserActivityInfoJson_v5_131(id)));
             vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(userIdSet.NewUserStringIds))
-                .ReturnsAsync(GetApiUsers(userIdSet.NewUserIds, id => GetVkUserActivityInfoJson_v5_131(id)));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewUserIds, id => GetApiUserActivityInfoJson_v5_131(id)));
             vkIntegrationMock.Setup(m => m.GetUsersWithActivityInfoAsync(userIdSet.NewAndExistingUserStringIds))
-                .ReturnsAsync(GetApiUsers(userIdSet.NewAndExistingUserIds, id => GetVkUserActivityInfoJson_v5_131(id)));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewAndExistingUserIds, id => GetApiUserActivityInfoJson_v5_131(id)));
 
 #warning GetUsersWithFullInfoAsync returns UsersWithActivityInfo
             vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.InitialUserStringIds))
-                .ReturnsAsync(GetApiUsers(userIdSet.InitialUserIds, id => GetVkUserFullInfo_v5_131(id).Json));
+                .ReturnsAsync(GetApiUsers(userIdSet.InitialUserIds, id => GetApiUserFullInfoJson_v5_131(id)));
             vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.NewUserStringIds))
-                .ReturnsAsync(GetApiUsers(userIdSet.NewUserIds, id => GetVkUserFullInfo_v5_131(id).Json));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewUserIds, id => GetApiUserFullInfoJson_v5_131(id)));
             vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.NewAndExistingUserStringIds))
-                .ReturnsAsync(GetApiUsers(userIdSet.NewAndExistingUserIds, id => GetVkUserFullInfo_v5_131(id).Json));
+                .ReturnsAsync(GetApiUsers(userIdSet.NewAndExistingUserIds, id => GetApiUserFullInfoJson_v5_131(id)));
+            vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.ChangedUserStringIds))
+                .ReturnsAsync(GetApiUsersWithUpdates(userIdSet.ChangedUserIds));
         }
         else
         {
@@ -222,17 +209,54 @@ internal class StubFactory
         return users;
     }
 
-    internal static List<VkApiUser> GetUsersToUpdate(int[] userIds)
+    private static List<VkApiUser> GetApiUsersWithUpdates(int[] userIds)
     {
-        throw new NotImplementedException();
+        var changedUsers = new List<VkApiUser>(userIds.Length);
+        foreach (var id in userIds)
+        {
+            var userFullInfoJson = GetApiUserFullInfoJson_v5_131(id);
+            var user = JsonSerializer.Deserialize<VkApiUser>(userFullInfoJson)!;
+            var changedUser = GetChangedUser(user);
+            changedUsers.Add(changedUser);
+        }
 
-        //foreach (var id in userIds)
-        //{
-        //    var userFullInfoJson = GetVkUserFullInfo_v5_131(id).Json;
-        //
-        //}
-
+        return changedUsers;
     }
 
+    private static VkApiUser GetChangedUser(VkApiUser user)
+    {
+        var changeType = Random.Shared.Next(1, 5);
 
+        switch (changeType)
+        {
+            case 1:
+                return new VkApiUser
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName + "_changed",
+                    LastName = user.LastName,
+                    RawData = user.RawData
+                };
+            case 2:
+                return new VkApiUser
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName + "_changed",
+                    RawData = user.RawData
+                };
+            default:
+                var newRawData = user.RawData!.ToDictionary(i => i.Key, i => i.Value.Clone());
+                var updatedValue = user.RawData!["screen_name"] + "_changed";
+                newRawData["screen_name"] = JsonSerializer.SerializeToElement(updatedValue);
+
+                return new VkApiUser
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    RawData = newRawData
+                };
+        }
+    }
 }

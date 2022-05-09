@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using VkActivity.Service;
@@ -12,7 +13,7 @@ namespace IntegrationTests;
 public class VkIntegrationTests
 {
     [Fact]
-    public async Task GetUsersWithActivityInfoAsync_ReceiveScreenNames_ReturnsExpectedUsers()
+    public async Task GetUsersWithActivityInfoAsync_ByScreenNames_ReturnsExpectedUsers()
     {
         // Arrange
         var vkIntegration = GetVkIntegration();
@@ -23,11 +24,12 @@ public class VkIntegrationTests
 
         // Assert
         Assert.NotNull(users);
+        Assert.DoesNotContain(null, users);
         Assert.Equal(screenNames.Length, users.Count);
     }
 
     [Fact]
-    public async Task GetUsersWithActivityInfoAsync_ReceiveIds_ReturnsExpectedUsers()
+    public async Task GetUsersWithActivityInfoAsync_ByIds_ReturnsExpectedUsers()
     {
         // Arrange
         var vkIntegration = GetVkIntegration();
@@ -38,6 +40,7 @@ public class VkIntegrationTests
 
         // Assert
         Assert.NotNull(users);
+        Assert.DoesNotContain(null, users);
         Assert.Equal(userIds.Length, users.Count);
     }
 
@@ -58,12 +61,32 @@ public class VkIntegrationTests
 
             // Assert
             Assert.NotNull(users);
+            Assert.DoesNotContain(null, users);
             Assert.Equal(2, users.Count);
         }
         sw.Stop();
 
         Assert.True(sw.Elapsed > attempts * VkIntegration.ApiAccessMinInterval);
     }
+
+    [Fact]
+    public async Task GetUsersWithFullInfoAsync__WorksCorrect()
+    {
+        // Arrange
+        var vkIntegration = GetVkIntegration();
+        var screenNames = new string[] { "durov", "zuev56" };
+
+        // Act
+        var users = await vkIntegration.GetUsersWithFullInfoAsync(screenNames);
+
+        // Assert
+        Assert.NotNull(users);
+        Assert.DoesNotContain(null, users);
+        Assert.Contains(null, users.Select(u => u.LastSeen));
+        Assert.Contains(0, users.Select(u => u.IsOnline));
+        Assert.Equal(screenNames.Length, users.Count);
+    }
+
 
     private IVkIntegration GetVkIntegration()
     {

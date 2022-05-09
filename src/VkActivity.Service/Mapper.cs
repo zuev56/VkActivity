@@ -23,12 +23,15 @@ public static class Mapper
     {
         ArgumentNullException.ThrowIfNull(nameof(apiVkUser));
 
+        //Просто удалить из словаря ненужные поля перед сериализацией
+        var json = JsonSerializer.Serialize(apiVkUser, _jsonSerializerOptions);
+
         return new User
         {
             Id = apiVkUser.Id,
             FirstName = apiVkUser.FirstName,
             LastName = apiVkUser.LastName,
-            RawData = JsonSerializer.Serialize(apiVkUser, _jsonSerializerOptions).NormalizeJsonString(),
+            RawData = json,
             RawDataHistory = null,
             InsertDate = DateTime.UtcNow,
             UpdateDate = DateTime.UtcNow

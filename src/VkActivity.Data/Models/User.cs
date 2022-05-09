@@ -18,11 +18,6 @@ public partial class User : IEquatable<User?>
 
     public bool Equals(User? other)
     {
-        throw new NotImplementedException();
-        // в RawData может меняться платформа и время захода, что потребует необходимости правок
-        // Сделать белый или чёрный список полей, затем парсить их и сравнивать
-        // Или просто не сохрянять поля, которые меняются регулярно
-
         return other != null
             && Id == other.Id
             && FirstName == other.FirstName

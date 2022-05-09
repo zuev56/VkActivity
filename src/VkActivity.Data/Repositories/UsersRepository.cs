@@ -79,7 +79,10 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
 
     private void UpdateUserFromOther(User target, User source)
     {
-        var rawDataHistory = JsonSerializer.Deserialize<JsonElement>(target.RawDataHistory ?? "").EnumerateArray().ToList();
+        var rawDataHistory = target.RawDataHistory != null
+            ? JsonSerializer.Deserialize<JsonElement>(target.RawDataHistory).EnumerateArray().ToList()
+            : new List<JsonElement>();
+
         rawDataHistory.Add(JsonSerializer.Deserialize<JsonElement>(target.RawData!));
         target.RawDataHistory = JsonSerializer.Serialize(rawDataHistory).NormalizeJsonString();
 

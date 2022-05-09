@@ -66,7 +66,6 @@ public class UserManagerTests
     {
         // Arrange
         var userManager = StubFactory.GetUserManager(_userIdSet);
-        var usersToUpdate = StubFactory.GetUsersToUpdate(_userIdSet.ChangedUserIds);
 
         // Act
         var updateUsersResult = await userManager.UpdateUsersAsync(_userIdSet.ChangedUserIds);
