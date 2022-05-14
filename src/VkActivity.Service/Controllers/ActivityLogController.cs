@@ -16,10 +16,11 @@ public sealed class ActivityLogController : Controller
     //+/- Настроить использование appsettings.Development.json
     //+/- Покрыть тестами оставшееся!
     //+/- Сделать настройку Kestrel из конфигурационного файла(возможность переопределения заданных в коде параметров)
-    //- Проверить корректность работы логгера активности пользователей
-    //- Сделать обработку деактивированного пользователя deactivated: string [ deleted, banned ]
-    //- Раз в день обновлять пользователей в БД
-    //- Вынести строковые названия переменных appsettings.json в константы
+    // - Проверить корректность работы логгера активности пользователей
+    // - Сделать обработку деактивированного пользователя deactivated: string [ deleted, banned ]
+    // +/- Раз в день обновлять пользователей в БД (Осталось проверить)
+    // - Накапливать ошибки соединения и выдавать их один раз в 10 минут
+    // - Анализировать соединение и останавливать запросы к Vk API при разрыве связи
 
 
 
@@ -28,9 +29,9 @@ public sealed class ActivityLogController : Controller
         _activityAnalyzerService = activityAnalyzerService ?? throw new ArgumentNullException(nameof(activityAnalyzerService));
     }
 
-    [HttpGet("{userId:int}period/{fromDate:DateTime}/{toDate:DateTime}")]
+    [HttpGet("{userId:int}/period")]
     public async Task<IActionResult> GetPeriodInfo(
-        [FromRoute] int userId, [FromRoute] DateTime fromDate, [FromRoute] DateTime toDate)
+        [FromRoute] int userId, [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
     {
         var periodStatisticsResult = await _activityAnalyzerService.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
         periodStatisticsResult.AssertResultIsSuccessful();
@@ -40,7 +41,7 @@ public sealed class ActivityLogController : Controller
     }
 
     [HttpGet("{userId:int}/fulltime")]
-    public async Task<IActionResult> GetFullTimeInfo(int userId)
+    public async Task<IActionResult> GetFullTimeInfo([FromRoute] int userId)
     {
         var fullTimeStatistictResult = await _activityAnalyzerService.GetFullTimeActivityAsync(userId);
         fullTimeStatistictResult.AssertResultIsSuccessful();
@@ -48,18 +49,6 @@ public sealed class ActivityLogController : Controller
 
         return Ok(fullTimeInfoDto);
     }
-
-
-
-    //[Obsolete("Use UsersController.AddNewUsers")]
-    //[HttpPost(nameof(AddNewUsers))]
-    //public async Task<IActionResult> AddNewUsers(int[] userIds)
-    //{
-    //    var addUsersResult = await _activityLoggerService.AddNewUsersAsync(userIds).ConfigureAwait(false);
-    //    return addUsersResult.IsSuccess
-    //        ? Ok(addUsersResult)
-    //        : StatusCode(500, addUsersResult);
-    //}
 
 
     //[Obsolete("Use UsersController.GetUsersWithActivity")]

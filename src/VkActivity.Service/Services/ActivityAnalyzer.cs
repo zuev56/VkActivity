@@ -72,7 +72,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(string filterText, DateTime fromDate, DateTime toDate)
+    public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(string? filterText, DateTime fromDate, DateTime toDate)
     {
         try
         {
@@ -263,8 +263,8 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         {
             var prev = orderedLog[i - 1];
             var cur = orderedLog[i];
-            var prevIsOnlineMobile = IsWebSite(prev.Platform);
-            var curIsOnlineMobile = IsWebSite(cur.Platform);
+            var prevIsOnlineMobile = !IsWebSite(prev.Platform);
+            var curIsOnlineMobile = !IsWebSite(cur.Platform);
 
             switch (device)
             {

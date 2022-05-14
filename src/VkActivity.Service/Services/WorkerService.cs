@@ -72,7 +72,7 @@ internal sealed class WorkerService : BackgroundService
     private List<IJobBase> CreateJobs()
     {
         _userActivityLoggerJob = new ProgramJob(
-            period: TimeSpan.FromMilliseconds(_configuration.GetSection(AppSettings.Vk.ActivityLogIntervalSec).Get<int>()),
+            period: TimeSpan.FromSeconds(_configuration.GetSection(AppSettings.Vk.ActivityLogIntervalSec).Get<int>()),
             method: SaveVkUsersActivityAsync,
             logger: _logger);
 
@@ -124,10 +124,12 @@ internal sealed class WorkerService : BackgroundService
         {
             var usersRepo = scope.ServiceProvider.GetService<IUsersRepository>();
             var userIds = await usersRepo!.FindAllIdsAsync().ConfigureAwait(false);
-            var userScreenNames = userIds.Select(id => id.ToString()).ToArray();
 
-            var vkIntegration = scope.ServiceProvider.GetService<IVkIntegration>();
-            var users = await vkIntegration!.GetUsersWithFullInfoAsync(userScreenNames).ConfigureAwait(false);
+            var userManager = scope.ServiceProvider.GetService<IUserManager>()!;
+            var updateResult = await userManager.UpdateUsersAsync(userIds);
+
+            if (!updateResult.IsSuccess)
+                _logger.LogError(string.Join(Environment.NewLine, updateResult.Messages), new { UserIds = userIds });
         }
     }
 

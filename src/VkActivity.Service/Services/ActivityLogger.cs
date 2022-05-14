@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
 using VkActivity.Service.Abstractions;
@@ -28,18 +27,6 @@ public sealed class ActivityLogger : IActivityLogger
         _usersRepo = usersRepo ?? throw new ArgumentNullException(nameof(usersRepo));
         _vkIntegration = vkIntegration ?? throw new ArgumentNullException(nameof(vkIntegration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    private async Task<(int[] userIds, int[] newUserIds)> SeparateNewUserIdsAsync(string[] sourceScreenNames)
-    {
-        var vkApiUsers = await _vkIntegration.GetUsersWithActivityInfoAsync(sourceScreenNames).ConfigureAwait(false);
-        var userIds = vkApiUsers.Select(u => u.Id).ToArray();
-
-        var existingDbUsers = await _usersRepo.FindAllByIdsAsync(userIds).ConfigureAwait(false);
-
-        var newUserIds = userIds.Except(existingDbUsers.Select(u => u.Id)).ToArray();
-
-        return (userIds, newUserIds);
     }
 
     /// <inheritdoc/>

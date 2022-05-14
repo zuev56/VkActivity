@@ -8,15 +8,15 @@ public class DetailedActivity
     public string? UserName { get; init; }
     public string? Url { get; init; }
 
-    private static Dictionary<DayOfWeek, TimeSpan> _avgWeekDayActivity = new Dictionary<DayOfWeek, TimeSpan>
+    private static readonly Dictionary<DayOfWeek, TimeSpan> _avgWeekDayActivity = new()
     {
-        { DayOfWeek.Monday,    TimeSpan.FromSeconds(-1) },
-        { DayOfWeek.Tuesday,   TimeSpan.FromSeconds(-1) },
+        { DayOfWeek.Monday, TimeSpan.FromSeconds(-1) },
+        { DayOfWeek.Tuesday, TimeSpan.FromSeconds(-1) },
         { DayOfWeek.Wednesday, TimeSpan.FromSeconds(-1) },
-        { DayOfWeek.Thursday,  TimeSpan.FromSeconds(-1) },
-        { DayOfWeek.Friday,    TimeSpan.FromSeconds(-1) },
-        { DayOfWeek.Saturday,  TimeSpan.FromSeconds(-1) },
-        { DayOfWeek.Sunday,    TimeSpan.FromSeconds(-1) }
+        { DayOfWeek.Thursday, TimeSpan.FromSeconds(-1) },
+        { DayOfWeek.Friday, TimeSpan.FromSeconds(-1) },
+        { DayOfWeek.Saturday, TimeSpan.FromSeconds(-1) },
+        { DayOfWeek.Sunday, TimeSpan.FromSeconds(-1) }
     };
 
     public int AnalyzedDaysCount { get; init; }

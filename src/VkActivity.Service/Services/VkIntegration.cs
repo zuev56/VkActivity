@@ -17,9 +17,6 @@ internal sealed class VkIntegration : IVkIntegration
         "domain,education,exports,has_photo,has_mobile,home_town,photo_50,sex,site,schools,screen_name,verified,games,interests," +
         "maiden_name,military,movies,music,nickname,occupation,personal,quotes,relation,relatives,timezone,tv,universities";
 
-    // screen_name - короткое имя страницы
-    // domain - короткий адрес страницы (например, andrew, id35828305)
-
     private static readonly SemaphoreSlim _semaphore = new(1, 32);
     private static readonly TimeSpan _apiAccessTimeout = TimeSpan.FromSeconds(3);
     private static DateTime _lastApiAccessTime = DateTime.UtcNow;
