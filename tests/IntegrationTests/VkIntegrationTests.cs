@@ -3,9 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using VkActivity.Service;
-using VkActivity.Service.Abstractions;
-using VkActivity.Service.Services;
+using VkActivity.Worker;
+using VkActivity.Worker.Abstractions;
+using VkActivity.Worker.Services;
 using Xunit;
 
 namespace IntegrationTests;

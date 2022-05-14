@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "tests\UnitTest
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Data", "src\VkActivity.Data\VkActivity.Data.csproj", "{00BB3993-E898-4B92-865D-B380F2B59427}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Service", "src\VkActivity.Service\VkActivity.Service.csproj", "{84FAB167-76EF-4414-87F0-75ECE3E850CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Worker", "src\VkActivity.Worker\VkActivity.Worker.csproj", "{84FAB167-76EF-4414-87F0-75ECE3E850CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "tests\IntegrationTests\IntegrationTests.csproj", "{8D281376-2AD3-4C00-BB86-3482B12E590C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "tests\IntegrationTests\IntegrationTests.csproj", "{8D281376-2AD3-4C00-BB86-3482B12E590C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

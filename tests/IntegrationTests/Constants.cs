@@ -2,5 +2,5 @@
 
 internal static class Constants
 {
-    public const string VkActivityServiceAppSettingsPath = @"..\..\..\..\..\src\VkActivity.Service\appsettings.Development.json";
+    public const string VkActivityServiceAppSettingsPath = @"..\..\..\..\..\src\VkActivity.Worker\appsettings.Development.json";
 }

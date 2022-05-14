@@ -3,9 +3,9 @@
 2. PS> dotnet ef migrations add InitialVkActivityContext --context VkActivityContext --output-dir "Migrations"
 
 3. Append to generated MigrationBuilder.Up(...) method:
-            migrationBuilder.Sql(VkActivityContext.GetOtherSqlScripts(@"..\VkActivity.Service\appsettings.Development.json"));
+            migrationBuilder.Sql(VkActivityContext.GetOtherSqlScripts(@"..\VkActivity.Worker\appsettings.Development.json"));
 
-4. VkActivity.Service -> Open in Terminal
+4. VkActivity.Worker -> Open in Terminal
 
 5. PS> dotnet ef database update --context VkActivityContext --project ..\VkActivity.Data\VkActivity.Data.csproj 
 

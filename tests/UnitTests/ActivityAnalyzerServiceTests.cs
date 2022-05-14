@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UnitTests.Data;
-using VkActivity.Service.Abstractions;
-using VkActivity.Service.Services;
+using VkActivity.Worker.Abstractions;
+using VkActivity.Worker.Services;
 using Xunit;
 
 namespace UnitTests;

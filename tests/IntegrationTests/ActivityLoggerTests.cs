@@ -5,9 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UnitTests.Data;
-using VkActivity.Service;
-using VkActivity.Service.Abstractions;
-using VkActivity.Service.Services;
+using VkActivity.Worker;
+using VkActivity.Worker.Abstractions;
+using VkActivity.Worker.Services;
 using Xunit;
 
 namespace IntegrationTests;
