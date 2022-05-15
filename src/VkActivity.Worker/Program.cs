@@ -16,6 +16,7 @@ using VkActivity.Worker.Services;
 using Zs.Common.Enums;
 using Zs.Common.Models;
 using Zs.Common.Services.Abstractions;
+using Zs.Common.Services.Connection;
 using Zs.Common.Services.Scheduler;
 
 [assembly: InternalsVisibleTo("UnitTests")]
@@ -164,6 +165,13 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddScoped<ApiExceptionFilter>();
 
     services.AddSingleton<IScheduler, Scheduler>();
+    services.AddSingleton<IDelayedLogger, DelayedLogger>();
+    services.AddSingleton<IConnectionAnalyser, ConnectionAnalyser>(sp =>
+    {
+        return new ConnectionAnalyser(
+           sp.GetService<ILogger<ConnectionAnalyser>>(),
+           context.Configuration.GetSection("ConnectionAnalyser:Urls").Get<string[]>());
+    });
 
     services.AddSingleton<IVkIntegration, VkIntegration>(
         sp => new VkIntegration(context.Configuration[AppSettings.Vk.AccessToken], context.Configuration[AppSettings.Vk.Version]));

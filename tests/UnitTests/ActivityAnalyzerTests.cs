@@ -9,7 +9,7 @@ using Xunit;
 
 namespace UnitTests;
 
-public class ActivityAnalyzerServiceTests
+public class ActivityAnalyzerTests
 {
     private const int _dbEntitiesAmount = 1000;
 

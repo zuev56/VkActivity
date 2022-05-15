@@ -52,6 +52,7 @@ public sealed class ActivityLogger : IActivityLogger
             Trace.WriteLine($"LoggedItemsCount: {loggedItemsCount}");
 #endif
 
+            result.AddMessage($"LoggedItemsCount: {loggedItemsCount}");
             return result;
         }
         catch (Exception ex)
