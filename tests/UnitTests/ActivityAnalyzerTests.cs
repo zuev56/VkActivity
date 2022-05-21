@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using UnitTests.Data;
 using VkActivity.Worker.Abstractions;
+using VkActivity.Worker.Models;
 using VkActivity.Worker.Services;
 using Xunit;
 
@@ -58,7 +59,7 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        // TODO: Check Error message
+        result.Messages.Should().OnlyContain(m => m.Text == Notes.UserNotFound(userId));
     }
 
     [Fact]
@@ -75,7 +76,8 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        // TODO: Check Warning message
+        result.Messages.Should().OnlyContain(m => m.Text == Notes.ActivityForUserNotFound(userWithoutActivityDataId));
+        result.Messages.Should().ContainSingle();
     }
 
     [Fact]
@@ -118,7 +120,8 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        // TODO: Check Error message
+        result.Messages.Should().OnlyContain(m => m.Text == Notes.UserNotFound(userId));
+        result.Messages.Should().ContainSingle();
     }
 
     [Theory]
@@ -137,7 +140,8 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        // TODO: Check Error message
+        result.Messages.Should().OnlyContain(m => m.Text == Notes.EndDateIsNotMoreThanStartDate);
+        result.Messages.Should().ContainSingle();
     }
 
     public static readonly object[][] _correctParametersForGetUsersWithActivityAsync =
@@ -183,7 +187,8 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        // TODO: Check Error message
+        result.Messages.Should().OnlyContain(m => m.Text == Notes.EndDateIsNotMoreThanStartDate);
+        result.Messages.Should().ContainSingle();
     }
 
     private IActivityAnalyzer GetActivityAnalyzer()

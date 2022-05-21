@@ -1,3 +1,4 @@
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using UnitTests.Data;
@@ -24,7 +25,7 @@ public class ActivityLoggerTests
         Assert.Empty(saveActivityResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning));
     }
 
-    [Fact(Skip = "Unable to save default activity because EF Inmemory not works with RawSql")]
+    [Fact]
     public async Task SaveVkUsersActivityAsync_VkIntegrationFailed_ReturnsError()
     {
         // Arrange
@@ -38,5 +39,24 @@ public class ActivityLoggerTests
         Assert.NotEmpty(saveActivityResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Error));
         Assert.Empty(saveActivityResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning));
         Assert.Empty(saveActivityResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Info));
+    }
+
+    [Fact(Skip = "NotImplemented")]
+    public async Task SetUndefinedActivityToAllUsersAsync_Once_Successful()
+    {
+        throw new NotImplementedException();
+    }
+
+    [Fact(Skip = "NotImplemented")]
+    public async Task SetUndefinedActivityToAllUsersAsync_ManyTimes_Successful()
+    {
+        // Не записывает повторно в БД записи, где is_online = null
+        throw new NotImplementedException();
+    }
+
+    [Fact(Skip = "NotImplemented")]
+    public async Task SetUndefinedActivityToAllUsersAsync_EmptyActivityLog_SuccessfulWithWarning()
+    {
+        throw new NotImplementedException();
     }
 }

@@ -16,7 +16,7 @@ internal sealed class WorkerService : BackgroundService
     private readonly IScheduler _scheduler;
     private readonly IConnectionAnalyser _connectionAnalyser;
     private readonly IConfiguration _configuration;
-    private readonly IDelayedLogger delayedLogger;
+    private readonly IDelayedLogger _delayedLogger;
     private readonly ILogger<WorkerService> _logger;
     private DateTime _disconnectionTime = DateTime.UtcNow;
 
@@ -38,7 +38,7 @@ internal sealed class WorkerService : BackgroundService
             _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
             _connectionAnalyser = connectionAnalyser ?? throw new ArgumentNullException(nameof(connectionAnalyser));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.delayedLogger = delayedLogger ?? throw new ArgumentNullException(nameof(delayedLogger));
+            this._delayedLogger = delayedLogger ?? throw new ArgumentNullException(nameof(delayedLogger));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _scheduler.Jobs.AddRange(CreateJobs());
@@ -114,7 +114,9 @@ internal sealed class WorkerService : BackgroundService
     {
         if (_disconnectionTime != default)
         {
-            delayedLogger.LogError(Notes.NoInernetConnection, typeof(WorkerService));
+            await SetUndefinedActivityToAllUsers().ConfigureAwait(false);
+
+            _delayedLogger.LogError(Notes.NoInernetConnection, typeof(WorkerService));
             return;
         }
 
@@ -122,27 +124,27 @@ internal sealed class WorkerService : BackgroundService
         {
             _isFirstStep = false;
             _userActivityLoggerJob!.IdleStepsCount = 1;
-            await AddUsersFullInfo().ConfigureAwait(false);
+            await AddUsersFullInfoAsync().ConfigureAwait(false);
             return;
         }
 
         if (_userActivityLoggerJob!.IdleStepsCount > 0)
             _userActivityLoggerJob.IdleStepsCount = 0;
 
-        var result = await GetUsersActivity().ConfigureAwait(false);
+        var result = await SaveUsersActivityAsync().ConfigureAwait(false);
         if (!result.IsSuccess)
         {
             string logMessage = result.Messages.Count == 1
                 ? result.Messages[0].Text
                 : result.JoinMessages();
 
-            _logger.LogError(logMessage);
+            _logger.LogErrorIfNeed(logMessage);
         }
 
         _logger.LogTraceIfNeed(result.JoinMessages());
     }
 
-    private async Task<IOperationResult> GetUsersActivity()
+    private async Task<IOperationResult> SaveUsersActivityAsync()
     {
         using (var scope = _scopeFactory.CreateScope())
         {
@@ -151,7 +153,15 @@ internal sealed class WorkerService : BackgroundService
         }
     }
 
-    private async Task AddUsersFullInfo()
+    private async Task<IOperationResult> SetUndefinedActivityToAllUsers()
+    {
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            var activityLoggerService = scope.ServiceProvider.GetService<IActivityLogger>();
+            return await activityLoggerService!.SetUndefinedActivityToAllUsersAsync().ConfigureAwait(false);
+        }
+    }
+    private async Task AddUsersFullInfoAsync()
     {
         using (var scope = _scopeFactory.CreateScope())
         {

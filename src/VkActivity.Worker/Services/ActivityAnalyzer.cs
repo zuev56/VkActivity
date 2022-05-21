@@ -60,7 +60,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         }
     }
 
-    private bool IsWebSite(Platform platform)
+    private static bool IsWebSite(Platform platform)
         => platform == Platform.MobileSiteVersion || platform == Platform.FullSiteVersion;
 
 
@@ -240,7 +240,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     /// <summary>Get activity time from list of <see cref="ActivityLogItem"/>s in seconds</summary>
     /// <param name="orderedLog">Ordered list of <see cref="ActivityLogItem"/>s</param>
     /// <param name="device">The device type from which the site was used</param>
-    private int GetActivitySeconds(List<ActivityLogItem> orderedLog, Device device)
+    private static int GetActivitySeconds(List<ActivityLogItem> orderedLog, Device device)
     {
         // Проверка:
         //  - Первый элемент списка должен быть IsOnline == true

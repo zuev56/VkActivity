@@ -52,7 +52,7 @@ namespace UnitTests
                 }
             }
 
-            await Task.Delay(_specificLogWriteInterval + _specificLogWriteInterval / 5);
+            await Task.Delay(_specificLogWriteInterval + TimeSpan.FromMilliseconds(300));
 
             // Assert
             _loggerMock.Verify(logger => logger.Log(

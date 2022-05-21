@@ -60,48 +60,49 @@ public sealed class ActivityLogger : IActivityLogger
         {
             _logger.LogErrorIfNeed(ex, Notes.SaveUsersActivityError);
 
-            await TrySetUndefinedActivityToAllUsers().ConfigureAwait(false);
+            await SetUndefinedActivityToAllUsersAsync().ConfigureAwait(false);
 
             return ServiceResult.Error(Notes.SaveUsersActivityError);
         }
     }
 
     /// <summary>Save undefined user activities to database</summary>
-    private async Task TrySetUndefinedActivityToAllUsers()
+    public async Task<IOperationResult> SetUndefinedActivityToAllUsersAsync()
     {
         try
         {
             var users = await _usersRepo.FindAllAsync();
 
             var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
-
             if (!lastUsersActivityLogItems.Any())
-                return;
+                return ServiceResult.Warning(Notes.ActivityLogIsEmpty);
 
             var activityLogItems = new List<ActivityLogItem>();
             foreach (var user in users)
             {
-                if (lastUsersActivityLogItems.First(i => i.UserId == user.Id).IsOnline == true)
-                    activityLogItems.Add(
-                        new ActivityLogItem
-                        {
-                            UserId = user.Id,
-                            IsOnline = null,
-                            Platform = 0,
-                            LastSeen = -1,
-                            InsertDate = DateTime.UtcNow
-                        }
-                    );
+                var userActivityItem = lastUsersActivityLogItems.FirstOrDefault(i => i.UserId == user.Id);
+                if (userActivityItem?.IsOnline != null)
+                    activityLogItems.Add(new ActivityLogItem
+                    {
+                        UserId = user.Id,
+                        IsOnline = null,
+                        Platform = 0,
+                        LastSeen = int.MaxValue,
+                        InsertDate = DateTime.UtcNow
+                    });
             }
 
             var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
 
-            _logger.LogWarningIfNeed(Notes.SetUndefinedActivityToAllUsers, saveResult);
+#if DEBUG
+            Trace.WriteLine(Notes.SetUndefinedActivityToAllUsers);
+#endif
+            return ServiceResult.Success();
         }
-        catch (Exception ex)
+        catch
         {
             _logger.LogErrorIfNeed(Notes.SetUndefinedActivityToAllUsersError);
-            throw;
+            return ServiceResult.Error(Notes.SetUndefinedActivityToAllUsersError);
         }
     }
 
