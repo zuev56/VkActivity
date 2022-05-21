@@ -1,7 +1,8 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
@@ -45,7 +46,7 @@ public class VkIntegrationTests
     }
 
     [Fact]
-    public async Task GetUsersWithActivityInfoAsync_ManyRequests_WorksCorrect()
+    public async Task GetUsersWithActivityInfoAsync_ManyRequests_ExecuteWithDelay()
     {
         // Arrange
         var vkIntegration = GetVkIntegration();
@@ -70,7 +71,7 @@ public class VkIntegrationTests
     }
 
     [Fact]
-    public async Task GetUsersWithFullInfoAsync__WorksCorrect()
+    public async Task GetUsersWithFullInfoAsync_ReturnsUsersWithFullInfo()
     {
         // Arrange
         var vkIntegration = GetVkIntegration();
@@ -87,6 +88,21 @@ public class VkIntegrationTests
         Assert.Equal(screenNames.Length, users.Count);
     }
 
+    [Fact]
+    public async Task GetFriendIds_ReturnsFriendIdsArray()
+    {
+        // Arrange
+        var vkIntegration = GetVkIntegration();
+        var userId = 8790237; //Надо перебирать пользователей с открытыми друзьями
+
+        // Act
+        var friendIds = await vkIntegration.GetFriendIds(userId);
+
+        // Assert
+        friendIds.Should().NotBeNull();
+        friendIds.Should().HaveCountGreaterThan(100);
+        friendIds.Should().OnlyHaveUniqueItems();
+    }
 
     private IVkIntegration GetVkIntegration()
     {

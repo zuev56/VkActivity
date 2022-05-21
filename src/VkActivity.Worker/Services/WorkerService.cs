@@ -114,7 +114,7 @@ internal sealed class WorkerService : BackgroundService
     {
         if (_disconnectionTime != default)
         {
-            delayedLogger.AddError(Errors.NoInernetConnection, typeof(WorkerService));
+            delayedLogger.LogError(Notes.NoInernetConnection, typeof(WorkerService));
             return;
         }
 
@@ -147,7 +147,7 @@ internal sealed class WorkerService : BackgroundService
         using (var scope = _scopeFactory.CreateScope())
         {
             var activityLoggerService = scope.ServiceProvider.GetService<IActivityLogger>();
-            return await activityLoggerService!.SaveVkUsersActivityAsync().ConfigureAwait(false);
+            return await activityLoggerService!.SaveUsersActivityAsync().ConfigureAwait(false);
         }
     }
 

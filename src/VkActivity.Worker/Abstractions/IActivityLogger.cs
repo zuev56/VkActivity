@@ -5,5 +5,5 @@ namespace VkActivity.Worker.Abstractions;
 public interface IActivityLogger
 {
     /// <summary> Activity data collection </summary>
-    Task<IOperationResult> SaveVkUsersActivityAsync();
+    Task<IOperationResult> SaveUsersActivityAsync();
 }

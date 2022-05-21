@@ -1,4 +1,6 @@
 ﻿using System.Collections.ObjectModel;
+using System.Text.Json;
+using VkActivity.Data.Models;
 
 namespace VkActivity.Worker.Models;
 
@@ -36,4 +38,17 @@ public class DetailedActivity
     public TimeSpan MaxDailyTime { get; init; }
     public static ReadOnlyDictionary<DayOfWeek, TimeSpan> AvgWeekDayActivity { get; } = new ReadOnlyDictionary<DayOfWeek, TimeSpan>(_avgWeekDayActivity);
 
+    public DetailedActivity(User user)
+    {
+        UserId = user.Id;
+        UserName = $"{user.FirstName} {user.LastName}";
+        AnalyzedDaysCount = 0;
+        ActivityDaysCount = 0;
+        VisitsFromSite = 0;
+        VisitsFromApp = 0;
+        //ActivityCalendar  = GetActivityForEveryDay(orderedLogForUser), Пока не используется
+        TimeInSite = TimeSpan.Zero;
+        TimeInApp = TimeSpan.Zero;
+        Url = $"https://vk.com/id{JsonDocument.Parse(user.RawData).RootElement.GetProperty("id")}";
+    }
 }

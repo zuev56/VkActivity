@@ -7,7 +7,7 @@ namespace VkActivity.Worker.Services;
 
 public sealed class DelayedLogger : IDelayedLogger, IDisposable
 {
-    public TimeSpan DefaultInterval { get; set; } = TimeSpan.FromMinutes(1);
+    public TimeSpan DefaultLogWriteInterval { get; set; } = TimeSpan.FromMinutes(1);
 
     private record class Message(
         string Text,
@@ -49,43 +49,60 @@ public sealed class DelayedLogger : IDelayedLogger, IDisposable
 
             switch (messageInfo.Message.LogLevel)
             {
+                case LogLevel.Trace: logger.LogTraceIfNeed(summaryMessage); break;
+                case LogLevel.Debug: logger.LogDebugIfNeed(summaryMessage); break;
+                case LogLevel.Information: logger.LogInformationIfNeed(summaryMessage); break;
                 case LogLevel.Warning: logger.LogWarningIfNeed(summaryMessage); break;
                 case LogLevel.Error: logger.LogErrorIfNeed(summaryMessage); break;
+                case LogLevel.Critical: logger.LogCriticalIfNeed(summaryMessage); break;
             }
 
             _messages = _messages.RemoveAll(m => m.Text == messageInfo.Message.Text);
         }
     }
 
-    public void SetupMessage(string message, TimeSpan logShowInterval)
+    public void SetupLogMessage(string messageText, TimeSpan logShowInterval)
     {
-        _messageTemplatesWithInterval.AddOrUpdate(message, logShowInterval, (k, v) => v);
+        _messageTemplatesWithInterval.AddOrUpdate(
+            messageText, logShowInterval, (key, value) => value);
     }
 
-    public int AddWarning<TSourceContext>(string message, TSourceContext sourceContextType)
+    public int Log<TSourceContext>(string messageText, LogLevel logLevel, TSourceContext sourceContextType)
         where TSourceContext : Type
     {
-        return Add(message, LogLevel.Warning, sourceContextType);
-    }
+        ArgumentNullException.ThrowIfNull(messageText);
 
-    public int AddError<TSourceContext>(string message, TSourceContext sourceContextType)
-        where TSourceContext : Type
-    {
-        ArgumentNullException.ThrowIfNull(message);
-
-        return Add(message, LogLevel.Error, sourceContextType);
-    }
-
-    public int Add<TSourceContext>(string messageText, LogLevel logLevel, TSourceContext sourceContextType)
-        where TSourceContext : Type
-    {
         if (!_messageTemplatesWithInterval.ContainsKey(messageText))
-            SetupMessage(messageText, DefaultInterval);
+            SetupLogMessage(messageText, DefaultLogWriteInterval);
 
         _messages = _messages.Add(new(messageText, logLevel, DateTime.UtcNow, sourceContextType));
 
         return _messages.Count(m => m.Text == messageText);
     }
+
+    public int LogTrace<TSourceContext>(string messageText, TSourceContext sourceContextType)
+        where TSourceContext : Type
+        => Log(messageText, LogLevel.Trace, sourceContextType);
+
+    public int LogInformation<TSourceContext>(string messageText, TSourceContext sourceContextType)
+        where TSourceContext : Type
+        => Log(messageText, LogLevel.Information, sourceContextType);
+
+    public int LogDebug<TSourceContext>(string messageText, TSourceContext sourceContextType)
+        where TSourceContext : Type
+        => Log(messageText, LogLevel.Debug, sourceContextType);
+
+    public int LogWarning<TSourceContext>(string messageText, TSourceContext sourceContextType)
+        where TSourceContext : Type
+        => Log(messageText, LogLevel.Warning, sourceContextType);
+
+    public int LogError<TSourceContext>(string messageText, TSourceContext sourceContextType)
+        where TSourceContext : Type
+        => Log(messageText, LogLevel.Error, sourceContextType);
+
+    public int LogCritical<TSourceContext>(string messageText, TSourceContext sourceContextType)
+        where TSourceContext : Type
+        => Log(messageText, LogLevel.Critical, sourceContextType);
 
     public void Dispose()
     {

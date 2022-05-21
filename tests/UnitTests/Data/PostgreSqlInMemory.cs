@@ -32,7 +32,7 @@ public class PostgreSqlInMemory
     public void FillWithFakeData(int entitiesCount)
     {
         var users = StubFactory.CreateUsers(entitiesCount);
-        var activityLogItems = StubFactory.CreateActivityLogItems(entitiesCount);
+        var activityLogItems = StubFactory.CreateActivityLogItems(entitiesCount - 10);
 
 
         Task.WaitAll(new Task[]

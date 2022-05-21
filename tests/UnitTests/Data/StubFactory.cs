@@ -100,31 +100,63 @@ internal class StubFactory
         return users;
     }
 
-    internal static ActivityLogItem CreateActivityLogItem(int itemId = 0, int userId = 0)
+    internal static ActivityLogItem CreateActivityLogItem(int itemId, int userId, int lastSeen, bool isOnline)
     {
-        itemId = PrepareId(itemId);
-
-        var isOnline = Convert.ToBoolean(Random.Shared.Next(0, 1));
-        var platform = (Platform)Convert.ToInt32(Random.Shared.Next(0, 7));
+        var platform = (Platform)Convert.ToInt32(Random.Shared.Next(0, 8));
 
         return new ActivityLogItem
         {
             Id = itemId,
             UserId = userId,
+            LastSeen = lastSeen,
             IsOnline = isOnline,
             Platform = platform,
             InsertDate = DateTime.UtcNow
         };
     }
 
-    internal static ActivityLogItem[] CreateActivityLogItems(int amount)
+    internal static ActivityLogItem[] CreateActivityLogItems(int usersCount)
     {
-        var activityLogItems = new ActivityLogItem[amount];
+        // TODO: Вообще, правильным было бы заполнение через реальный функционал IActivityLogger
+        var activityLogItems = new ActivityLogItem[usersCount * 3];
+        var shift = 1;
 
-        for (int i = 0; i < amount; i++)
-            activityLogItems[i] = CreateActivityLogItem(i + 1, i + 1);
+        DateTime lastSeen;
+        for (int i = 1; i < usersCount + 1; i++)
+        {
+            lastSeen = DateTime.UtcNow - TimeSpan.FromDays(Random.Shared.Next(10, 365));
+            activityLogItems[i - 1] = CreateActivityLogItem(
+                itemId: i,
+                userId: i,
+                lastSeen: lastSeen.ToUnixEpoch(),
+                isOnline: true
+                );
+        }
 
-        return activityLogItems;
+        shift += usersCount;
+        for (int i = 1; i < usersCount + 1; i++)
+        {
+            lastSeen = DateTime.UtcNow - TimeSpan.FromHours(Random.Shared.Next(10, 200));
+            activityLogItems[i - 2 + shift] = CreateActivityLogItem(
+                itemId: i - 1 + shift,
+                userId: i,
+                lastSeen.ToUnixEpoch(),
+                isOnline: false
+                );
+        }
+
+        shift += usersCount;
+        for (int i = 0; i < usersCount; i += 3)
+        {
+            lastSeen = DateTime.UtcNow - TimeSpan.FromMinutes(Random.Shared.Next(0, 500));
+            activityLogItems[i - 2 + shift] = CreateActivityLogItem(
+                itemId: i - 1 + shift,
+                userId: i,
+                lastSeen.ToUnixEpoch(),
+                isOnline: true
+                );
+        }
+        return activityLogItems.Where(i => i != null).ToArray();
     }
 
     internal static IActivityLogger GetActivityLogger(UserIdSet userIdSet, bool vkIntergationWorks = true)
@@ -160,8 +192,8 @@ internal class StubFactory
                 .ReturnsAsync(GetApiUsers(userIdSet.NewUserIds, id => GetApiUserFullInfoJson_v5_131(id)));
             vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.NewAndExistingUserStringIds))
                 .ReturnsAsync(GetApiUsers(userIdSet.NewAndExistingUserIds, id => GetApiUserFullInfoJson_v5_131(id)));
-            vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.ChangedUserStringIds))
-                .ReturnsAsync(GetApiUsersWithUpdates(userIdSet.ChangedUserIds));
+            vkIntegrationMock.Setup(m => m.GetUsersWithFullInfoAsync(userIdSet.ChangedExistingUserStringIds))
+                .ReturnsAsync(GetApiUsersWithUpdates(userIdSet.ChangedExistingUserIds));
         }
         else
         {

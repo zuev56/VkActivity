@@ -79,18 +79,30 @@ namespace VkActivity.Worker.Services
 
         public async Task<IOperationResult> UpdateUsersAsync(params int[] userIds)
         {
-            ArgumentNullException.ThrowIfNull(nameof(userIds));
+            if (userIds == null || userIds.Length == 0)
+                return ServiceResult.Error($"{nameof(userIds)} is null or empty");
 
+            var result = ServiceResult.Success();
             var existingDbUserIds = await _usersRepo.FindExistingIdsAsync(userIds).ConfigureAwait(false);
+            if (existingDbUserIds.Length < userIds.Length)
+            {
+                var nonexistentIds = string.Join(',', userIds.Except(existingDbUserIds));
+                result.AddMessage($"Unable to update users that are not exist in database. IDs: {nonexistentIds}", InfoMessageType.Warning);
+            }
+
             var userIdsToUpdate = existingDbUserIds.Select(id => id.ToString()).ToArray();
 
             var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(userIdsToUpdate).ConfigureAwait(false);
             if (vkUsers is null)
-                return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
+                return ServiceResult.Error("Vk API error: cannot get users by IDs");
 
             var dbUsers = vkUsers.Select(u => Mapper.ToUser(u));
 
-            return await _usersRepo.UpdateRangeAsync(dbUsers).ConfigureAwait(false);
+            var updateResult = await _usersRepo.UpdateRangeAsync(dbUsers).ConfigureAwait(false);
+
+            result.Merge(updateResult);
+
+            return result;
         }
     }
 }

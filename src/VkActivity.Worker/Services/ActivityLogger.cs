@@ -2,6 +2,7 @@
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
 using VkActivity.Worker.Abstractions;
+using VkActivity.Worker.Models;
 using VkActivity.Worker.Models.VkApi;
 using Zs.Common.Abstractions;
 using Zs.Common.Enums;
@@ -30,7 +31,7 @@ public sealed class ActivityLogger : IActivityLogger
     }
 
     /// <inheritdoc/>
-    public async Task<IOperationResult> SaveVkUsersActivityAsync()
+    public async Task<IOperationResult> SaveUsersActivityAsync()
     {
         ServiceResult result = ServiceResult.Success();
         try
@@ -39,7 +40,7 @@ public sealed class ActivityLogger : IActivityLogger
 
             if (!userIds.Any())
             {
-                result.AddMessage("There are no users in the database", InfoMessageType.Warning);
+                result.AddMessage(Notes.NoUsersInDatabase, InfoMessageType.Warning);
                 return result;
             }
 
@@ -49,24 +50,24 @@ public sealed class ActivityLogger : IActivityLogger
             int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
 #if DEBUG
-            Trace.WriteLine($"LoggedItemsCount: {loggedItemsCount}");
+            Trace.WriteLine(Notes.LoggedItemsCount(loggedItemsCount));
 #endif
 
-            result.AddMessage($"LoggedItemsCount: {loggedItemsCount}");
+            result.AddMessage(Notes.LoggedItemsCount(loggedItemsCount));
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogErrorIfNeed(ex, "SaveVkUsersActivityAsync error");
+            _logger.LogErrorIfNeed(ex, Notes.SaveUsersActivityError);
 
-            await TrySetUndefinedActivityToAllVkUsers().ConfigureAwait(false);
+            await TrySetUndefinedActivityToAllUsers().ConfigureAwait(false);
 
-            return ServiceResult.Error("Users activity saving error");
+            return ServiceResult.Error(Notes.SaveUsersActivityError);
         }
     }
 
     /// <summary>Save undefined user activities to database</summary>
-    private async Task TrySetUndefinedActivityToAllVkUsers()
+    private async Task TrySetUndefinedActivityToAllUsers()
     {
         try
         {
@@ -95,11 +96,11 @@ public sealed class ActivityLogger : IActivityLogger
 
             var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
 
-            _logger.LogWarningIfNeed("Set undefined activity to all VkUsers (succeeded: {SaveResult})", saveResult);
+            _logger.LogWarningIfNeed(Notes.SetUndefinedActivityToAllUsers, saveResult);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _logger.LogErrorIfNeed("Set undefined activity to all VkUsers error");
+            _logger.LogErrorIfNeed(Notes.SetUndefinedActivityToAllUsersError);
             throw;
         }
     }
@@ -153,5 +154,4 @@ public sealed class ActivityLogger : IActivityLogger
 
         return 0;
     }
-
 }

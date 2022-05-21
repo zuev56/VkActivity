@@ -11,5 +11,9 @@ public enum Platform
     AndroidApp,
     WindowsPhoneApp,
     Windows10App,
-    FullSiteVersion
+    FullSiteVersion,
+    /// <summary>For backward compatibility with the previous API version</summary>
+    LegacyMobileApp,
+    /// <summary>For backward compatibility with the previous API version</summary>
+    legacyWebSite
 }

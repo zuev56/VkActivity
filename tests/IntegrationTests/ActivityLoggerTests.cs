@@ -24,7 +24,7 @@ public class ActivityLoggerTests
         var activityLogger = GetActivityLogger();
 
         // Act
-        var saveActivityResult = await activityLogger.SaveVkUsersActivityAsync();
+        var saveActivityResult = await activityLogger.SaveUsersActivityAsync();
 
         // Assert
         Assert.True(saveActivityResult?.IsSuccess);

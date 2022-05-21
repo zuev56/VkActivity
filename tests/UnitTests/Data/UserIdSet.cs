@@ -11,8 +11,8 @@ internal class UserIdSet
     public string[] NewUserStringIds { get; }
     public int[] NewAndExistingUserIds { get; }
     public string[] NewAndExistingUserStringIds { get; }
-    public int[] ChangedUserIds { get; }
-    public string[] ChangedUserStringIds { get; }
+    public int[] ChangedExistingUserIds { get; }
+    public string[] ChangedExistingUserStringIds { get; }
 
     private UserIdSet(int initialUsersAmount, int subluistAmountDivider)
     {
@@ -24,12 +24,12 @@ internal class UserIdSet
         InitialUserIds = Enumerable.Range(1, initialUsersAmount).ToArray();
         NewUserIds = Enumerable.Range(initialUsersAmount + 1, newUsersAmount).ToArray();
         NewAndExistingUserIds = InitialUserIds.Take(existingUsersAmountWhenAddNew).Union(NewUserIds).ToArray();
-        ChangedUserIds = Enumerable.Range(1, changedUsersAmount).ToArray();
+        ChangedExistingUserIds = Enumerable.Range(1, changedUsersAmount).ToArray();
 
         InitialUserStringIds = InitialUserIds.Select(x => x.ToString()).ToArray();
         NewUserStringIds = NewUserIds.Select(x => x.ToString()).ToArray();
         NewAndExistingUserStringIds = NewAndExistingUserIds.Select(x => x.ToString()).ToArray();
-        ChangedUserStringIds = ChangedUserIds.Select(x => x.ToString()).ToArray();
+        ChangedExistingUserStringIds = ChangedExistingUserIds.Select(x => x.ToString()).ToArray();
     }
 
     public static UserIdSet Create(int initialUsersAmount, int subluistAmountDivider = 10)

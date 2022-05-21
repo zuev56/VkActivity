@@ -11,6 +11,8 @@ public partial class User : IEquatable<User?>
     public DateTime UpdateDate { get; set; }
     public DateTime InsertDate { get; set; }
 
+    public string GetFullName() => $"{FirstName} {LastName}";
+
     public override bool Equals(object? obj)
     {
         return Equals(obj as User);

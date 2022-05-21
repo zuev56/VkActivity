@@ -21,7 +21,9 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
 
     public async Task<List<User>> FindAllWhereNameLikeValueAsync(string value, int? skip, int? take, CancellationToken cancellationToken = default)
         => await FindAllAsync(
-               u => EF.Functions.ILike(u.FirstName!, $"%{value}%") || EF.Functions.ILike(u.LastName!, $"%{value}%"),
+
+               u => u.FirstName!.Contains(value, StringComparison.InvariantCultureIgnoreCase) || u.LastName!.Contains(value, StringComparison.InvariantCultureIgnoreCase),
+               //u => EF.Functions.ILike(u.FirstName!, $"%{value}%") || EF.Functions.ILike(u.LastName!, $"%{value}%"),
                skip: skip,
                take: take,
                cancellationToken: cancellationToken);
