@@ -40,7 +40,7 @@ public sealed class ActivityLogger : IActivityLogger
 
             if (!userIds.Any())
             {
-                result.AddMessage(Notes.NoUsersInDatabase, InfoMessageType.Warning);
+                result.AddMessage(Note.NoUsersInDatabase, InfoMessageType.Warning);
                 return result;
             }
 
@@ -50,19 +50,19 @@ public sealed class ActivityLogger : IActivityLogger
             int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
 #if DEBUG
-            Trace.WriteLine(Notes.LoggedItemsCount(loggedItemsCount));
+            Trace.WriteLine(Note.LoggedItemsCount(loggedItemsCount));
 #endif
 
-            result.AddMessage(Notes.LoggedItemsCount(loggedItemsCount));
+            result.AddMessage(Note.LoggedItemsCount(loggedItemsCount));
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogErrorIfNeed(ex, Notes.SaveUsersActivityError);
+            _logger.LogErrorIfNeed(ex, Note.SaveUsersActivityError);
 
             await SetUndefinedActivityToAllUsersAsync().ConfigureAwait(false);
 
-            return ServiceResult.Error(Notes.SaveUsersActivityError);
+            return ServiceResult.Error(Note.SaveUsersActivityError);
         }
     }
 
@@ -75,7 +75,7 @@ public sealed class ActivityLogger : IActivityLogger
 
             var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
             if (!lastUsersActivityLogItems.Any())
-                return ServiceResult.Warning(Notes.ActivityLogIsEmpty);
+                return ServiceResult.Warning(Note.ActivityLogIsEmpty);
 
             var activityLogItems = new List<ActivityLogItem>();
             foreach (var user in users)
@@ -95,14 +95,14 @@ public sealed class ActivityLogger : IActivityLogger
             var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
 
 #if DEBUG
-            Trace.WriteLine(Notes.SetUndefinedActivityToAllUsers);
+            Trace.WriteLine(Note.SetUndefinedActivityToAllUsers);
 #endif
             return ServiceResult.Success();
         }
         catch
         {
-            _logger.LogErrorIfNeed(Notes.SetUndefinedActivityToAllUsersError);
-            return ServiceResult.Error(Notes.SetUndefinedActivityToAllUsersError);
+            _logger.LogErrorIfNeed(Note.SetUndefinedActivityToAllUsersError);
+            return ServiceResult.Error(Note.SetUndefinedActivityToAllUsersError);
         }
     }
 

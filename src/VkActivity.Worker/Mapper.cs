@@ -62,7 +62,8 @@ public static class Mapper
             VisitsCount = simpleActivity.VisitsCount,
             TimeInSite = simpleActivity.TimeInSite.ToDayHHmmss(),
             TimeInApp = simpleActivity.TimeInApp.ToDayHHmmss(),
-            FullTime = (simpleActivity.TimeInSite + simpleActivity.TimeInApp).ToDayHHmmss()
+            TimeOnPlatforms = simpleActivity.TimeOnPlatforms.ToDictionary(i => i.Key, i => i.Value.ToDayHHmmss()),
+            FullTime = simpleActivity.TimeOnPlatforms.Sum(i => i.Value).ToDayHHmmss()
         };
     }
 
@@ -77,6 +78,7 @@ public static class Mapper
             VisitsCount = detailedActivity.VisitsCount,
             TimeInSite = detailedActivity.TimeInSite.ToDayHHmmss(),
             TimeInApp = detailedActivity.TimeInApp.ToDayHHmmss(),
+            TimeOnPlatforms = detailedActivity.TimeOnPlatforms.ToDictionary(i => i.Key, i => i.Value.ToDayHHmmss()),
             FullTime = detailedActivity.FullTime.ToDayHHmmss(),
             AvgDailyTime = detailedActivity.AvgDailyTime.ToDayHHmmss()
         };

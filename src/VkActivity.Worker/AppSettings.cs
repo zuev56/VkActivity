@@ -28,4 +28,12 @@ public static class AppSettings
         public const string ApiVersion = $"{nameof(Swagger)}:{nameof(ApiVersion)}";
         public const string EndpointUrl = $"{nameof(Swagger)}:{nameof(EndpointUrl)}";
     }
+
+    public static class Proxy
+    {
+        public const string UseProxy = $"{nameof(Proxy)}:{nameof(UseProxy)}";
+        public const string Socket = $"{nameof(Proxy)}:{nameof(Socket)}";
+        public const string Login = $"{nameof(Proxy)}:{nameof(Login)}";
+        public const string Password = $"{nameof(Proxy)}:{nameof(Password)}";
+    }
 }

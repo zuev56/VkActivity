@@ -50,7 +50,7 @@ public class ActivityLoggerTests
     [Fact(Skip = "NotImplemented")]
     public async Task SetUndefinedActivityToAllUsersAsync_ManyTimes_Successful()
     {
-        // Не записывает повторно в БД записи, где is_online = null
+        // Не записывает повторно в БД записи, где is_online = null (исправить название)
         throw new NotImplementedException();
     }
 

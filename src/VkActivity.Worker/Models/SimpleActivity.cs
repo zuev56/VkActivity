@@ -1,11 +1,16 @@
-﻿namespace VkActivity.Worker.Models;
+﻿using VkActivity.Data.Models;
+
+namespace VkActivity.Worker.Models;
 
 public class SimpleActivity
 {
-    public int UserId { get; set; }
-    public string? UserName { get; set; }
-    public string? CurrentStatus { get; set; }
-    public int VisitsCount { get; set; }
-    public TimeSpan TimeInSite { get; set; }
-    public TimeSpan TimeInApp { get; set; }
+    public int UserId { get; init; }
+    public string? UserName { get; init; }
+    public string? CurrentStatus { get; init; }
+    public int VisitsCount { get; init; }
+    [Obsolete("Use TimeOnPlatforms instead")]
+    public TimeSpan TimeInSite { get; init; }
+    [Obsolete("Use TimeOnPlatforms instead")]
+    public TimeSpan TimeInApp { get; init; }
+    public Dictionary<Platform, TimeSpan> TimeOnPlatforms { get; init; } = new();
 }

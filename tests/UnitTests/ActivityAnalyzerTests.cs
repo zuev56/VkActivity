@@ -42,6 +42,12 @@ public class ActivityAnalyzerTests
         }
     }
 
+    [Fact(Skip = "NotImplemented")]
+    public Task GetFullTimeActivityAsync_SuccessfulWithCorrectActivityTime()
+    {
+        throw new NotImplementedException();
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -59,7 +65,7 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        result.Messages.Should().OnlyContain(m => m.Text == Notes.UserNotFound(userId));
+        result.Messages.Should().OnlyContain(m => m.Text == Note.UserNotFound(userId));
     }
 
     [Fact]
@@ -76,7 +82,7 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Messages.Should().OnlyContain(m => m.Text == Notes.ActivityForUserNotFound(userWithoutActivityDataId));
+        result.Messages.Should().OnlyContain(m => m.Text == Note.ActivityForUserNotFound(userWithoutActivityDataId));
         result.Messages.Should().ContainSingle();
     }
 
@@ -120,7 +126,7 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        result.Messages.Should().OnlyContain(m => m.Text == Notes.UserNotFound(userId));
+        result.Messages.Should().OnlyContain(m => m.Text == Note.UserNotFound(userId));
         result.Messages.Should().ContainSingle();
     }
 
@@ -140,7 +146,7 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        result.Messages.Should().OnlyContain(m => m.Text == Notes.EndDateIsNotMoreThanStartDate);
+        result.Messages.Should().OnlyContain(m => m.Text == Note.EndDateIsNotMoreThanStartDate);
         result.Messages.Should().ContainSingle();
     }
 
@@ -187,11 +193,11 @@ public class ActivityAnalyzerTests
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
-        result.Messages.Should().OnlyContain(m => m.Text == Notes.EndDateIsNotMoreThanStartDate);
+        result.Messages.Should().OnlyContain(m => m.Text == Note.EndDateIsNotMoreThanStartDate);
         result.Messages.Should().ContainSingle();
     }
 
-    private IActivityAnalyzer GetActivityAnalyzer()
+    private static IActivityAnalyzer GetActivityAnalyzer()
     {
         var postgreSqlInMemory = new PostgreSqlInMemory();
         postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);

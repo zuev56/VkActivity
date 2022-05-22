@@ -26,14 +26,17 @@ public class DetailedActivity
     public int VisitsFromSite { get; init; }
     public int VisitsFromApp { get; init; }
     public int VisitsCount => VisitsFromSite + VisitsFromApp;
+    [Obsolete("Use TimeOnPlatforms instead")]
     public TimeSpan TimeInSite { get; init; }
+    [Obsolete("Use TimeOnPlatforms instead")]
     public TimeSpan TimeInApp { get; init; }
-    public TimeSpan FullTime => TimeInSite + TimeInApp;
+    public Dictionary<Platform, TimeSpan> TimeOnPlatforms { get; init; } = new();
+    public TimeSpan FullTime => TimeOnPlatforms.Sum(i => i.Value);
 
     /// <summary> Day-activity map for all time </summary>
     public Dictionary<DateTime, TimeSpan>? ActivityCalendar { get; init; }
 
-    public TimeSpan AvgDailyTime => ActivityDaysCount > 0 ? (TimeInSite + TimeInApp) / ActivityDaysCount : default;
+    public TimeSpan AvgDailyTime => ActivityDaysCount > 0 ? FullTime / ActivityDaysCount : default;
     public TimeSpan MinDailyTime { get; init; }
     public TimeSpan MaxDailyTime { get; init; }
     public static ReadOnlyDictionary<DayOfWeek, TimeSpan> AvgWeekDayActivity { get; } = new ReadOnlyDictionary<DayOfWeek, TimeSpan>(_avgWeekDayActivity);
@@ -50,5 +53,14 @@ public class DetailedActivity
         TimeInSite = TimeSpan.Zero;
         TimeInApp = TimeSpan.Zero;
         Url = $"https://vk.com/id{JsonDocument.Parse(user.RawData).RootElement.GetProperty("id")}";
+    }
+}
+
+// Tmp
+public static class TimeSpanExtensions
+{
+    public static TimeSpan Sum<TSource>(this IEnumerable<TSource> source, Func<TSource, TimeSpan> selector)
+    {
+        return source.Select(selector).Aggregate(TimeSpan.Zero, (t1, t2) => t1 + t2);
     }
 }

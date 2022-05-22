@@ -116,7 +116,7 @@ internal sealed class WorkerService : BackgroundService
         {
             await SetUndefinedActivityToAllUsers().ConfigureAwait(false);
 
-            _delayedLogger.LogError(Notes.NoInernetConnection, typeof(WorkerService));
+            _delayedLogger.LogError(Note.NoInernetConnection, typeof(WorkerService));
             return;
         }
 

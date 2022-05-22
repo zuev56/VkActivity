@@ -1,13 +1,12 @@
 ﻿namespace VkActivity.Worker.Models
 {
-    public static class Notes
+    public static class Note
     {
         public const string NoInernetConnection = nameof(NoInernetConnection);
         public const string EndDateIsNotMoreThanStartDate = nameof(EndDateIsNotMoreThanStartDate);
         public const string NoUsersInDatabase = nameof(NoUsersInDatabase);
         public const string SetUndefinedActivityToAllUsers = nameof(SetUndefinedActivityToAllUsers);
         public const string ActivityLogIsEmpty = nameof(ActivityLogIsEmpty);
-
 
         public const string GetFullTimeActivityError = nameof(GetFullTimeActivityError);
         public const string GetUsersError = nameof(GetUsersError);

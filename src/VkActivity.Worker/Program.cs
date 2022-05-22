@@ -13,8 +13,6 @@ using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Helpers;
 using VkActivity.Worker.Services;
-using Zs.Common.Enums;
-using Zs.Common.Models;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Connection;
 using Zs.Common.Services.Scheduler;
@@ -22,60 +20,22 @@ using Zs.Common.Services.Scheduler;
 [assembly: InternalsVisibleTo("UnitTests")]
 [assembly: InternalsVisibleTo("IntegrationTests")]
 
-// TODO: recognize environment and pass to CreateConfiguration
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(CreateConfiguration(args))
-    .CreateLogger();
-
-Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, User: {User}, ProcessId: {ProcessId})",
-    Process.GetCurrentProcess().MainModule?.ModuleName,
-    Environment.MachineName,
-    Environment.OSVersion,
-    Environment.UserName,
-    Environment.ProcessId);
-
 
 IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration(ConfigureAppConfiguration)
     .UseSerilog()
     .ConfigureWebHostDefaults(ConfigureWebHostDefaults)
     .ConfigureServices(ConfigureServices)
     .Build();
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(host.Services.GetService<IConfiguration>())
+    .CreateLogger();
+
+Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, User: {User}, ProcessId: {ProcessId})",
+    Process.GetCurrentProcess().MainModule?.ModuleName, Environment.MachineName,
+    Environment.OSVersion, Environment.UserName, Environment.ProcessId);
+
 await host.RunAsync();
-
-
-
-void ConfigureAppConfiguration(HostBuilderContext context, IConfigurationBuilder builder)
-{
-    var environment = Enum.Parse<AppEnvironment>(context.HostingEnvironment.EnvironmentName);
-    var configuration = CreateConfiguration(args, environment);
-
-    builder.AddConfiguration(configuration);
-}
-
-IConfiguration CreateConfiguration(string[] args, AppEnvironment environment = default)
-{
-    var configPath = ProgramUtilites.GetAppsettingsPath(environment);
-
-    if (!File.Exists(configPath))
-        throw new FileNotFoundException("Configuration file not found", configPath);
-
-    var configuration = new ConfigurationManager();
-    configuration.AddJsonFile(configPath, optional: false, reloadOnChange: true);
-
-    foreach (var arg in args)
-    {
-        if (!File.Exists(arg))
-            throw new FileNotFoundException($"Wrong configuration path:\n{arg}");
-
-        configuration.AddJsonFile(arg, optional: true, reloadOnChange: true);
-    }
-
-    //AssertConfigurationIsCorrect(configuration);
-
-    return configuration;
-}
 
 void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 {
@@ -100,16 +60,11 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
     })
     .Configure((context, app) =>
     {
-        //app.UseHttpLogging();
         app.UseSerilogRequestLogging(opts => opts.EnrichDiagnosticContext = LogHelper.EnrichFromRequest);
 
         // Configure the HTTP request pipeline.
         if (!context.HostingEnvironment.IsDevelopment())
-        {
-            app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            //app.UseHsts();
-        }
+            app.UseHsts();
 
         app.UseSwagger();
         app.UseSwaggerUI(c => c.SwaggerEndpoint(
@@ -164,17 +119,10 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 
     services.AddScoped<ApiExceptionFilter>();
 
+    services.AddConnectionAnalyzer(context);
+    services.AddVkIntegration(context);
     services.AddSingleton<IScheduler, Scheduler>();
     services.AddSingleton<IDelayedLogger, DelayedLogger>();
-    services.AddSingleton<IConnectionAnalyser, ConnectionAnalyser>(sp =>
-    {
-        return new ConnectionAnalyser(
-           sp.GetService<ILogger<ConnectionAnalyser>>(),
-           context.Configuration.GetSection("ConnectionAnalyser:Urls").Get<string[]>());
-    });
-
-    services.AddSingleton<IVkIntegration, VkIntegration>(
-        sp => new VkIntegration(context.Configuration[AppSettings.Vk.AccessToken], context.Configuration[AppSettings.Vk.Version]));
 
     services.AddScoped<IUserManager, UserManager>();
     services.AddScoped<IActivityLogger, ActivityLogger>();
@@ -183,6 +131,43 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
     services.AddScoped<IUsersRepository, UsersRepository>();
 
-
     services.AddHostedService<WorkerService>();
 }
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddConnectionAnalyzer(this IServiceCollection services, HostBuilderContext context)
+    {
+        return services.AddSingleton<IConnectionAnalyser, ConnectionAnalyser>(sp =>
+        {
+            var connectionAnalyzer = new ConnectionAnalyser(
+                sp.GetService<ILogger<ConnectionAnalyser>>(),
+                context.Configuration.GetSection(AppSettings.ConnectionAnalyser.Urls).Get<string[]>());
+
+            if (context.Configuration.GetValue<bool>(AppSettings.Proxy.UseProxy) == true)
+            {
+                connectionAnalyzer.InitializeProxy(context.Configuration[AppSettings.Proxy.Socket],
+                    context.Configuration[AppSettings.Proxy.Login],
+                    context.Configuration[AppSettings.Proxy.Password]);
+
+                HttpClient.DefaultProxy = connectionAnalyzer.WebProxy;
+            }
+            return connectionAnalyzer;
+        });
+    }
+
+    public static IServiceCollection AddVkIntegration(this IServiceCollection services, HostBuilderContext context)
+    {
+        return services.AddSingleton<IVkIntegration, VkIntegration>(
+            sp => new VkIntegration(
+                context.Configuration[AppSettings.Vk.AccessToken],
+                context.Configuration[AppSettings.Vk.Version])
+            );
+    }
+}
+
+public static class WebHostBuilderExtensions
+{
+
+}
+

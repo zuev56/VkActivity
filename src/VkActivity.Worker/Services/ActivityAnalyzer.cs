@@ -34,11 +34,11 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         {
             var user = await _vkUsersRepo.FindByIdAsync(userId);
             if (user == null)
-                return ServiceResult<DetailedActivity>.Error(Notes.UserNotFound(userId));
+                return ServiceResult<DetailedActivity>.Error(Note.UserNotFound(userId));
 
             var orderedLogForUser = await GetOrderedLog(_tmpMinLogDate, DateTime.UtcNow, userId);
             if (!orderedLogForUser.Any())
-                return ServiceResult<DetailedActivity>.Warning(Notes.ActivityForUserNotFound(userId), new DetailedActivity(user));
+                return ServiceResult<DetailedActivity>.Warning(Note.ActivityForUserNotFound(userId), new DetailedActivity(user));
 
             var activityDetails = new DetailedActivity(user)
             {
@@ -49,14 +49,15 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
                 //ActivityCalendar  = GetActivityForEveryDay(orderedLogForUser), Пока не используется
                 TimeInSite = TimeSpan.FromSeconds(GetActivitySeconds(orderedLogForUser.ToList(), Device.PC)),
                 TimeInApp = TimeSpan.FromSeconds(GetActivitySeconds(orderedLogForUser.ToList(), Device.Mobile)),
+                TimeOnPlatforms = GetTimeOnPlatforms(orderedLogForUser),
             };
 
             return ServiceResult<DetailedActivity>.Success(activityDetails);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, Notes.GetFullTimeActivityError);
-            return ServiceResult<DetailedActivity>.Error(Notes.GetFullTimeActivityError);
+            _logger?.LogError(ex, Note.GetFullTimeActivityError);
+            return ServiceResult<DetailedActivity>.Error(Note.GetFullTimeActivityError);
         }
     }
 
@@ -70,7 +71,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         try
         {
             if (fromDate >= toDate)
-                return ServiceResult<List<ActivityListItem>>.Error(Notes.EndDateIsNotMoreThanStartDate);
+                return ServiceResult<List<ActivityListItem>>.Error(Note.EndDateIsNotMoreThanStartDate);
 
             var usersResult = await GetUsersAsync(filterText);
             if (!usersResult.IsSuccess)
@@ -88,7 +89,8 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
                 userActivityBag.Add(new ActivityListItem(user)
                 {
-                    ActivitySec = GetActivitySeconds(orderedLogForUser, Device.All),
+                    //ActivitySec = GetActivitySeconds(orderedLogForUser, Device.All),
+                    ActivitySec = (int)GetTimeOnPlatforms(orderedLogForUser).Sum(i => i.Value.TotalSeconds),
                     IsOnline = onlineUserIds.Any(id => id == user.Id)
                 });
             });
@@ -101,8 +103,8 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, Notes.GetUsersWithActivityError);
-            return ServiceResult<List<ActivityListItem>>.Error(Notes.GetUsersWithActivityError);
+            _logger?.LogError(ex, Note.GetUsersWithActivityError);
+            return ServiceResult<List<ActivityListItem>>.Error(Note.GetUsersWithActivityError);
         }
     }
 
@@ -163,8 +165,8 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, Notes.GetUsersError);
-            return ServiceResult<List<User>>.Error(Notes.GetUsersError);
+            _logger?.LogError(ex, Note.GetUsersError);
+            return ServiceResult<List<User>>.Error(Note.GetUsersError);
         }
     }
 
@@ -240,6 +242,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     /// <summary>Get activity time from list of <see cref="ActivityLogItem"/>s in seconds</summary>
     /// <param name="orderedLog">Ordered list of <see cref="ActivityLogItem"/>s</param>
     /// <param name="device">The device type from which the site was used</param>
+    [Obsolete]
     private static int GetActivitySeconds(List<ActivityLogItem> orderedLog, Device device)
     {
         // Проверка:
@@ -290,18 +293,47 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         return seconds;
     }
 
+    private static int GetActivitySecondsOnPlatform(List<ActivityLogItem> orderedLog, Platform platform)
+    {
+        // Проверка:
+        //  - Первый элемент списка должен быть IsOnline == true
+        //  - Каждый последующий элемент обрабатывается опираясь на предыдущий
+
+        int seconds = 0;
+        for (int i = 1; i < orderedLog.Count; i++)
+        {
+            var prev = orderedLog[i - 1];
+            var cur = orderedLog[i];
+
+            if (prev.IsOnline == true
+                && prev.Platform == platform
+                && (cur.IsOnline == false || cur.IsOnline == true && cur.Platform == platform))
+            {
+                seconds += cur.LastSeen - prev.LastSeen;
+            }
+        }
+
+        // Для корректного отображения времени активности пользователей, которые в данный момент онлайн
+        // надо прибавлять секунды с момента их входа в Вк до текущего момента (!!!Можно дописывать в журнал фейковую запись о выходе!!!).
+        // Но это решение портит результат, когда анализируется отрезок времени, заканчивающийся в прошлом.
+        //var lastLogItem = log.LastOrDefault();
+        //if (lastLogItem?.IsOnline == true && lastLogItem.InsertDate...)
+        //    seconds += DateTime.UtcNow.ToUnixEpoch() - log.Last().InsertDate.ToUnixEpoch();
+
+        return seconds;
+    }
     public async Task<IOperationResult<SimpleActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
     {
         try
         {
             if (fromDate >= toDate || _tmpMinLogDate >= toDate)
-                return ServiceResult<SimpleActivity>.Error(Notes.EndDateIsNotMoreThanStartDate);
+                return ServiceResult<SimpleActivity>.Error(Note.EndDateIsNotMoreThanStartDate);
 
             fromDate = fromDate > _tmpMinLogDate ? fromDate : _tmpMinLogDate;
 
             var user = await _vkUsersRepo.FindByIdAsync(userId);
             if (user == null)
-                return ServiceResult<SimpleActivity>.Error(Notes.UserNotFound(userId));
+                return ServiceResult<SimpleActivity>.Error(Note.UserNotFound(userId));
 
             var orderedLogForUser = await GetOrderedLog(fromDate, toDate, userId);
             var userStatistics = GetUserStatistics(userId, user.GetFullName(), orderedLogForUser.ToList());
@@ -310,13 +342,14 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, Notes.GetUserStatisticsForPeriodError);
-            return ServiceResult<SimpleActivity>.Error(Notes.GetUserStatisticsForPeriodError);
+            _logger?.LogError(ex, Note.GetUserStatisticsForPeriodError);
+            return ServiceResult<SimpleActivity>.Error(Note.GetUserStatisticsForPeriodError);
         }
     }
 
     private SimpleActivity GetUserStatistics(int userId, string userName, List<ActivityLogItem> orderedLogForUser)
     {
+
         int browserActivitySec = GetActivitySeconds(orderedLogForUser, Device.PC);
         int mobileActivitySec = GetActivitySeconds(orderedLogForUser, Device.Mobile);
 
@@ -326,8 +359,23 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
             UserName = userName,
             TimeInSite = TimeSpan.FromSeconds(browserActivitySec),
             TimeInApp = TimeSpan.FromSeconds(mobileActivitySec),
+            TimeOnPlatforms = GetTimeOnPlatforms(orderedLogForUser),
             VisitsCount = orderedLogForUser.Count(l => l.IsOnline == true)
         };
     }
 
+    private Dictionary<Platform, TimeSpan> GetTimeOnPlatforms(List<ActivityLogItem> orderedLogForUser)
+    {
+        var timeOnPlatforms = new Dictionary<Platform, TimeSpan>();
+
+        foreach (var platform in Enum.GetValues<Platform>())
+        {
+            var seconds = GetActivitySecondsOnPlatform(orderedLogForUser, platform);
+
+            if (seconds > 0)
+                timeOnPlatforms.Add(platform, TimeSpan.FromSeconds(seconds));
+        }
+
+        return timeOnPlatforms;
+    }
 }
