@@ -42,7 +42,7 @@ public class ActivityLoggerTests
     }
 
     [Fact(Skip = "NotImplemented")]
-    public async Task SetUndefinedActivityToAllUsersAsync_Once_Successful()
+    public async Task SetUndefinedActivityToAllUsersAsync_Once_AddUndefinedStateToAll()
     {
         throw new NotImplementedException();
     }

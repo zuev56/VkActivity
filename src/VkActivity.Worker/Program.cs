@@ -74,6 +74,8 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 
         app.UseRouting();
 
+        app.UseCors();
+
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
