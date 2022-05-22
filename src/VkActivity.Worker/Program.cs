@@ -41,6 +41,15 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 {
     webHostBuilder.ConfigureServices((context, services) =>
     {
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+                policy.AllowAnyOrigin()
+                      .WithMethods("HEAD", "GET", "POST", "PUT", "PATCH", "UPDATE", "DELETE")
+                      .AllowAnyHeader()
+            );
+        });
+
         services.AddControllers().AddJsonOptions(o =>
         {
             o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
