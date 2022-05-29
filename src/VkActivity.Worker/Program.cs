@@ -133,7 +133,12 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddConnectionAnalyzer(context);
     services.AddVkIntegration(context);
     services.AddSingleton<IScheduler, Scheduler>();
-    services.AddSingleton<IDelayedLogger, DelayedLogger>();
+    // TODO: Create Factory!
+    services.AddSingleton<IDelayedLogger<ActivityLogger>, DelayedLogger<ActivityLogger>>();
+    services.AddSingleton<IDelayedLogger<ActivityAnalyzer>, DelayedLogger<ActivityAnalyzer>>();
+    services.AddSingleton<IDelayedLogger<WorkerService>, DelayedLogger<WorkerService>>();
+    //services.AddSingleton<IDelayedLogger, DelayedLogger>();
+    //services.AddSingleton<IDelayedLogger, DelayedLogger>();
 
     services.AddScoped<IUserManager, UserManager>();
     services.AddScoped<IActivityLogger, ActivityLogger>();

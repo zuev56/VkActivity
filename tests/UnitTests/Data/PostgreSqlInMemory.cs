@@ -9,14 +9,14 @@ namespace UnitTests.Data;
 public class PostgreSqlInMemory
 {
     public ActivityLogItemsRepository ActivityLogItemsRepository { get; }
-    public UsersRepository VkUsersRepository { get; }
+    public UsersRepository UsersRepository { get; }
 
     public PostgreSqlInMemory()
     {
         var dbContextFactory = GetPostgreSqlBotContextFactory();
 
         ActivityLogItemsRepository = new ActivityLogItemsRepository(dbContextFactory);
-        VkUsersRepository = new UsersRepository(dbContextFactory);
+        UsersRepository = new UsersRepository(dbContextFactory);
     }
 
     private VkActivityContextFactory GetPostgreSqlBotContextFactory()
@@ -37,7 +37,7 @@ public class PostgreSqlInMemory
 
         Task.WaitAll(new Task[]
         {
-            VkUsersRepository.SaveRangeAsync(users),
+            UsersRepository.SaveRangeAsync(users),
             ActivityLogItemsRepository.SaveRangeAsync(activityLogItems)
         });
     }

@@ -16,7 +16,7 @@ internal sealed class WorkerService : BackgroundService
     private readonly IScheduler _scheduler;
     private readonly IConnectionAnalyser _connectionAnalyser;
     private readonly IConfiguration _configuration;
-    private readonly IDelayedLogger _delayedLogger;
+    private readonly IDelayedLogger<WorkerService> _delayedLogger;
     private readonly ILogger<WorkerService> _logger;
     private DateTime _disconnectionTime = DateTime.UtcNow;
 
@@ -29,7 +29,7 @@ internal sealed class WorkerService : BackgroundService
         IScheduler scheduler,
         IConnectionAnalyser connectionAnalyser,
         IConfiguration configuration,
-        IDelayedLogger delayedLogger,
+        IDelayedLogger<WorkerService> delayedLogger,
         ILogger<WorkerService> logger)
     {
         try
@@ -116,7 +116,7 @@ internal sealed class WorkerService : BackgroundService
         {
             await SetUndefinedActivityToAllUsers().ConfigureAwait(false);
 
-            _delayedLogger.LogError(Note.NoInernetConnection, typeof(WorkerService));
+            _delayedLogger.LogError(Note.NoInernetConnection);
             return;
         }
 

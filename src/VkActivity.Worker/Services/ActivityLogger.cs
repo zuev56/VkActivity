@@ -17,17 +17,20 @@ public sealed class ActivityLogger : IActivityLogger
     private readonly IUsersRepository _usersRepo;
     private readonly IVkIntegration _vkIntegration;
     private readonly ILogger<ActivityLogger> _logger;
+    private readonly IDelayedLogger<ActivityLogger> _delayedLogger;
 
     public ActivityLogger(
         IActivityLogItemsRepository activityLogRepo,
         IUsersRepository usersRepo,
         IVkIntegration vkIntegration,
-        ILogger<ActivityLogger> logger)
+        ILogger<ActivityLogger> logger,
+        IDelayedLogger<ActivityLogger> delayedLogger)
     {
         _activityLogRepo = activityLogRepo ?? throw new ArgumentNullException(nameof(activityLogRepo));
         _usersRepo = usersRepo ?? throw new ArgumentNullException(nameof(usersRepo));
         _vkIntegration = vkIntegration ?? throw new ArgumentNullException(nameof(vkIntegration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _delayedLogger = delayedLogger ?? throw new ArgumentNullException(nameof(delayedLogger));
     }
 
     /// <inheritdoc/>
@@ -58,7 +61,8 @@ public sealed class ActivityLogger : IActivityLogger
         }
         catch (Exception ex)
         {
-            _logger.LogErrorIfNeed(ex, Note.SaveUsersActivityError);
+            _logger.LogTraceIfNeed("Code: {Code}, Exception: {ExceptionType}, Message: {ExceptionMessage}", Note.SaveUsersActivityError, ex.GetType().Name, ex.Message);
+            _delayedLogger.LogError(Note.SaveUsersActivityError);
 
             await SetUndefinedActivityToAllUsersAsync().ConfigureAwait(false);
 
@@ -73,7 +77,7 @@ public sealed class ActivityLogger : IActivityLogger
         {
             var users = await _usersRepo.FindAllAsync();
 
-            var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivity();
+            var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivityAsync();
             if (!lastUsersActivityLogItems.Any())
                 return ServiceResult.Warning(Note.ActivityLogIsEmpty);
 
@@ -112,7 +116,7 @@ public sealed class ActivityLogger : IActivityLogger
     private async Task<int> LogVkUsersActivityAsync(List<VkApiUser> apiUsers)
     {
         // TODO: Add user activity info (range) - ???
-        var lastActivityLogItems = await _activityLogRepo.FindLastUsersActivity().ConfigureAwait(false);
+        var lastActivityLogItems = await _activityLogRepo.FindLastUsersActivityAsync().ConfigureAwait(false);
         var activityLogItemsForSave = new List<ActivityLogItem>();
 
         foreach (var apiUser in apiUsers)

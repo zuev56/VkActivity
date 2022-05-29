@@ -12,7 +12,6 @@ namespace UnitTests
         private const int MessageRepeatTimes = 100;
         private readonly TimeSpan _specificLogWriteInterval = TimeSpan.FromSeconds(1);
         private readonly int _logMessageBufferAnalyzeIntervalMs;
-        private readonly Type _sourceContextType = typeof(DelayedLoggerShould);
         private readonly Mock<ILogger> _loggerMock = new();
 
         public DelayedLoggerShould()
@@ -40,19 +39,19 @@ namespace UnitTests
             {
                 switch (logLevel)
                 {
-                    case LogLevel.Trace: delayedLogger.LogTrace(testMessage, _sourceContextType); break;
-                    case LogLevel.Debug: delayedLogger.LogDebug(testMessage, _sourceContextType); break;
-                    case LogLevel.Information: delayedLogger.LogInformation(testMessage, _sourceContextType); break;
-                    case LogLevel.Warning: delayedLogger.LogWarning(testMessage, _sourceContextType); break;
-                    case LogLevel.Error: delayedLogger.LogError(testMessage, _sourceContextType); break;
-                    case LogLevel.Critical: delayedLogger.LogCritical(testMessage, _sourceContextType); break;
+                    case LogLevel.Trace: delayedLogger.LogTrace(testMessage); break;
+                    case LogLevel.Debug: delayedLogger.LogDebug(testMessage); break;
+                    case LogLevel.Information: delayedLogger.LogInformation(testMessage); break;
+                    case LogLevel.Warning: delayedLogger.LogWarning(testMessage); break;
+                    case LogLevel.Error: delayedLogger.LogError(testMessage); break;
+                    case LogLevel.Critical: delayedLogger.LogCritical(testMessage); break;
                     case LogLevel.None:
                         logLevel = LogLevel.Warning;
-                        delayedLogger.Log(testMessage, logLevel, _sourceContextType); break;
+                        delayedLogger.Log(testMessage, logLevel); break;
                 }
             }
 
-            await Task.Delay(_specificLogWriteInterval + TimeSpan.FromMilliseconds(300));
+            await Task.Delay(_specificLogWriteInterval + TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
 
             // Assert
             _loggerMock.Verify(logger => logger.Log(
@@ -68,7 +67,7 @@ namespace UnitTests
         {
             // Arrange
             using var delayedLogger = CreateDelayedLogger();
-            var action = () => delayedLogger.Log(null, LogLevel.Information, typeof(DelayedLoggerShould));
+            var action = () => delayedLogger.Log(null, LogLevel.Information);
 
             // Act, Assert
             Assert.Throws<ArgumentNullException>(() => action());
@@ -86,7 +85,7 @@ namespace UnitTests
 
             // Act
             for (int i = 0; i < MessageRepeatTimes; i++)
-                delayedLogger.Log(testMessage, logLevel, _sourceContextType);
+                delayedLogger.Log(testMessage, logLevel);
 
             var defaultDelayTask = Task.Delay(delayedLogger.DefaultLogWriteInterval);
 
@@ -122,7 +121,7 @@ namespace UnitTests
 
             // Act
             for (int i = 0; i < MessageRepeatTimes; i++)
-                delayedLogger.Log(testMessage, logLevel, _sourceContextType);
+                delayedLogger.Log(testMessage, logLevel);
 
             var specificDelayTask = Task.Delay(delayedLogger.DefaultLogWriteInterval);
 
@@ -148,14 +147,14 @@ namespace UnitTests
 
 
 
-        private DelayedLogger CreateDelayedLogger()
+        private DelayedLogger<DelayedLoggerShould> CreateDelayedLogger()
         {
             _loggerMock.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
             var loggerFactoryMock = new Mock<ILoggerFactory>();
             loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
                 .Returns(_loggerMock.Object);
 
-            return new DelayedLogger(loggerFactoryMock.Object, _logMessageBufferAnalyzeIntervalMs);
+            return new DelayedLogger<DelayedLoggerShould>(loggerFactoryMock.Object, _logMessageBufferAnalyzeIntervalMs);
         }
 
     }

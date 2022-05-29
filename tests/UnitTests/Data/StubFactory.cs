@@ -159,21 +159,7 @@ internal class StubFactory
         return activityLogItems.Where(i => i != null).ToArray();
     }
 
-    internal static IActivityLogger GetActivityLogger(UserIdSet userIdSet, bool vkIntergationWorks = true)
-    {
-        var postgreSqlInMemory = new PostgreSqlInMemory();
-        postgreSqlInMemory.FillWithFakeData(userIdSet.InitialUsersAmount);
-
-        var vkIntegrationMock = CreateVkIntegrationMock(userIdSet, vkIntergationWorks);
-
-        return new ActivityLogger(
-            postgreSqlInMemory.ActivityLogItemsRepository,
-            postgreSqlInMemory.VkUsersRepository,
-            vkIntegrationMock.Object,
-            Mock.Of<ILogger<ActivityLogger>>());
-    }
-
-    private static Mock<IVkIntegration> CreateVkIntegrationMock(UserIdSet userIdSet, bool vkIntergationWorks)
+    public static Mock<IVkIntegration> CreateVkIntegrationMock(UserIdSet userIdSet, bool vkIntergationWorks)
     {
         var vkIntegrationMock = new Mock<IVkIntegration>();
         if (vkIntergationWorks)
@@ -214,7 +200,7 @@ internal class StubFactory
         var vkIntegrationMock = CreateVkIntegrationMock(userIdSet, vkIntergationWorks);
 
         return new UserManager(
-            postgreSqlInMemory.VkUsersRepository,
+            postgreSqlInMemory.UsersRepository,
             vkIntegrationMock.Object,
             Mock.Of<ILogger<UserManager>>());
 

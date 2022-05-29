@@ -1,14 +1,13 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UnitTests.Data;
+using VkActivity.Data.Repositories;
 using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Services;
@@ -16,29 +15,11 @@ using Xunit;
 
 namespace IntegrationTests;
 
-[ExcludeFromCodeCoverage]
-public class ActivityLoggerTests : IDisposable
+public class ActivityLoggerTests_old
 {
     private const int _dbEntitiesAmount = 100;
-
-    public ActivityLoggerTests()
-    {
-        // Создание инстанса приложения
-        //https://docs.microsoft.com/ru-ru/aspnet/core/test/integration-tests?view=aspnetcore-6.0
-        var application = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(config =>
-            {
-
-            });
-
-        var client = application.CreateClient();
-
-
-        // Создание БД
-        //https://stackoverflow.com/questions/60510597/integration-testing-with-asp-net-core-and-entity-framework-core-how-to-restore
-        //DbContext = new MyDbContext(TestInit.TestDatabaseName);
-        //DbContext.Database.CreateIfNotExists();
-    }
+    private readonly ActivityLogItemsRepository? _activityLogItemsRepository;
+    private readonly UsersRepository? _usersRepository;
 
 
     [Fact]
@@ -92,8 +73,6 @@ public class ActivityLoggerTests : IDisposable
 
     private IActivityLogger GetActivityLogger()
     {
-
-
         var postgreSqlInMemory = new PostgreSqlInMemory();
         postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
         var configuration = new ConfigurationBuilder()
@@ -108,13 +87,5 @@ public class ActivityLoggerTests : IDisposable
             vkIntegration,
             Mock.Of<ILogger<ActivityLogger>>(),
             Mock.Of<IDelayedLogger<ActivityLogger>>());
-    }
-
-
-
-    public void Dispose()
-    {
-        // Удаление БД
-        //Database.Delete(TestDatabaseName);
     }
 }

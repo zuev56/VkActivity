@@ -204,7 +204,7 @@ public class ActivityAnalyzerTests
 
         return new ActivityAnalyzer(
             postgreSqlInMemory.ActivityLogItemsRepository,
-            postgreSqlInMemory.VkUsersRepository,
+            postgreSqlInMemory.UsersRepository,
             Mock.Of<ILogger<ActivityAnalyzer>>());
     }
 }

@@ -172,7 +172,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
     private async Task<int[]> GetOnlineUserIdsAsync(params int[] userIds)
     {
-        var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivity(userIds);
+        var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userIds);
 
         return lastUsersActivity.Where(i => i.IsOnline == true && DateTime.UtcNow - i.InsertDate < TimeSpan.FromDays(1))
             .Select(i => i.UserId).ToArray();

@@ -5,7 +5,7 @@ using Zs.Common.Extensions;
 
 namespace VkActivity.Worker.Services;
 
-public sealed class DelayedLogger : IDelayedLogger, IDisposable
+public sealed class DelayedLogger<TSourceContext> : IDelayedLogger<TSourceContext>, IDisposable
 {
     public TimeSpan DefaultLogWriteInterval { get; set; } = TimeSpan.FromMinutes(1);
 
@@ -67,42 +67,36 @@ public sealed class DelayedLogger : IDelayedLogger, IDisposable
             messageText, logShowInterval, (key, value) => value);
     }
 
-    public int Log<TSourceContext>(string messageText, LogLevel logLevel, TSourceContext sourceContextType)
-        where TSourceContext : Type
+    public int Log(string messageText, LogLevel logLevel)
+
     {
         ArgumentNullException.ThrowIfNull(messageText);
 
         if (!_messageTemplatesWithInterval.ContainsKey(messageText))
             SetupLogMessage(messageText, DefaultLogWriteInterval);
 
-        _messages = _messages.Add(new(messageText, logLevel, DateTime.UtcNow, sourceContextType));
+        _messages = _messages.Add(new(messageText, logLevel, DateTime.UtcNow, typeof(TSourceContext)));
 
         return _messages.Count(m => m.Text == messageText);
     }
 
-    public int LogTrace<TSourceContext>(string messageText, TSourceContext sourceContextType)
-        where TSourceContext : Type
-        => Log(messageText, LogLevel.Trace, sourceContextType);
+    public int LogTrace(string messageText)
+        => Log(messageText, LogLevel.Trace);
 
-    public int LogInformation<TSourceContext>(string messageText, TSourceContext sourceContextType)
-        where TSourceContext : Type
-        => Log(messageText, LogLevel.Information, sourceContextType);
+    public int LogInformation(string messageText)
+        => Log(messageText, LogLevel.Information);
 
-    public int LogDebug<TSourceContext>(string messageText, TSourceContext sourceContextType)
-        where TSourceContext : Type
-        => Log(messageText, LogLevel.Debug, sourceContextType);
+    public int LogDebug(string messageText)
+        => Log(messageText, LogLevel.Debug);
 
-    public int LogWarning<TSourceContext>(string messageText, TSourceContext sourceContextType)
-        where TSourceContext : Type
-        => Log(messageText, LogLevel.Warning, sourceContextType);
+    public int LogWarning(string messageText)
+        => Log(messageText, LogLevel.Warning);
 
-    public int LogError<TSourceContext>(string messageText, TSourceContext sourceContextType)
-        where TSourceContext : Type
-        => Log(messageText, LogLevel.Error, sourceContextType);
+    public int LogError(string messageText)
+        => Log(messageText, LogLevel.Error);
 
-    public int LogCritical<TSourceContext>(string messageText, TSourceContext sourceContextType)
-        where TSourceContext : Type
-        => Log(messageText, LogLevel.Critical, sourceContextType);
+    public int LogCritical(string messageText)
+        => Log(messageText, LogLevel.Critical);
 
     public void Dispose()
     {

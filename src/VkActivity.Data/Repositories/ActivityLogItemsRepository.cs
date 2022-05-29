@@ -25,7 +25,7 @@ public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContex
             cancellationToken: cancellationToken);
     }
 
-    public async Task<List<ActivityLogItem>> FindLastUsersActivity(params int[] userIds)
+    public async Task<List<ActivityLogItem>> FindLastUsersActivityAsync(params int[] userIds)
     {
         var sql = @"WITH RECURSIVE t AS ( 
                           (SELECT * FROM vk.activity_log ORDER BY user_id DESC, last_seen DESC, insert_date DESC LIMIT 1)
