@@ -1,11 +1,11 @@
 ﻿using VkActivity.Data.Abstractions;
 using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Models;
 using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Scheduler;
+using static VkActivity.Worker.Models.Constants;
 
 namespace VkActivity.Worker.Services;
 
@@ -116,7 +116,7 @@ internal sealed class WorkerService : BackgroundService
         {
             await SetUndefinedActivityToAllUsers().ConfigureAwait(false);
 
-            _delayedLogger.LogError(Note.NoInernetConnection);
+            _delayedLogger.LogError(NoInernetConnection);
             return;
         }
 
@@ -158,7 +158,7 @@ internal sealed class WorkerService : BackgroundService
         using (var scope = _scopeFactory.CreateScope())
         {
             var activityLoggerService = scope.ServiceProvider.GetService<IActivityLogger>();
-            return await activityLoggerService!.SetUndefinedActivityToAllUsersAsync().ConfigureAwait(false);
+            return await activityLoggerService!.ChangeAllUserActivitiesToUndefinedAsync().ConfigureAwait(false);
         }
     }
     private async Task AddUsersFullInfoAsync()

@@ -11,6 +11,7 @@ public sealed class FriendsApiResponse
     {
         [JsonPropertyName("count")]
         public int Count { get; init; }
+
         [JsonPropertyName("items")]
         public int[]? FriendIds { get; init; }
     }

@@ -15,7 +15,7 @@ internal sealed class VkIntegration : IVkIntegration
     private const string FieldsForGettingUserActivity = "online,last_seen";
     private const string FieldsForGettingFullUserInfo = "activities,about,books,bdate,career,connections,contacts,city,country," +
         "domain,education,exports,has_photo,has_mobile,home_town,photo_50,sex,site,schools,screen_name,verified,games,interests," +
-        "maiden_name,military,movies,music,nickname,occupation,personal,quotes,relation,relatives,timezone,tv,universities";
+        "maiden_name,military,movies,music,nickname,occupation,personal,quotes,relation,relatives,timezone,tv,universities,deactivated";
 
     private static readonly SemaphoreSlim _semaphore = new(1, 32);
     private static readonly TimeSpan _apiAccessTimeout = TimeSpan.FromSeconds(3);
@@ -47,7 +47,7 @@ internal sealed class VkIntegration : IVkIntegration
 
     private async Task<List<VkApiUser>> GetVkUsersAsync(string url)
     {
-        var responseResult = await GetResponseAsync<UsersApiResponse>(url).ConfigureAwait(false);
+        var responseResult = await GetResponseAsync<UsersApiResponse>(url, _httpClient).ConfigureAwait(false);
 
         if (!responseResult.IsSuccess || responseResult.Value?.Users == null)
             throw new InvalidOperationException("Unable to get correct response from Vk API");
@@ -55,7 +55,7 @@ internal sealed class VkIntegration : IVkIntegration
         return responseResult.Value.Users;
     }
 
-    private async Task<IOperationResult<TResponse>> GetResponseAsync<TResponse>(string url)
+    private static async Task<IOperationResult<TResponse>> GetResponseAsync<TResponse>(string url, HttpClient httpClient)
     {
         if (await _semaphore.WaitAsync(_apiAccessTimeout))
         {
@@ -64,9 +64,8 @@ internal sealed class VkIntegration : IVkIntegration
                 if (DateTime.UtcNow.Subtract(_lastApiAccessTime) < ApiAccessMinInterval)
                     await Task.Delay(ApiAccessMinInterval).ConfigureAwait(false);
 
-                var response = await _httpClient.GetAsync<TResponse>(url).ConfigureAwait(false);
-
                 _lastApiAccessTime = DateTime.UtcNow;
+                var response = await httpClient.GetAsync<TResponse>(url).ConfigureAwait(false);
 
                 return ServiceResult<TResponse>.Success(response);
             }
@@ -97,7 +96,7 @@ internal sealed class VkIntegration : IVkIntegration
     {
         var url = $"{_getFriendsUrl}&user_id={userId}";
 
-        var responseResult = await GetResponseAsync<FriendsApiResponse>(url).ConfigureAwait(false);
+        var responseResult = await GetResponseAsync<FriendsApiResponse>(url, _httpClient).ConfigureAwait(false);
 
         if (!responseResult.IsSuccess || responseResult.Value?.Data?.FriendIds == null)
             throw new InvalidOperationException("Unable to get correct response from Vk API");

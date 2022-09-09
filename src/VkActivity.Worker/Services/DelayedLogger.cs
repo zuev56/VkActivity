@@ -9,7 +9,7 @@ public sealed class DelayedLogger<TSourceContext> : IDelayedLogger<TSourceContex
 {
     public TimeSpan DefaultLogWriteInterval { get; set; } = TimeSpan.FromMinutes(1);
 
-    private record class Message(
+    private sealed record class Message(
         string Text,
         LogLevel LogLevel,
         DateTime CreateAt,

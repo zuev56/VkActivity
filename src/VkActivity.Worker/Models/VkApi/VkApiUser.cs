@@ -2,12 +2,6 @@
 using System.Text.Json.Serialization;
 
 namespace VkActivity.Worker.Models.VkApi;
-public enum State
-{
-    Active = 0,
-    Banned,
-    Deleted
-}
 
 public sealed class VkApiUser
 {
@@ -25,8 +19,12 @@ public sealed class VkApiUser
 
     // Надо парсить только когда это свойство есть
     [JsonPropertyName("deactivated")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
-    public State State { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Deactivated { get; init; }
+
+    [JsonPropertyName("deleted")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Deleted { get; init; }
 
     [JsonPropertyName("last_seen")]
     public VkApiLastSeen? LastSeen { get; init; }

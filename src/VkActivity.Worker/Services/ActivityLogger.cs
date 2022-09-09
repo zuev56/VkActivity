@@ -8,6 +8,7 @@ using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
+using static VkActivity.Worker.Models.Constants;
 
 namespace VkActivity.Worker.Services;
 
@@ -43,7 +44,7 @@ public sealed class ActivityLogger : IActivityLogger
 
             if (!userIds.Any())
             {
-                result.AddMessage(Note.NoUsersInDatabase, InfoMessageType.Warning);
+                result.AddMessage(NoUsersInDatabase, InfoMessageType.Warning);
                 return result;
             }
 
@@ -53,25 +54,25 @@ public sealed class ActivityLogger : IActivityLogger
             int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
 #if DEBUG
-            Trace.WriteLine(Note.LoggedItemsCount(loggedItemsCount));
+            Trace.WriteLine(Constants.LoggedItemsCount(loggedItemsCount));
 #endif
 
-            result.AddMessage(Note.LoggedItemsCount(loggedItemsCount));
+            result.AddMessage(Constants.LoggedItemsCount(loggedItemsCount));
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogTraceIfNeed("Code: {Code}, Exception: {ExceptionType}, Message: {ExceptionMessage}", Note.SaveUsersActivityError, ex.GetType().Name, ex.Message);
-            _delayedLogger.LogError(Note.SaveUsersActivityError);
+            _logger.LogTraceIfNeed("Code: {Code}, Exception: {ExceptionType}, Message: {ExceptionMessage}", SaveUsersActivityError, ex.GetType().Name, ex.Message);
+            _delayedLogger.LogError(SaveUsersActivityError);
 
-            await SetUndefinedActivityToAllUsersAsync().ConfigureAwait(false);
+            await ChangeAllUserActivitiesToUndefinedAsync().ConfigureAwait(false);
 
-            return ServiceResult.Error(Note.SaveUsersActivityError);
+            return ServiceResult.Error(SaveUsersActivityError);
         }
     }
 
     /// <summary>Save undefined user activities to database</summary>
-    public async Task<IOperationResult> SetUndefinedActivityToAllUsersAsync()
+    public async Task<IOperationResult> ChangeAllUserActivitiesToUndefinedAsync()
     {
         try
         {
@@ -79,7 +80,7 @@ public sealed class ActivityLogger : IActivityLogger
 
             var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivityAsync();
             if (!lastUsersActivityLogItems.Any())
-                return ServiceResult.Warning(Note.ActivityLogIsEmpty);
+                return ServiceResult.Warning(ActivityLogIsEmpty);
 
             var activityLogItems = new List<ActivityLogItem>();
             foreach (var user in users)
@@ -99,14 +100,14 @@ public sealed class ActivityLogger : IActivityLogger
             var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
 
 #if DEBUG
-            Trace.WriteLine(Note.SetUndefinedActivityToAllUsers);
+            Trace.WriteLine(SetUndefinedActivityToAllUsers);
 #endif
             return ServiceResult.Success();
         }
         catch
         {
-            _logger.LogErrorIfNeed(Note.SetUndefinedActivityToAllUsersError);
-            return ServiceResult.Error(Note.SetUndefinedActivityToAllUsersError);
+            _logger.LogErrorIfNeed(SetUndefinedActivityToAllUsersError);
+            return ServiceResult.Error(SetUndefinedActivityToAllUsersError);
         }
     }
 
