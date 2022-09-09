@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -11,8 +12,11 @@ using VkActivity.Worker.Models.VkApi;
 using VkActivity.Worker.Services;
 using Zs.Common.Extensions;
 
+[assembly: InternalsVisibleTo("Worker.IntegrationTests")]
+
 namespace UnitTests.Data;
 
+// Extract to Common project
 internal class StubFactory
 {
     private static string CreateFirstName(int id) => $"TestVkUserFirstName_{id}";

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,15 +10,16 @@ using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Services;
 using Xunit;
 
-namespace IntegrationTests;
+namespace Worker.IntegrationTests;
 
+[ExcludeFromCodeCoverage]
 public class VkIntegrationTests
 {
     [Fact]
     public async Task GetUsersWithActivityInfoAsync_ByScreenNames_ReturnsExpectedUsers()
     {
         // Arrange
-        var vkIntegration = GetVkIntegration();
+        var vkIntegration = CreateVkIntegration();
         var screenNames = new string[] { "durov", "zuev56" };
 
         // Act
@@ -33,7 +35,7 @@ public class VkIntegrationTests
     public async Task GetUsersWithActivityInfoAsync_ByIds_ReturnsExpectedUsers()
     {
         // Arrange
-        var vkIntegration = GetVkIntegration();
+        var vkIntegration = CreateVkIntegration();
         var userIds = new string[] { "1", "8790237" };
 
         // Act
@@ -49,7 +51,7 @@ public class VkIntegrationTests
     public async Task GetUsersWithActivityInfoAsync_ManyRequests_ExecuteWithDelay()
     {
         // Arrange
-        var vkIntegration = GetVkIntegration();
+        var vkIntegration = CreateVkIntegration();
         var screenNames = new string[] { "1", "8790237" };
         var sw = new Stopwatch();
         var attempts = 10;
@@ -74,7 +76,7 @@ public class VkIntegrationTests
     public async Task GetUsersWithFullInfoAsync_ReturnsUsersWithFullInfo()
     {
         // Arrange
-        var vkIntegration = GetVkIntegration();
+        var vkIntegration = CreateVkIntegration();
         var screenNames = new string[] { "durov", "zuev56" };
 
         // Act
@@ -92,7 +94,7 @@ public class VkIntegrationTests
     public async Task GetFriendIds_ReturnsFriendIdsArray()
     {
         // Arrange
-        var vkIntegration = GetVkIntegration();
+        var vkIntegration = CreateVkIntegration();
         var userId = 8790237; //Надо перебирать пользователей с открытыми друзьями
 
         // Act
@@ -104,7 +106,7 @@ public class VkIntegrationTests
         friendIds.Should().OnlyHaveUniqueItems();
     }
 
-    private IVkIntegration GetVkIntegration()
+    private IVkIntegration CreateVkIntegration()
     {
         var configuration = new ConfigurationBuilder()
            .AddJsonFile(Path.GetFullPath(Constants.VkActivityServiceAppSettingsPath))

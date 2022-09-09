@@ -1,120 +1,110 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Moq;
-using UnitTests.Data;
-using VkActivity.Worker;
+using Microsoft.Extensions.DependencyInjection;
+using VkActivity.Data.Abstractions;
+using VkActivity.Data.Models;
 using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Services;
 using Xunit;
 
-namespace IntegrationTests;
+namespace Worker.IntegrationTests;
 
 [ExcludeFromCodeCoverage]
-public class ActivityLoggerTests : IDisposable
+public class ActivityLoggerTests : TestBase
 {
-    private const int _dbEntitiesAmount = 100;
+    private const int _dbEntitiesAmount = 1000;
 
     public ActivityLoggerTests()
     {
-        // Создание инстанса приложения
-        //https://docs.microsoft.com/ru-ru/aspnet/core/test/integration-tests?view=aspnetcore-6.0
-        var application = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(config =>
-            {
-
-            });
-
-        var client = application.CreateClient();
-
-
-        // Создание БД
-        //https://stackoverflow.com/questions/60510597/integration-testing-with-asp-net-core-and-entity-framework-core-how-to-restore
-        //DbContext = new MyDbContext(TestInit.TestDatabaseName);
-        //DbContext.Database.CreateIfNotExists();
+        AddRealUsersAsync(_dbEntitiesAmount).Wait();
     }
 
-
     [Fact]
-    public async Task SaveVkUsersActivityAsync_ReturnsSuccess()
+    public async Task SaveVkUsersActivityAsync_Should_ReturnSuccess()
     {
         // Arrange
-        var activityLogger = GetActivityLogger();
+        var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
 
         // Act
         var saveActivityResult = await activityLogger.SaveUsersActivityAsync();
 
         // Assert
-        Assert.True(saveActivityResult?.IsSuccess);
-        Assert.Empty(saveActivityResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning));
+        saveActivityResult?.IsSuccess.Should().BeTrue();
+        saveActivityResult?.Messages
+            .Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning)
+            .Should().BeEmpty();
+
+        await Task.Delay(1000);
     }
 
-    [Fact(Skip = "NotImplemented")]
-    public async Task SetUndefinedActivityToAllUsersAsync_Once_AddUndefinedStateToAll()
+    [Fact]
+    public async Task SetUndefinedActivityToAllUsersAsync_Should_AddUndefinedStateToAll()
     {
-        throw new NotImplementedException();
-
         // Arrange
-        //var activityLoggerService = GetActivityLogger(_userIdSet);
-        //var users = await _usersRepository!.FindAllAsync();
-        //var before = await _activityLogItemsRepository!.FindLastUsersActivityAsync();
-        //
-        //// Act
-        //var setUndefinedActivityResult = await activityLoggerService.SetUndefinedActivityToAllUsersAsync();
-        //var after = await _activityLogItemsRepository.FindLastUsersActivityAsync();
-        //after = after.OrderBy(i => i.Id).TakeLast(_dbEntitiesAmount).ToList(); // Because InMemory doesn't support RawSql
-        //
-        //// Assert
-        //setUndefinedActivityResult.Should().NotBeNull();
-        //setUndefinedActivityResult.IsSuccess.Should().BeTrue();
-        //after.Should().HaveSameCount(users);
-        //after.Should().OnlyContain(i => i.IsOnline == null);
+        var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
+        var usersRepository = ServiceProvider.GetRequiredService<IUsersRepository>();
+        var activityLogsRepository = ServiceProvider.GetRequiredService<IActivityLogItemsRepository>();
+        var users = await usersRepository!.FindAllAsync();
+        var existingUsers = users.Where(u => u.State == State.Active).ToList();
+        await activityLogger.SaveUsersActivityAsync();
+        var activitiesBefore = await activityLogsRepository!.FindLastUsersActivityAsync();
+
+        // Act
+        var setUndefinedActivityResult = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
+        var activitiesAfter = await activityLogsRepository.FindLastUsersActivityAsync();
+
+        // Assert
+        setUndefinedActivityResult.Should().NotBeNull();
+        setUndefinedActivityResult.IsSuccess.Should().BeTrue();
+        activitiesAfter.Should().NotBeEquivalentTo(activitiesBefore);
+        activitiesAfter.Should().HaveCountLessThanOrEqualTo(existingUsers.Count);
+        activitiesAfter.Should().OnlyContain(i => i.IsOnline == null);
+
+        await Task.Delay(1000);
     }
 
-    [Fact(Skip = "NotImplemented")]
-    public async Task SetUndefinedActivityToAllUsersAsync_ManyTimes_AddUndefinedActivityOnlyOnce()
+    [Fact]
+    public async Task SetUndefinedActivityToAllUsersAsync_Should_AddUndefinedActivityOnlyOnce_When_InvokesManyTimes()
     {
-        throw new NotImplementedException();
+        // Arrange
+        var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
+        var activityLogsRepository = ServiceProvider.GetRequiredService<IActivityLogItemsRepository>();
+        await activityLogger.SaveUsersActivityAsync();
+
+        // Act
+        var setUndefinedActivityResult1 = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
+        var activitiesAfter1 = await activityLogsRepository.FindLastUsersActivityAsync();
+        var setUndefinedActivityResult2 = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
+        var activitiesAfter2 = await activityLogsRepository.FindLastUsersActivityAsync();
+
+        // Assert
+        setUndefinedActivityResult1.Should().NotBeNull();
+        setUndefinedActivityResult1.IsSuccess.Should().BeTrue();
+        setUndefinedActivityResult2.Should().NotBeNull();
+        setUndefinedActivityResult2.IsSuccess.Should().BeTrue();
+        activitiesAfter1.Should().BeEquivalentTo(activitiesAfter2);
+
+        await Task.Delay(1000);
     }
 
-    [Fact(Skip = "NotImplemented")]
-    public async Task SetUndefinedActivityToAllUsersAsync_EmptyActivityLog_SuccessfulWithWarning()
+    [Fact]
+    public async Task ChangeAllUserActivitiesToUndefinedAsync_ShouldDoNothing_When_EmptyActivityLog()
     {
-        throw new NotImplementedException();
-    }
+        // Arrange
+        var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
+        var activityLogsRepository = ServiceProvider.GetRequiredService<IActivityLogItemsRepository>();
 
+        // Act
+        var setUndefinedActivityResult = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
+        var activitiesAfter = await activityLogsRepository.FindLastUsersActivityAsync();
 
-    private IActivityLogger GetActivityLogger()
-    {
+        // Assert
+        setUndefinedActivityResult.Should().NotBeNull();
+        setUndefinedActivityResult.IsSuccess.Should().BeTrue();
+        setUndefinedActivityResult.HasWarnings.Should().BeTrue();
+        activitiesAfter.Should().BeEmpty();
 
-
-        var postgreSqlInMemory = new PostgreSqlInMemory();
-        postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile(Path.GetFullPath(Constants.VkActivityServiceAppSettingsPath))
-            .Build();
-
-        var vkIntegration = new VkIntegration(configuration[AppSettings.Vk.AccessToken], configuration[AppSettings.Vk.Version]);
-
-        return new ActivityLogger(
-            postgreSqlInMemory.ActivityLogItemsRepository,
-            postgreSqlInMemory.UsersRepository,
-            vkIntegration,
-            Mock.Of<ILogger<ActivityLogger>>(),
-            Mock.Of<IDelayedLogger<ActivityLogger>>());
-    }
-
-
-
-    public void Dispose()
-    {
-        // Удаление БД
-        //Database.Delete(TestDatabaseName);
+        await Task.Delay(1000);
     }
 }
