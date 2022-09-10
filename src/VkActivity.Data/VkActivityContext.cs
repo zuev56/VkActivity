@@ -93,6 +93,10 @@ public partial class VkActivityContext : DbContext
             .HasColumnName("last_name")
             .HasMaxLength(50);
 
+            b.Property(e => e.Status)
+            .HasColumnType("integer")
+            .HasColumnName("status");
+
             b.Property(e => e.RawData)
             .HasColumnType("json")
             .HasColumnName("raw_data");

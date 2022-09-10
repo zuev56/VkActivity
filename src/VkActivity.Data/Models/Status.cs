@@ -1,6 +1,6 @@
 ﻿namespace VkActivity.Data.Models
 {
-    public enum State
+    public enum Status
     {
         Active = 0,
         Banned,

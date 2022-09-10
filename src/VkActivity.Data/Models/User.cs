@@ -10,7 +10,7 @@ public partial class User : IEquatable<User?>
     public string? RawDataHistory { get; set; }
     public DateTime UpdateDate { get; set; }
     public DateTime InsertDate { get; set; }
-    public State State { get; set; }
+    public Status Status { get; set; }
 
     public string GetFullName() => $"{FirstName} {LastName}";
 

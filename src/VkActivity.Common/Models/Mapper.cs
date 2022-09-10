@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.Unicode;
 using VkActivity.Common.Models.VkApi;
 using DbUser = VkActivity.Data.Models.User;
-using State = VkActivity.Data.Models.State;
+using Status = VkActivity.Data.Models.Status;
 
 namespace VkActivity.Common;
 
@@ -29,11 +29,11 @@ public static class Mapper
             Id = apiVkUser.Id,
             FirstName = apiVkUser.FirstName,
             LastName = apiVkUser.LastName,
-            State = apiVkUser.Deactivated switch
+            Status = apiVkUser.Deactivated switch
             {
-                "deleted" => State.Deleted,
-                "banned" => State.Banned,
-                _ => State.Active
+                "deleted" => Status.Deleted,
+                "banned" => Status.Banned,
+                _ => Status.Active
             },
             RawData = json,
             RawDataHistory = null,

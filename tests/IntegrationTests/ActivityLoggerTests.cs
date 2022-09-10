@@ -46,7 +46,7 @@ public class ActivityLoggerTests : TestBase
         var usersRepository = ServiceProvider.GetRequiredService<IUsersRepository>();
         var activityLogsRepository = ServiceProvider.GetRequiredService<IActivityLogItemsRepository>();
         var users = await usersRepository!.FindAllAsync();
-        var existingUsers = users.Where(u => u.State == State.Active).ToList();
+        var existingUsers = users.Where(u => u.Status == Status.Active).ToList();
         await activityLogger.SaveUsersActivityAsync();
         var activitiesBefore = await activityLogsRepository!.FindLastUsersActivityAsync();
 
