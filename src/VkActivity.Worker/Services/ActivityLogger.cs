@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
+using VkActivity.Common.Abstractions;
+using VkActivity.Common.Models.VkApi;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
 using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Models;
-using VkActivity.Worker.Models.VkApi;
 using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;

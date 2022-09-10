@@ -2,11 +2,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Unicode;
-using VkActivity.Worker.Models.VkApi;
+using VkActivity.Common.Models.VkApi;
 using DbUser = VkActivity.Data.Models.User;
 using State = VkActivity.Data.Models.State;
 
-namespace VkActivity.Worker;
+namespace VkActivity.Common;
 
 public static class Mapper
 {

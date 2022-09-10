@@ -5,9 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
-using VkActivity.Worker;
-using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Services;
+using VkActivity.Common;
+using VkActivity.Common.Abstractions;
+using VkActivity.Common.Services;
 using Xunit;
 
 namespace Worker.IntegrationTests;

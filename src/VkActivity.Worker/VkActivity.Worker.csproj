@@ -22,7 +22,6 @@
     <ItemGroup>
         <!--<PackageReference Include="Microsoft.AspNetCore.Hosting.WindowsServices" Version="6.0.4" />-->
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
-        <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
         
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.4">
             <PrivateAssets>all</PrivateAssets>
@@ -37,6 +36,7 @@
         <PackageReference Include="Zs.Common.Services" Version="6.0.7" />
     </ItemGroup>
     <ItemGroup>
+      <ProjectReference Include="..\VkActivity.Common\VkActivity.Common.csproj" />
       <ProjectReference Include="..\VkActivity.Data\VkActivity.Data.csproj" />
     </ItemGroup>
 

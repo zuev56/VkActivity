@@ -1,12 +1,12 @@
-﻿using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Models.VkApi;
+﻿using VkActivity.Common.Abstractions;
+using VkActivity.Common.Models.VkApi;
 using Zs.Common.Abstractions;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
 
-namespace VkActivity.Worker.Services;
+namespace VkActivity.Common.Services;
 
-internal sealed class VkIntegration : IVkIntegration
+public sealed class VkIntegration : IVkIntegration
 {
     // https://dev.vk.com/reference/objects/user
     private const string BaseUrl = "https://api.vk.com/method/";

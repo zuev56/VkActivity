@@ -1,5 +1,4 @@
-﻿using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Services;
+﻿using VkActivity.Common;
 using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Connection;
 
@@ -24,14 +23,5 @@ public static class ServiceCollectionExtensions
             }
             return connectionAnalyzer;
         });
-    }
-
-    public static IServiceCollection AddVkIntegration(this IServiceCollection services, IConfiguration configuration)
-    {
-        return services.AddSingleton<IVkIntegration, VkIntegration>(
-            sp => new VkIntegration(
-                configuration[AppSettings.Vk.AccessToken],
-                configuration[AppSettings.Vk.Version])
-            );
     }
 }

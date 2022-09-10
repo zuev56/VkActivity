@@ -1,7 +1,7 @@
 ﻿using VkActivity.Data.Models;
 using Zs.Common.Abstractions;
 
-namespace VkActivity.Worker.Abstractions;
+namespace VkActivity.Common.Abstractions;
 
 public interface IUserManager
 {

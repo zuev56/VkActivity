@@ -6,10 +6,10 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Moq;
+using VkActivity.Common.Abstractions;
+using VkActivity.Common.Models.VkApi;
+using VkActivity.Common.Services;
 using VkActivity.Data.Models;
-using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Models.VkApi;
-using VkActivity.Worker.Services;
 using Zs.Common.Extensions;
 
 [assembly: InternalsVisibleTo("Worker.IntegrationTests")]

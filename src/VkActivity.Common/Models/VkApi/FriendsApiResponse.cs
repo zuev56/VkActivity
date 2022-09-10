@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace VkActivity.Worker.Models.VkApi;
+namespace VkActivity.Common.Models.VkApi;
 
 public sealed class FriendsApiResponse
 {

@@ -1,6 +1,6 @@
-﻿using VkActivity.Worker.Models.VkApi;
+﻿using VkActivity.Common.Models.VkApi;
 
-namespace VkActivity.Worker.Abstractions;
+namespace VkActivity.Common.Abstractions;
 
 public interface IVkIntegration
 {

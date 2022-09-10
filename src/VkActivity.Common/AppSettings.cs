@@ -1,4 +1,4 @@
-﻿namespace VkActivity.Worker;
+﻿namespace VkActivity.Common;
 
 public static class AppSettings
 {

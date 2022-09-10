@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using VkActivity.Data.Models;
 
-namespace VkActivity.Worker.Models.VkApi;
+namespace VkActivity.Common.Models.VkApi;
 
 // https://dev.vk.com/reference/objects/user#last_seen
 public sealed class VkApiLastSeen

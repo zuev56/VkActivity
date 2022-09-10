@@ -2,8 +2,8 @@
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using VkActivity.Common.Abstractions;
 using VkActivity.Data.Abstractions;
-using VkActivity.Worker.Abstractions;
 using Xunit;
 
 namespace Worker.IntegrationTests
