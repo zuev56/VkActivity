@@ -22,7 +22,7 @@ internal sealed class WorkerService : BackgroundService
     private readonly ILogger<WorkerService> _logger;
     private DateTime _disconnectionTime = DateTime.UtcNow;
 
-    private IJob? _userActivityLoggerJob;
+    private IJob _userActivityLoggerJob;
     private bool _isFirstStep = true;
 
 
@@ -40,7 +40,7 @@ internal sealed class WorkerService : BackgroundService
             _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
             _connectionAnalyser = connectionAnalyser ?? throw new ArgumentNullException(nameof(connectionAnalyser));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this._delayedLogger = delayedLogger ?? throw new ArgumentNullException(nameof(delayedLogger));
+            _delayedLogger = delayedLogger ?? throw new ArgumentNullException(nameof(delayedLogger));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _scheduler.Jobs.AddRange(CreateJobs());
@@ -85,8 +85,8 @@ internal sealed class WorkerService : BackgroundService
     private void СonnectionAnalyser_StatusChanged(ConnectionStatus status)
     {
         _disconnectionTime = status == ConnectionStatus.Ok
-            ? _disconnectionTime = default
-            : _disconnectionTime = DateTime.UtcNow;
+            ? default
+            : DateTime.UtcNow;
     }
 
     private List<IJobBase> CreateJobs()
