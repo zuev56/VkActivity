@@ -28,7 +28,7 @@ public class UserManager : IUserManager
     /// <param name="userIds">User IDs or ScreenNames</param>
     public async Task<IOperationResult<List<User>>> AddUsersAsync(params string[] screenNames)
     {
-        ArgumentNullException.ThrowIfNull(nameof(screenNames));
+        ArgumentNullException.ThrowIfNull(screenNames);
 
         var resultUsersList = new List<User>();
         var result = ServiceResult<List<User>>.Success(resultUsersList);
@@ -104,5 +104,21 @@ public class UserManager : IUserManager
         result.Merge(updateResult);
 
         return result;
+    }
+
+    public async Task<IOperationResult<List<User>>> AddFriendsOf(int userId)
+    {
+        try
+        {
+            var friendIds = await _vkIntegration.GetFriendIds(userId);
+            var stringNames = friendIds.Select(friendIds => friendIds.ToString()).ToArray();
+
+            return await AddUsersAsync(stringNames);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogErrorIfNeed(ex, "Add friends failed");
+            return ServiceResult<List<User>>.Error("Add friends failed");
+        }
     }
 }

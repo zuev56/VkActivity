@@ -33,4 +33,20 @@ public sealed class UsersController : Controller
             ? Ok(addUsersResult)
             : StatusCode(500, addUsersResult);
     }
+
+
+    [HttpPost("friends/{userId:int}")]
+    public async Task<IActionResult> AddFriendsOf(int userId)
+    {
+        if (userId == default)
+        {
+            return BadRequest("userId must be present");
+        }
+
+        var addFriendsResult = await _userManager.AddFriendsOf(userId);
+
+        return addFriendsResult.IsSuccess
+            ? Ok(addFriendsResult)
+            : StatusCode(500, addFriendsResult);
+    }
 }
