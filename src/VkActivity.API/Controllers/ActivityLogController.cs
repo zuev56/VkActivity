@@ -4,7 +4,7 @@ using Zs.Common.Extensions;
 
 namespace VkActivity.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/activity")]
 [ServiceFilter(typeof(ApiExceptionFilter))]
 [ServiceFilter(typeof(ApiExceptionFilter))]
 [ApiController] // Реализует проверку модели и возвращает 400, если она не валидна
@@ -32,9 +32,9 @@ public sealed class ActivityLogController : Controller
         _activityAnalyzerService = activityAnalyzerService ?? throw new ArgumentNullException(nameof(activityAnalyzerService));
     }
 
-    [HttpGet("{userId:int}/period")]
+    [HttpGet("{userId:int}/period/{fromDate:datetime}/{toDate:datetime}")]
     public async Task<IActionResult> GetPeriodInfo(
-        [FromRoute] int userId, [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
+        [FromRoute] int userId, [FromRoute] DateTime fromDate, [FromRoute] DateTime toDate)
     {
         var periodStatisticsResult = await _activityAnalyzerService.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
         periodStatisticsResult.AssertResultIsSuccessful();

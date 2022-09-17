@@ -68,6 +68,8 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
                 Version = context.Configuration[AppSettings.Swagger.ApiVersion]
             })
         );
+
+        services.Configure<RouteOptions>(o => o.LowercaseUrls = true);
     })
     .Configure((context, app) =>
     {

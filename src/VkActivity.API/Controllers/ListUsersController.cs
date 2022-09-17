@@ -25,7 +25,7 @@ public sealed class ListUsersController : Controller
     /// <param name="fromDate"></param>
     /// <param name="toDate"></param>
     /// <returns></returns>
-    [HttpGet]
+    [HttpGet("period/{fromDate}/{toDate}")]
     public async Task<IActionResult> GetUsersWithActivity(string? filterText, DateTime fromDate, DateTime toDate)
     {
         var usersWithActivityResult = await _activityAnalyzer.GetUsersWithActivityAsync(filterText, fromDate, toDate);

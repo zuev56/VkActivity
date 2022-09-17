@@ -19,15 +19,15 @@ public sealed class UsersController : Controller
     /// <summary>
     /// Add users by theirs Vk-Identifiers
     /// </summary>
-    /// <param name="vkUserIds"></param>
+    /// <param name="screenNames"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<IActionResult> AddNewUsers([FromBody] string[] vkUserIds)
+    public async Task<IActionResult> AddNewUsers([FromBody] string[] screenNames)
     {
-        if (vkUserIds == null || vkUserIds.Length == 0)
+        if (screenNames == null || screenNames.Length == 0)
             return BadRequest("No VK user IDs to add");
 
-        var addUsersResult = await _userManager.AddUsersAsync(vkUserIds).ConfigureAwait(false);
+        var addUsersResult = await _userManager.AddUsersAsync(screenNames).ConfigureAwait(false);
 
         return addUsersResult.IsSuccess
             ? Ok(addUsersResult)
