@@ -67,7 +67,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(string? filterText, DateTime fromDate, DateTime toDate)
+    public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(DateTime fromDate, DateTime toDate, string? filterText)
     {
         try
         {
@@ -230,9 +230,6 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     /// <summary>Gets log and order it</summary>
     private async Task<List<ActivityLogItem>> GetOrderedLog(DateTime fromDate, DateTime toDate, params int[] userIds)
     {
-        int fromDateUnix = fromDate.ToUnixEpoch();
-        int toDateUnix = toDate.ToUnixEpoch();
-
         var log = await _vkActivityLogRepo.FindAllByIdsInDateRangeAsync(userIds, fromDate, toDate);
 
         return log.OrderBy(l => l.LastSeen)

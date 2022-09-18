@@ -16,7 +16,7 @@ public interface IActivityAnalyzer
     Task<IOperationResult<List<User>>> GetUsersAsync(string filterText = null, int? skip = null, int? take = null);
 
     /// <summary>Get users list with activity time in a specified period</summary>
-    Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(string filterText, DateTime fromDate, DateTime toDate);
+    Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(DateTime fromDate, DateTime toDate, string? filterText);
 
     ///// <summary> Get paginated users list with activity time in a specified period </summary>
     ///// <param name="filterText">Filter for user names</param>

@@ -4,9 +4,9 @@
 public partial class User : IEquatable<User?>
 {
     public int Id { get; set; }
-    public string? FirstName { get; set; }
-    public string? LastName { get; set; }
-    public string? RawData { get; set; }
+    public string FirstName { get; set; } = null!;
+    public string LastName { get; set; } = null!;
+    public string RawData { get; set; } = null!;
     public string? RawDataHistory { get; set; }
     public DateTime UpdateDate { get; set; }
     public DateTime InsertDate { get; set; }
