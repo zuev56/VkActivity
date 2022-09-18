@@ -81,21 +81,25 @@ public sealed class ActivityLogger : IActivityLogger
 
             var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivityAsync();
             if (!lastUsersActivityLogItems.Any())
+            {
                 return ServiceResult.Warning(ActivityLogIsEmpty);
+            }
 
             var activityLogItems = new List<ActivityLogItem>();
             foreach (var user in users)
             {
                 var userActivityItem = lastUsersActivityLogItems.FirstOrDefault(i => i.UserId == user.Id);
                 if (userActivityItem?.IsOnline != null)
+                {
                     activityLogItems.Add(new ActivityLogItem
                     {
                         UserId = user.Id,
                         IsOnline = null,
                         Platform = 0,
-                        LastSeen = int.MaxValue,
+                        LastSeen = userActivityItem.LastSeen,
                         InsertDate = DateTime.UtcNow
                     });
+                }
             }
 
             var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
