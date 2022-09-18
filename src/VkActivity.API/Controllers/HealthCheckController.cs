@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using VkActivity.Common;
+using VkActivity.Data.Services;
 
 namespace VkActivity.Api.Controllers;
 
@@ -7,10 +9,16 @@ namespace VkActivity.Api.Controllers;
 public sealed class HealthCheckController : Controller
 {
     // TODO: Try HealthCheckApplicationBuilderExtensions _healthCheckApplicationBuilderExtensions;
+    private readonly string _connectionString;
+
+    public HealthCheckController(IConfiguration configuration)
+    {
+        _connectionString = configuration.GetConnectionString(AppSettings.ConnectionStrings.Default);
+    }
 
     [HttpGet]
     [HttpHead]
-    public IActionResult GetHealthInfo()
+    public async Task<IActionResult> GetHealthInfo()
     {
         if (Request.Method == "HEAD")
             return Ok();
@@ -31,7 +39,8 @@ public sealed class HealthCheckController : Controller
                 Current = BytesToSize(currentProcess.WorkingSet64),
                 Peak = BytesToSize(currentProcess.PeakWorkingSet64)
             },
-            ActiveThreads = currentProcess.Threads.Count
+            ActiveThreads = currentProcess.Threads.Count,
+            Database = await DbInfoService.GetInfoAsync(_connectionString)
         });
     }
 
