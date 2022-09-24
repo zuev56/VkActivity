@@ -125,12 +125,12 @@ internal sealed class WorkerService : BackgroundService
         if (_isFirstStep)
         {
             _isFirstStep = false;
-            _userActivityLoggerJob!.IdleStepsCount = 1;
+            _userActivityLoggerJob.IdleStepsCount = 1;
             await AddUsersFullInfoAsync().ConfigureAwait(false);
             return;
         }
 
-        if (_userActivityLoggerJob!.IdleStepsCount > 0)
+        if (_userActivityLoggerJob.IdleStepsCount > 0)
             _userActivityLoggerJob.IdleStepsCount = 0;
 
         var result = await SaveUsersActivityAsync().ConfigureAwait(false);
@@ -150,8 +150,8 @@ internal sealed class WorkerService : BackgroundService
     {
         using (var scope = _scopeFactory.CreateScope())
         {
-            var activityLoggerService = scope.ServiceProvider.GetService<IActivityLogger>();
-            return await activityLoggerService!.SaveUsersActivityAsync().ConfigureAwait(false);
+            var activityLoggerService = scope.ServiceProvider.GetRequiredService<IActivityLogger>();
+            return await activityLoggerService.SaveUsersActivityAsync().ConfigureAwait(false);
         }
     }
 
@@ -159,17 +159,17 @@ internal sealed class WorkerService : BackgroundService
     {
         using (var scope = _scopeFactory.CreateScope())
         {
-            var activityLoggerService = scope.ServiceProvider.GetService<IActivityLogger>();
-            return await activityLoggerService!.ChangeAllUserActivitiesToUndefinedAsync().ConfigureAwait(false);
+            var activityLoggerService = scope.ServiceProvider.GetRequiredService<IActivityLogger>();
+            return await activityLoggerService.ChangeAllUserActivitiesToUndefinedAsync().ConfigureAwait(false);
         }
     }
     private async Task AddUsersFullInfoAsync()
     {
         using (var scope = _scopeFactory.CreateScope())
         {
-            var userManager = scope.ServiceProvider.GetService<IUserManager>();
+            var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
             var initialUserIds = _configuration.GetSection(AppSettings.Vk.InitialUserIds).Get<string[]>();
-            await userManager!.AddUsersAsync(initialUserIds ?? Array.Empty<string>()).ConfigureAwait(false);
+            await userManager.AddUsersAsync(initialUserIds ?? Array.Empty<string>()).ConfigureAwait(false);
         }
     }
 
@@ -177,10 +177,10 @@ internal sealed class WorkerService : BackgroundService
     {
         using (var scope = _scopeFactory.CreateScope())
         {
-            var usersRepo = scope.ServiceProvider.GetService<IUsersRepository>();
-            var userIds = await usersRepo!.FindAllIdsAsync().ConfigureAwait(false);
+            var usersRepo = scope.ServiceProvider.GetRequiredService<IUsersRepository>();
+            var userIds = await usersRepo.FindAllIdsAsync().ConfigureAwait(false);
 
-            var userManager = scope.ServiceProvider.GetService<IUserManager>()!;
+            var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
             var updateResult = await userManager.UpdateUsersAsync(userIds);
 
             if (!updateResult.IsSuccess)
