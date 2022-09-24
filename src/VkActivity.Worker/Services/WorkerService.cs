@@ -11,7 +11,6 @@ using static VkActivity.Worker.Models.Constants;
 
 namespace VkActivity.Worker.Services;
 
-// TODO: В хранимке vk.sf_cmd_get_not_active_users выводить точное количество времени отсутствия
 internal sealed class WorkerService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -22,7 +21,7 @@ internal sealed class WorkerService : BackgroundService
     private readonly ILogger<WorkerService> _logger;
     private DateTime _disconnectionTime = DateTime.UtcNow;
 
-    private IJob _userActivityLoggerJob;
+    private IJob _userActivityLoggerJob = null!;
     private bool _isFirstStep = true;
 
 
@@ -53,7 +52,7 @@ internal sealed class WorkerService : BackgroundService
         }
     }
 
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
@@ -63,6 +62,7 @@ internal sealed class WorkerService : BackgroundService
             _scheduler.Start(3000, 1000);
 
             _logger.LogInformation($"{nameof(WorkerService)} started");
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {

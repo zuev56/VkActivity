@@ -9,8 +9,8 @@ public interface IDelayedLogger<TSourceContext>
     int LogTrace(string messageText);
     int LogDebug(string messageText);
     int LogInformation(string messageText);
-    int LogWarning(string message);
-    int LogError(string message);
+    int LogWarning(string messageText);
+    int LogError(string messageText);
     //int LogError<TSourceContext>(Exception exception, string message);
     int LogCritical(string messageText);
 }

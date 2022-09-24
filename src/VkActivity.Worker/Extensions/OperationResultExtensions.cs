@@ -1,6 +1,6 @@
 ﻿using Zs.Common.Abstractions;
 
-namespace VkActivity.Worker.Helpers
+namespace VkActivity.Worker.Extensions
 {
     public static class OperationResultExtensions
     {

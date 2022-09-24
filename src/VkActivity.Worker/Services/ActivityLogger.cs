@@ -4,7 +4,6 @@ using VkActivity.Common.Models.VkApi;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
 using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Models;
 using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
@@ -55,10 +54,10 @@ public sealed class ActivityLogger : IActivityLogger
             int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
 #if DEBUG
-            Trace.WriteLine(Constants.LoggedItemsCount(loggedItemsCount));
+            Trace.WriteLine(LoggedItemsCount(loggedItemsCount));
 #endif
 
-            result.AddMessage(Constants.LoggedItemsCount(loggedItemsCount));
+            result.AddMessage(LoggedItemsCount(loggedItemsCount));
             return result;
         }
         catch (Exception ex)
@@ -77,7 +76,7 @@ public sealed class ActivityLogger : IActivityLogger
     {
         try
         {
-            var users = await _usersRepo.FindAllAsync();
+            var users = await _usersRepo.FindAllAsync().ConfigureAwait(false);
 
             var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivityAsync();
             if (!lastUsersActivityLogItems.Any())
@@ -102,7 +101,7 @@ public sealed class ActivityLogger : IActivityLogger
                 }
             }
 
-            var saveResult = await _activityLogRepo.SaveRangeAsync(activityLogItems);
+            await _activityLogRepo.SaveRangeAsync(activityLogItems);
 
 #if DEBUG
             Trace.WriteLine(SetUndefinedActivityToAllUsers);

@@ -35,14 +35,5 @@
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.4" />
       <PackageReference Include="Zs.Common" Version="6.0.9" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Resource Include="SQL\ForeignTales.sql" />
-      <Resource Include="SQL\Priveleges.sql" />
-      <Resource Include="SQL\StoredFunctions.sql" />
-      <Resource Include="SQL\Views.sql" />
-    </ItemGroup>
-
-   
     
 </Project>

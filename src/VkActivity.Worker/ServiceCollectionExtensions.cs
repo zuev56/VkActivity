@@ -3,6 +3,7 @@ using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Connection;
 
 namespace VkActivity.Worker;
+
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddConnectionAnalyzer(this IServiceCollection services, IConfiguration configuration)
