@@ -7,7 +7,7 @@ namespace VkActivity.Api.Abstractions;
 public interface IActivityAnalyzer
 {
     /// <summary>Get information about user activity in the specified period</summary>
-    Task<IOperationResult<SimpleActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate);
+    Task<IOperationResult<DetailedActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate);
 
     /// <summary>Get detailed information about full user activity</summary>
     Task<IOperationResult<DetailedActivity>> GetFullTimeActivityAsync(int userId);

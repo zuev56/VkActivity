@@ -1,16 +1,13 @@
-﻿using VkActivity.Data.Models;
-
-namespace VkActivity.Api.Models.Dto;
+﻿namespace VkActivity.Api.Models.Dto;
 
 public class PeriodInfoDto
 {
     public int UserId { get; init; }
     public string? UserName { get; init; }
-    public int VisitsCount { get; init; }
-    [Obsolete("Use TimeOnPlatforms instead")]
-    public string? TimeInSite { get; init; }
-    [Obsolete("Use TimeOnPlatforms instead")]
-    public string? TimeInApp { get; init; }
-    public Dictionary<Platform, string> TimeOnPlatforms { get; init; } = new();
+    public List<VisitInfoDto> VisitInfos { get; set; } = new();
+    public int AllVisitsCount { get; init; }
     public string? FullTime { get; init; }
+    public int AnalyzedDaysCount { get; init; }
+    public int ActivityDaysCount { get; init; }
+    public string? AvgDailyTime { get; init; }
 }

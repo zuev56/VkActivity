@@ -10,6 +10,7 @@ using static VkActivity.Api.Models.Constants;
 
 namespace VkActivity.Api.Services;
 
+// TODO: В хранимке vk.sf_cmd_get_not_active_users выводить точное количество времени отсутствия
 public sealed class ActivityAnalyzer : IActivityAnalyzer
 {
     private readonly IActivityLogItemsRepository _vkActivityLogRepo;
@@ -43,14 +44,9 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
             var activityDetails = new DetailedActivity(user)
             {
-                AnalyzedDaysCount = (int)(orderedLogForUser.Max(l => l.InsertDate.Date) - orderedLogForUser.Min(l => l.InsertDate.Date)).TotalDays,
+                AnalyzedDaysCount = (int)(orderedLogForUser.Max(l => l.InsertDate.Date) - orderedLogForUser.Min(l => l.InsertDate.Date)).TotalDays + 1,
                 ActivityDaysCount = orderedLogForUser.Select(l => l.InsertDate.Date).Distinct().Count(),
-                VisitsFromSite = orderedLogForUser.Count(l => l.IsOnline == true && IsWebSite(l.Platform)),
-                VisitsFromApp = orderedLogForUser.Count(l => l.IsOnline == true && !IsWebSite(l.Platform)),
-                //ActivityCalendar  = GetActivityForEveryDay(orderedLogForUser), Пока не используется
-                TimeInSite = TimeSpan.FromSeconds(GetActivitySeconds(orderedLogForUser.ToList(), Device.PC)),
-                TimeInApp = TimeSpan.FromSeconds(GetActivitySeconds(orderedLogForUser.ToList(), Device.Mobile)),
-                TimeOnPlatforms = GetTimeOnPlatforms(orderedLogForUser),
+                VisitInfos = GetVisitInfos(orderedLogForUser),
             };
 
             return ServiceResult<DetailedActivity>.Success(activityDetails);
@@ -60,6 +56,52 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
             _logger?.LogError(ex, GetFullTimeActivityError);
             return ServiceResult<DetailedActivity>.Error(GetFullTimeActivityError);
         }
+    }
+
+    private List<VisitInfo> GetVisitInfos(List<ActivityLogItem> orderedLogForUser)
+    {
+        var platforms = orderedLogForUser.Select(l => l.Platform).Distinct().ToList();
+        var visitInfos = new List<VisitInfo>(platforms.Count);
+        foreach (var platform in platforms)
+        {
+            visitInfos.Add(new VisitInfo
+            {
+                Platform = platform,
+                Count = orderedLogForUser.Count(l => l.Platform == platform),
+                Time = GetActivityTimeOnPlatform(orderedLogForUser, platform)
+            });
+        }
+
+        return visitInfos;
+    }
+    private static TimeSpan GetActivityTimeOnPlatform(List<ActivityLogItem> orderedLog, Platform platform)
+    {
+        // Проверка:
+        //  - Первый элемент списка должен быть IsOnline == true
+        //  - Каждый последующий элемент обрабатывается опираясь на предыдущий
+
+        int seconds = 0;
+        for (int i = 1; i < orderedLog.Count; i++)
+        {
+            var prev = orderedLog[i - 1];
+            var cur = orderedLog[i];
+
+            if (prev.IsOnline == true
+                && prev.Platform == platform
+                && (cur.IsOnline == false || cur.IsOnline == true && cur.Platform == platform))
+            {
+                seconds += cur.LastSeen - prev.LastSeen;
+            }
+        }
+
+        // Для корректного отображения времени активности пользователей, которые в данный момент онлайн
+        // надо прибавлять секунды с момента их входа в Вк до текущего момента (!!!Можно дописывать в журнал фейковую запись о выходе!!!).
+        // Но это решение портит результат, когда анализируется отрезок времени, заканчивающийся в прошлом.
+        //var lastLogItem = log.LastOrDefault();
+        //if (lastLogItem?.IsOnline == true && lastLogItem.InsertDate...)
+        //    seconds += DateTime.UtcNow.ToUnixEpoch() - log.Last().InsertDate.ToUnixEpoch();
+
+        return TimeSpan.FromSeconds(seconds);
     }
 
     private static bool IsWebSite(Platform platform)
@@ -320,46 +362,49 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
         return seconds;
     }
-    public async Task<IOperationResult<SimpleActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
+
+    public async Task<IOperationResult<DetailedActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
     {
         try
         {
             if (fromDate >= toDate || _tmpMinLogDate >= toDate)
-                return ServiceResult<SimpleActivity>.Error(EndDateIsNotMoreThanStartDate);
+                return ServiceResult<DetailedActivity>.Error(EndDateIsNotMoreThanStartDate);
 
             fromDate = fromDate > _tmpMinLogDate ? fromDate : _tmpMinLogDate;
 
             var user = await _vkUsersRepo.FindByIdAsync(userId);
             if (user == null)
-                return ServiceResult<SimpleActivity>.Error(UserNotFound(userId));
+                return ServiceResult<DetailedActivity>.Error(UserNotFound(userId));
 
             var orderedLogForUser = await GetOrderedLog(fromDate, toDate, userId);
             var userStatistics = GetUserStatistics(userId, user.GetFullName(), orderedLogForUser.ToList());
 
-            return ServiceResult<SimpleActivity>.Success(userStatistics);
+            return ServiceResult<DetailedActivity>.Success(userStatistics);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, GetUserStatisticsForPeriodError);
-            return ServiceResult<SimpleActivity>.Error(GetUserStatisticsForPeriodError);
+            return ServiceResult<DetailedActivity>.Error(GetUserStatisticsForPeriodError);
         }
     }
 
-    private SimpleActivity GetUserStatistics(int userId, string userName, List<ActivityLogItem> orderedLogForUser)
+    private DetailedActivity GetUserStatistics(int userId, string userName, List<ActivityLogItem> orderedLogForUser)
     {
 
         int browserActivitySec = GetActivitySeconds(orderedLogForUser, Device.PC);
         int mobileActivitySec = GetActivitySeconds(orderedLogForUser, Device.Mobile);
 
-        return new SimpleActivity
-        {
-            UserId = userId,
-            UserName = userName,
-            TimeInSite = TimeSpan.FromSeconds(browserActivitySec),
-            TimeInApp = TimeSpan.FromSeconds(mobileActivitySec),
-            TimeOnPlatforms = GetTimeOnPlatforms(orderedLogForUser),
-            VisitsCount = orderedLogForUser.Count(l => l.IsOnline == true)
-        };
+        throw new NotImplementedException();
+
+        //return new DetailedActivity()
+        //{
+        //    UserId = userId,
+        //    UserName = userName,
+        //    //TimeInSite = TimeSpan.FromSeconds(browserActivitySec),
+        //    //TimeInApp = TimeSpan.FromSeconds(mobileActivitySec),
+        //    //TimeOnPlatforms = GetTimeOnPlatforms(orderedLogForUser),
+        //    //VisitsCount = orderedLogForUser.Count(l => l.IsOnline == true)
+        //};
     }
 
     private Dictionary<Platform, TimeSpan> GetTimeOnPlatforms(List<ActivityLogItem> orderedLogForUser)
