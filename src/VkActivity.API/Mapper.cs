@@ -19,21 +19,7 @@ public static class Mapper
         };
     }
 
-    //public static PeriodInfoDto ToPeriodInfoDto(SimpleActivity simpleActivity)
-    //{
-    //    ArgumentNullException.ThrowIfNull(nameof(simpleActivity));
-
-    //    return new PeriodInfoDto
-    //    {
-    //        UserId = simpleActivity.UserId,
-    //        UserName = simpleActivity.UserName,
-    //        VisitInfos = simpleActivity.VisitInfos.ToDtos(),
-    //        AllVisitsCount = simpleActivity.VisitsCount,
-    //        FullTime = simpleActivity.FullTime.ToDayHHmmss()
-    //    };
-    //}
-
-    public static PeriodInfoDto ToFullTimeInfoDto(DetailedActivity detailedActivity)
+    public static PeriodInfoDto ToPeriodInfoDto(DetailedActivity detailedActivity)
     {
         ArgumentNullException.ThrowIfNull(nameof(detailedActivity));
 

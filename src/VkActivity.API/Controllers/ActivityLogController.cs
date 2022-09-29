@@ -36,13 +36,11 @@ public sealed class ActivityLogController : Controller
     public async Task<IActionResult> GetPeriodInfo(
         [FromRoute] int userId, [FromRoute] DateTime fromDate, [FromRoute] DateTime toDate)
     {
-        throw new NotImplementedException();
+        var periodStatisticsResult = await _activityAnalyzerService.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
+        periodStatisticsResult.AssertResultIsSuccessful();
+        var periodInfoDto = Mapper.ToPeriodInfoDto(periodStatisticsResult.Value);
 
-        //var periodStatisticsResult = await _activityAnalyzerService.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
-        //periodStatisticsResult.AssertResultIsSuccessful();
-        //var periodInfoDto = Mapper.ToPeriodInfoDto(periodStatisticsResult.Value);
-        //
-        //return Ok(periodInfoDto);
+        return Ok(periodInfoDto);
     }
 
     [HttpGet("{userId:int}/fulltime")]
@@ -50,7 +48,7 @@ public sealed class ActivityLogController : Controller
     {
         var fullTimeStatistictResult = await _activityAnalyzerService.GetFullTimeActivityAsync(userId);
         fullTimeStatistictResult.AssertResultIsSuccessful();
-        var fullTimeInfoDto = Mapper.ToFullTimeInfoDto(fullTimeStatistictResult.Value);
+        var fullTimeInfoDto = Mapper.ToPeriodInfoDto(fullTimeStatistictResult.Value);
 
         return Ok(fullTimeInfoDto);
     }
