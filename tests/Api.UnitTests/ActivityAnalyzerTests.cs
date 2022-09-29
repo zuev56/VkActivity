@@ -167,7 +167,7 @@ public class ActivityAnalyzerTests
         var activityAnalyzer = GetActivityAnalyzer();
 
         // Act
-        var result = await activityAnalyzer.GetUsersWithActivityAsync(filterText, fromDate, toDate);
+        var result = await activityAnalyzer.GetUsersWithActivityAsync(fromDate, toDate, filterText);
 
         // Assert
         result.Should().NotBeNull();
@@ -185,7 +185,7 @@ public class ActivityAnalyzerTests
         var activityAnalyzer = GetActivityAnalyzer();
 
         // Act
-        var result = await activityAnalyzer.GetUsersWithActivityAsync(filterText, fromDate, toDate);
+        var result = await activityAnalyzer.GetUsersWithActivityAsync(fromDate, toDate, filterText);
 
         // Assert
         result.Should().NotBeNull();

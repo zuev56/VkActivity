@@ -16,7 +16,7 @@ using VkActivity.Data.Abstractions;
 using VkActivity.Data.Repositories;
 using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Helpers;
+using VkActivity.Worker.Extensions;
 using VkActivity.Worker.Services;
 using static Worker.IntegrationTests.Constants;
 
