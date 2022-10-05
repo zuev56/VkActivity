@@ -6,7 +6,7 @@ namespace Worker.IntegrationTests;
 internal static class Constants
 {
     public const string VkActivityServiceAppSettingsPath
-        = @"..\..\..\..\..\src\VkActivity.Worker\appsettings.Development.json";
+        = "../../../../../src/VkActivity.Worker/appsettings.Development.json";
     public const string DbUserSecretsKey = "ConnectionString:User";
     public const string DbPasswordSecretsKey = "ConnectionString:Password";
     public const string DbPortSecretsKey = "ConnectionString:Port";

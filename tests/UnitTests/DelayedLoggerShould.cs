@@ -51,7 +51,7 @@ namespace UnitTests
                 }
             }
 
-            await Task.Delay(_specificLogWriteInterval + TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
+            await Task.Delay(_specificLogWriteInterval + TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
 
             // Assert
             _loggerMock.Verify(logger => logger.Log(
@@ -87,7 +87,7 @@ namespace UnitTests
             for (int i = 0; i < MessageRepeatTimes; i++)
                 delayedLogger.Log(testMessage, logLevel);
 
-            var defaultDelayTask = Task.Delay(delayedLogger.DefaultLogWriteInterval);
+            var defaultDelayTask = Task.Delay(delayedLogger.DefaultLogWriteInterval + TimeSpan.FromMilliseconds(300));
 
             await Task.Delay(defaultLogWriteInterval - TimeSpan.FromMilliseconds(300));
 
