@@ -2,7 +2,7 @@
 
 public sealed class VisitInfoDto
 {
-    public string Platform { get; set; }
+    public string Platform { get; set; } = null!;
     public int Count { get; set; }
-    public string Time { get; set; }
+    public string Time { get; set; } = null!;
 }

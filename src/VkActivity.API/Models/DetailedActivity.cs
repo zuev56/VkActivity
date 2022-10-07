@@ -6,8 +6,8 @@ namespace VkActivity.Api.Models;
 public class DetailedActivity
 {
     public int UserId { get; init; }
-    public string? UserName { get; init; }
-    public string? Url { get; init; }
+    public string UserName { get; init; } = null!;
+    public string Url { get; init; } = null!;
     public int AnalyzedDaysCount { get; init; }
     public int ActivityDaysCount { get; init; }
     public List<VisitInfo> VisitInfos { get; set; } = new();
