@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Worker.UnitTests", "tests\UnitTests\Worker.UnitTests.csproj", "{FC6957AA-EA79-4824-8027-A3996BB46639}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Worker.UnitTests", "tests\Worker.UnitTests\Worker.UnitTests.csproj", "{FC6957AA-EA79-4824-8027-A3996BB46639}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Data", "src\VkActivity.Data\VkActivity.Data.csproj", "{00BB3993-E898-4B92-865D-B380F2B59427}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Worker", "src\VkActivity.Worker\VkActivity.Worker.csproj", "{84FAB167-76EF-4414-87F0-75ECE3E850CA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Worker.IntegrationTests", "tests\IntegrationTests\Worker.IntegrationTests.csproj", "{8D281376-2AD3-4C00-BB86-3482B12E590C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Worker.IntegrationTests", "tests\Worker.IntegrationTests\Worker.IntegrationTests.csproj", "{8D281376-2AD3-4C00-BB86-3482B12E590C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VkActivity.Api", "src\VkActivity.API\VkActivity.Api.csproj", "{24E43BC9-FBF8-41CC-93D1-93A0D5803356}"
 EndProject
