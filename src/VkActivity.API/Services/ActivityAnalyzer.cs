@@ -16,7 +16,6 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     private readonly IActivityLogItemsRepository _vkActivityLogRepo;
     private readonly IUsersRepository _vkUsersRepo;
     private readonly ILogger<ActivityAnalyzer> _logger;
-    private readonly DateTime _tmpMinLogDate = new(2020, 10, 01);
 
     public ActivityAnalyzer(
         IActivityLogItemsRepository vkActivityLogRepo,
@@ -28,19 +27,12 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<IOperationResult<DetailedActivity>> GetFullTimeActivityAsync(int userId)
-    {
-        return await GetUserStatisticsForPeriodAsync(userId, _tmpMinLogDate, DateTime.UtcNow);
-    }
-
     public async Task<IOperationResult<DetailedActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
     {
         try
         {
-            if (fromDate >= toDate || _tmpMinLogDate >= toDate)
+            if (fromDate >= toDate)
                 return ServiceResult<DetailedActivity>.Error(EndDateIsNotMoreThanStartDate);
-
-            fromDate = fromDate > _tmpMinLogDate ? fromDate : _tmpMinLogDate;
 
             var user = await _vkUsersRepo.FindByIdAsync(userId);
             if (user == null)
@@ -69,7 +61,13 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     {
         var log = await _vkActivityLogRepo.FindAllByIdsInDateRangeAsync(userIds, fromDate, toDate);
 
-        return log.OrderBy(l => l.LastSeen)
+        // Важно учитывать обрыв связи и восстановление. Это добавляет 
+        // для каждого неактивного пользователя + 2 записи в день обрыва:
+        // одна с обнулением состояния, вторая с фиксацией текущего состояния после восстановления
+
+        return log.Where(l => l.IsOnline.HasValue)
+                  .OrderBy(l => l.LastSeen)
+                  .GroupBy(l => l.LastSeen).Select(g => g.First())
                   .SkipWhile(l => l.IsOnline != true)
                   .ToList();
     }
@@ -89,7 +87,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
             visitInfos.Add(new VisitInfo
             {
                 Platform = platform,
-                Count = orderedLogForUser.Count(l => l.Platform == platform),
+                Count = orderedLogForUser.Count(l => l.Platform == platform && l.IsOnline == true),
                 Time = GetActivityTimeOnPlatform(orderedLogForUser, platform)
             });
         }
@@ -360,4 +358,35 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         return seconds;
     }
 
+    public async Task<IOperationResult<DateTime>> GetLastVisitDate(int userId)
+    {
+        var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userId);
+        var lastUserActivity = lastUsersActivity.FirstOrDefault();
+
+        if (lastUserActivity == null)
+        {
+            return ServiceResult<DateTime>.Error($"Activity for user {userId} is not found");
+        }
+
+        var lastVisitDate = lastUserActivity.LastSeen.FromUnixEpoch();
+        return ServiceResult<DateTime>.Success(lastVisitDate);
+    }
+
+    public async Task<IOperationResult<bool>> IsOnline(int userId)
+    {
+        var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userId);
+        var lastUserActivity = lastUsersActivity.FirstOrDefault();
+
+        if (lastUserActivity == null)
+        {
+            return ServiceResult<bool>.Error($"Activity for user {userId} is not found");
+        }
+
+        if (lastUserActivity.IsOnline == null)
+        {
+            return ServiceResult<bool>.Error($"Activity for user {userId} is not defined");
+        }
+
+        return ServiceResult<bool>.Success(lastUserActivity.IsOnline.Value);
+    }
 }

@@ -43,16 +43,50 @@ public sealed class ActivityLogController : Controller
         return Ok(periodInfoDto);
     }
 
+    [HttpGet("{userId:int}/day/{date:datetime}")]
+    public async Task<IActionResult> GetDayInfo(
+        [FromRoute] int userId, [FromRoute] DateTime date)
+    {
+        var fromDate = date.Date;
+        var toDate = fromDate.AddDays(1).AddMilliseconds(-1);
+        var periodStatisticsResult = await _activityAnalyzerService.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
+        periodStatisticsResult.AssertResultIsSuccessful();
+        var periodInfoDto = Mapper.ToPeriodInfoDto(periodStatisticsResult.Value);
+
+        return Ok(periodInfoDto);
+    }
+
     [HttpGet("{userId:int}/fulltime")]
     public async Task<IActionResult> GetFullTimeInfo([FromRoute] int userId)
     {
-        var fullTimeStatistictResult = await _activityAnalyzerService.GetFullTimeActivityAsync(userId);
+        var tmpMinLogDate = new DateTime(2022, 09, 18);
+        var fullTimeStatistictResult = await _activityAnalyzerService
+            .GetUserStatisticsForPeriodAsync(userId, tmpMinLogDate, DateTime.UtcNow);
         fullTimeStatistictResult.AssertResultIsSuccessful();
         var fullTimeInfoDto = Mapper.ToPeriodInfoDto(fullTimeStatistictResult.Value);
 
         return Ok(fullTimeInfoDto);
     }
 
+    /// <summary>UTC</summary>
+    [HttpGet("{userId:int}/last")]
+    public async Task<IActionResult> GetLastVisitDate([FromRoute] int userId)
+    {
+        var lastVisitDateResult = await _activityAnalyzerService.GetLastVisitDate(userId);
+        lastVisitDateResult.AssertResultIsSuccessful();
+
+        return Ok(lastVisitDateResult.Value);
+    }
+
+    /// <summary>UTC</summary>
+    [HttpGet("{userId:int}/is-online")]
+    public async Task<IActionResult> IsOnline([FromRoute] int userId)
+    {
+        var isOnlineResult = await _activityAnalyzerService.IsOnline(userId);
+        isOnlineResult.AssertResultIsSuccessful();
+
+        return Ok(isOnlineResult.Value);
+    }
 
     //[Obsolete("Use UsersController.GetUsersWithActivity")]
     //[HttpGet(nameof(GetUsersWithActivity))]

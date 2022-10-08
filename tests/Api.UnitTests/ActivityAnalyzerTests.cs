@@ -12,6 +12,7 @@ namespace Api.UnitTests;
 public class ActivityAnalyzerTests
 {
     private const int _dbEntitiesAmount = 1000;
+    private static readonly DateTime _tmpMinLogDate = new(2022, 09, 18);
     private static readonly DateTime _utcNow = DateTime.UtcNow;
     public static readonly object[][] WrongDateIntervals =
     {
@@ -19,7 +20,7 @@ public class ActivityAnalyzerTests
         new object[] { _utcNow, _utcNow - TimeSpan.FromMilliseconds(1) }
     };
 
-
+    [Obsolete]
     [Fact]
     public async Task GetFullTimeActivityAsync_Successful_When_CorrectUserId()
     {
@@ -30,7 +31,7 @@ public class ActivityAnalyzerTests
             var userId = Random.Shared.Next(1, _dbEntitiesAmount);
 
             // Act
-            var result = await activityAnalyzer.GetFullTimeActivityAsync(userId);
+            var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, _tmpMinLogDate, DateTime.UtcNow);
 
             // Assert
             result.Should().NotBeNull();
@@ -46,6 +47,7 @@ public class ActivityAnalyzerTests
         throw new NotImplementedException();
     }
 
+    [Obsolete]
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -57,7 +59,7 @@ public class ActivityAnalyzerTests
         var activityAnalyzer = GetActivityAnalyzer();
 
         // Act
-        var result = await activityAnalyzer.GetFullTimeActivityAsync(userId);
+        var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, _tmpMinLogDate, DateTime.UtcNow);
 
         // Assert
         result.Should().NotBeNull();
@@ -66,6 +68,7 @@ public class ActivityAnalyzerTests
         result.Messages.Should().OnlyContain(m => m.Text == Constants.UserNotFound(userId));
     }
 
+    [Obsolete]
     [Fact]
     public async Task GetFullTimeActivityAsync_HasWarning_When_NoDataForUser()
     {
@@ -74,7 +77,7 @@ public class ActivityAnalyzerTests
         var activityAnalyzer = GetActivityAnalyzer();
 
         // Act
-        var result = await activityAnalyzer.GetFullTimeActivityAsync(userWithoutActivityDataId);
+        var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userWithoutActivityDataId, _tmpMinLogDate, DateTime.UtcNow);
 
         // Assert
         result.Should().NotBeNull();
