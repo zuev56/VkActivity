@@ -69,7 +69,7 @@ public sealed class ActivityLogController : Controller
     }
 
     /// <summary>UTC</summary>
-    [HttpGet("{userId:int}/last")]
+    [HttpGet("{userId:int}/last-utc")]
     public async Task<IActionResult> GetLastVisitDate([FromRoute] int userId)
     {
         var lastVisitDateResult = await _activityAnalyzerService.GetLastVisitDate(userId);
