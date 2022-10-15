@@ -15,7 +15,7 @@ public class DetailedActivity
     public int AllVisitsCount => VisitInfos.Sum(i => i.Count);
     public TimeSpan AvgDailyTime => ActivityDaysCount > 0 ? FullTime / ActivityDaysCount : default;
 
-    // TODO: выводить неучтённое время
+    // TODO: выводить неучтённое время (отключение интернета)
 
     /// <summary> Day-activity map for all time </summary>
     //public Dictionary<DateTime, TimeSpan>? ActivityCalendar { get; init; }
