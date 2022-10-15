@@ -67,7 +67,7 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
         return log.Where(l => l.IsOnline.HasValue)
                   .OrderBy(l => l.LastSeen)
-                  .GroupBy(l => l.LastSeen).Select(g => g.First())
+                  .GroupBy(l => new { l.LastSeen, l.IsOnline }).Select(g => g.First())
                   .SkipWhile(l => l.IsOnline != true)
                   .ToList();
     }
