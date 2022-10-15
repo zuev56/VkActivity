@@ -17,6 +17,20 @@ public sealed class UsersController : Controller
     }
 
     /// <summary>
+    /// Get user
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    [HttpGet("{userId:int}")]
+    public async Task<IActionResult> GetUser(int userId)
+    {
+        var gerUsersResult = await _userManager.GetUserAsync(userId);
+        return gerUsersResult.IsSuccess
+            ? Ok(gerUsersResult.Value.ToDto())
+            : StatusCode(500, gerUsersResult);
+    }
+
+    /// <summary>
     /// Add users by theirs Vk-Identifiers
     /// </summary>
     /// <param name="screenNames"></param>

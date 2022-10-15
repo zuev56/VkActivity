@@ -121,4 +121,15 @@ public class UserManager : IUserManager
             return ServiceResult<List<User>>.Error("Add friends failed");
         }
     }
+
+    public async Task<IOperationResult<User>> GetUserAsync(int userId)
+    {
+        var user = await _usersRepo.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return ServiceResult<User>.Error("Not Found");
+        }
+
+        return ServiceResult<User>.Success(user);
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using VkActivity.Api.Models;
 using VkActivity.Api.Models.Dto;
+using VkActivity.Data.Models;
 using Zs.Common.Extensions;
 
 namespace VkActivity.Api;
@@ -16,6 +17,19 @@ public static class Mapper
             Name = $"{activityListItem.User!.FirstName} {activityListItem.User.LastName}",
             IsOnline = activityListItem.IsOnline,
             ActivitySec = activityListItem.ActivitySec,
+        };
+    }
+
+    public static UserDto ToDto(this User user)
+    {
+        ArgumentNullException.ThrowIfNull(nameof(user));
+
+        return new UserDto
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Status = user.Status.ToString()
         };
     }
 
