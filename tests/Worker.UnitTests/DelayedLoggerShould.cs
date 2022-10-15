@@ -2,9 +2,10 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Moq;
-using VkActivity.Worker.Services;
 using Xunit;
+using Zs.Common.Services.Logging.DelayedLogger;
 
+// TODO: Move to Zs.Common.Services
 namespace UnitTests
 {
     public class DelayedLoggerShould

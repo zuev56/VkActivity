@@ -7,6 +7,7 @@ using UnitTests.Data;
 using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Services;
 using Xunit;
+using Zs.Common.Services.Abstractions;
 
 namespace UnitTests;
 

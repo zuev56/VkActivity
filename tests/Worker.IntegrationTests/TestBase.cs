@@ -18,6 +18,7 @@ using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Extensions;
 using VkActivity.Worker.Services;
+using Zs.Common.Services.Abstractions;
 using static Worker.IntegrationTests.Constants;
 
 namespace Worker.IntegrationTests

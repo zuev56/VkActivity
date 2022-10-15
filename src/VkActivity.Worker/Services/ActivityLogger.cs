@@ -8,6 +8,7 @@ using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
+using Zs.Common.Services.Abstractions;
 using static VkActivity.Worker.Models.Constants;
 
 namespace VkActivity.Worker.Services;

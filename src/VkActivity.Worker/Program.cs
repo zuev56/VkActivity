@@ -12,6 +12,7 @@ using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Services;
 using Zs.Common.Services.Abstractions;
+using Zs.Common.Services.Logging.DelayedLogger;
 using Zs.Common.Services.Scheduler;
 
 [assembly: InternalsVisibleTo("Worker.UnitTests")]
