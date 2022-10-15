@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UnitTests\Worker.UnitTests.csproj" />
+    <ProjectReference Include="..\Worker.UnitTests\Worker.UnitTests.csproj" />
   </ItemGroup>
 
 </Project>
