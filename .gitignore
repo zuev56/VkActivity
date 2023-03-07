@@ -350,6 +350,6 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-/src/VkActivity.API/.config/dotnet-tools.json
-.vscode/launch.json
-.vscode/tasks.json
+.vscode/
+.idea/
+.config/
