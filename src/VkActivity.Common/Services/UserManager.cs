@@ -9,7 +9,7 @@ using Zs.Common.Models;
 
 namespace VkActivity.Common.Services;
 
-public class UserManager : IUserManager
+public sealed class UserManager : IUserManager
 {
     private readonly IUsersRepository _usersRepo;
     private readonly IVkIntegration _vkIntegration;
@@ -26,26 +26,26 @@ public class UserManager : IUserManager
     }
 
     /// <param name="userIds">User IDs or ScreenNames</param>
-    public async Task<IOperationResult<List<User>>> AddUsersAsync(params string[] screenNames)
+    public async Task<Result<List<User>>> AddUsersAsync(params string[] screenNames)
     {
         ArgumentNullException.ThrowIfNull(screenNames);
 
         var resultUsersList = new List<User>();
-        var result = ServiceResult<List<User>>.Success(resultUsersList);
+        var result = Result<List<User>>.Success(resultUsersList);
         try
         {
             (int[] userIds, int[] newUserIds) = await SeparateNewUserIdsAsync(screenNames).ConfigureAwait(false);
 
             if (!newUserIds.Any())
-                return ServiceResult<List<User>>.Warning("Users already exist in DB");
+                return Result.Fail<List<User>>("Users already exist in DB");
 
             var newUserStringIds = newUserIds.Select(x => x.ToString()).ToArray();
             var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(newUserStringIds).ConfigureAwait(false);
             if (vkUsers is null)
-                return ServiceResult<List<User>>.Error("Vk API error: cannot get users by IDs");
+                return Result.Fail<List<User>>("Vk API error: cannot get users by IDs");
 
-            if (userIds.Except(newUserIds).Any())
-                result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', userIds.Except(newUserIds))}", InfoMessageType.Warning);
+            //if (userIds.Except(newUserIds).Any())
+            //    result.AddMessage($"Existing users won't be added. Existing users IDs: {string.Join(',', userIds.Except(newUserIds))}", InfoMessageType.Warning);
 
             var usersForSave = vkUsers.Select(u => Mapper.ToUser(u));
             var savedSuccessfully = !usersForSave.Any()
@@ -57,12 +57,12 @@ public class UserManager : IUserManager
                 return result;
             }
             else
-                return ServiceResult<List<User>>.Error("User saving failed");
+                return Result.Fail<List<User>>("User saving failed");
         }
         catch (Exception ex)
         {
             _logger.LogErrorIfNeed(ex, "New users saving failed");
-            return ServiceResult<List<User>>.Error("New users saving failed");
+            return Result.Fail<List<User>>("New users saving failed");
         }
     }
 
@@ -78,35 +78,34 @@ public class UserManager : IUserManager
         return (userIds, newUserIds);
     }
 
-    public async Task<IOperationResult> UpdateUsersAsync(params int[] userIds)
+    public async Task<Result> UpdateUsersAsync(params int[] userIds)
     {
-        if (userIds == null || userIds.Length == 0)
-            return ServiceResult.Error($"{nameof(userIds)} is null or empty");
+        if (userIds.Length == 0)
+            return Result.Fail($"{nameof(userIds)} is null or empty");
 
-        var result = ServiceResult.Success();
+        var result = Result.Success();
         var existingDbUserIds = await _usersRepo.FindExistingIdsAsync(userIds).ConfigureAwait(false);
-        if (existingDbUserIds.Length < userIds.Length)
-        {
-            var nonexistentIds = string.Join(',', userIds.Except(existingDbUserIds));
-            result.AddMessage($"Unable to update users that are not exist in database. IDs: {nonexistentIds}", InfoMessageType.Warning);
-        }
+        //if (existingDbUserIds.Length < userIds.Length)
+        //{
+        //    var nonexistentIds = string.Join(',', userIds.Except(existingDbUserIds));
+        //    result.AddMessage($"Unable to update users that are not exist in database. IDs: {nonexistentIds}", InfoMessageType.Warning);
+        //}
 
         var userIdsToUpdate = existingDbUserIds.Select(id => id.ToString()).ToArray();
 
         var vkUsers = await _vkIntegration.GetUsersWithFullInfoAsync(userIdsToUpdate).ConfigureAwait(false);
         if (vkUsers is null)
-            return ServiceResult.Error("Vk API error: cannot get users by IDs");
+            return Result.Fail("Vk API error: cannot get users by IDs");
 
         var dbUsers = vkUsers.Select(u => Mapper.ToUser(u));
 
-        var updateResult = await _usersRepo.UpdateRangeAsync(dbUsers).ConfigureAwait(false);
-
-        result.Merge(updateResult);
+        //var updateResult = await _usersRepo.UpdateRangeAsync(dbUsers).ConfigureAwait(false);
+        //result.Merge(updateResult);
 
         return result;
     }
 
-    public async Task<IOperationResult<List<User>>> AddFriendsOf(int userId)
+    public async Task<Result<List<User>>> AddFriendsOf(int userId)
     {
         try
         {
@@ -118,18 +117,18 @@ public class UserManager : IUserManager
         catch (Exception ex)
         {
             _logger.LogErrorIfNeed(ex, "Add friends failed");
-            return ServiceResult<List<User>>.Error("Add friends failed");
+            return Result.Fail<List<User>>("Add friends failed");
         }
     }
 
-    public async Task<IOperationResult<User>> GetUserAsync(int userId)
+    public async Task<Result<User>> GetUserAsync(int userId)
     {
         var user = await _usersRepo.FindByIdAsync(userId);
         if (user == null)
         {
-            return ServiceResult<User>.Error("Not Found");
+            return Result.Fail<User>("Not Found");
         }
 
-        return ServiceResult<User>.Success(user);
+        return user;
     }
 }

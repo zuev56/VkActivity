@@ -1,5 +1,4 @@
 ﻿using VkActivity.Common;
-using Zs.Common.Services.Abstractions;
 using Zs.Common.Services.Connection;
 
 namespace VkActivity.Worker;
@@ -8,10 +7,12 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddConnectionAnalyzer(this IServiceCollection services, IConfiguration configuration)
     {
-        return services.AddSingleton<IConnectionAnalyser, ConnectionAnalyser>(sp =>
+        return services.AddConnectionAnalyzer();
+
+        /*return services.AddSingleton<IConnectionAnalyzer, ConnectionAnalyzer>(sp =>
         {
-            var connectionAnalyzer = new ConnectionAnalyser(
-                sp.GetService<ILogger<ConnectionAnalyser>>(),
+            var connectionAnalyzer = new ConnectionAnalyzer(
+                sp.GetService<ILogger<ConnectionAnalyzer>>(),
                 configuration.GetSection(AppSettings.ConnectionAnalyser.Urls).Get<string[]>());
 
             if (configuration.GetValue<bool>(AppSettings.Proxy.UseProxy))
@@ -23,6 +24,6 @@ public static class ServiceCollectionExtensions
                 HttpClient.DefaultProxy = connectionAnalyzer.WebProxy;
             }
             return connectionAnalyzer;
-        });
+        });*/
     }
 }

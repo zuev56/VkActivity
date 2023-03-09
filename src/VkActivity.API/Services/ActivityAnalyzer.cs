@@ -27,20 +27,20 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<IOperationResult<DetailedActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
+    public async Task<Result<DetailedActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
     {
         try
         {
             if (fromDate >= toDate)
-                return ServiceResult<DetailedActivity>.Error(EndDateIsNotMoreThanStartDate);
+                return Result.Fail<DetailedActivity>(EndDateIsNotMoreThanStartDate);
 
             var user = await _vkUsersRepo.FindByIdAsync(userId);
             if (user == null)
-                return ServiceResult<DetailedActivity>.Error(UserNotFound(userId));
+                return Result.Fail<DetailedActivity>(UserNotFound(userId));
 
             var orderedLogForUser = await GetOrderedLog(fromDate, toDate, userId);
             if (!orderedLogForUser.Any())
-                return ServiceResult<DetailedActivity>.Warning(ActivityForUserNotFound(userId), new DetailedActivity(user));
+                return Result.Fail<DetailedActivity>(ActivityForUserNotFound(userId));
 
             var activityDetails = new DetailedActivity(user)
             {
@@ -49,12 +49,12 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
                 VisitInfos = GetVisitInfos(orderedLogForUser),
             };
 
-            return ServiceResult<DetailedActivity>.Success(activityDetails);
+            return activityDetails;
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, GetUserStatisticsForPeriodError);
-            return ServiceResult<DetailedActivity>.Error(GetUserStatisticsForPeriodError);
+            return Result.Fail<DetailedActivity>(GetUserStatisticsForPeriodError);
         }
     }
     private async Task<List<ActivityLogItem>> GetOrderedLog(DateTime fromDate, DateTime toDate, params int[] userIds)
@@ -130,16 +130,16 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(DateTime fromDate, DateTime toDate, string? filterText)
+    public async Task<Result<List<ActivityListItem>>> GetUsersWithActivityAsync(DateTime fromDate, DateTime toDate, string? filterText)
     {
         try
         {
             if (fromDate >= toDate)
-                return ServiceResult<List<ActivityListItem>>.Error(EndDateIsNotMoreThanStartDate);
+                return Result.Fail<List<ActivityListItem>>(EndDateIsNotMoreThanStartDate);
 
             var usersResult = await GetUsersAsync(filterText);
-            if (!usersResult.IsSuccess)
-                return ServiceResult<List<ActivityListItem>>.ErrorFrom(usersResult);
+            if (!usersResult.Successful)
+                return usersResult.Fault;
 
             var activityLog = await GetOrderedLog(fromDate, toDate, usersResult.Value.Select(u => u.Id).ToArray());
             var onlineUserIds = await GetOnlineUserIdsAsync();
@@ -162,16 +162,16 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
                 .OrderByDescending(i => i.ActivitySec).ThenBy(i => i.User.FirstName).ThenBy(i => i.User.LastName)
                 .ToList();
 
-            return ServiceResult<List<ActivityListItem>>.Success(orderedUserList);
+            return Result<List<ActivityListItem>>.Success(orderedUserList);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, GetUsersWithActivityError);
-            return ServiceResult<List<ActivityListItem>>.Error(GetUsersWithActivityError);
+            return Result.Fail<List<ActivityListItem>>(GetUsersWithActivityError);
         }
     }
 
-    //public async Task<IOperationResult<Table<UserWithActivity>>> GetUsersWithActivityTable(TableParameters tableParameters)
+    //public async Task<Result<Table<UserWithActivity>>> GetUsersWithActivityTable(TableParameters tableParameters)
     //{
     //    try
     //    {
@@ -206,17 +206,17 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     //            .OrderByDescending(i => i.ActivitySec).ThenBy(i => i.User.FirstName).ThenBy(i => i.User.LastName)
     //            .ToList();
     //
-    //        return ServiceResult<List<UserWithActivity>>.Success(orderedUserList);
+    //        return Result<List<UserWithActivity>>.Success(orderedUserList);
     //    }
     //    catch (Exception ex)
     //    {
     //        _logger?.LogError(ex, "GetVkUsersWithActivity error");
-    //        return ServiceResult<List<UserWithActivity>>.Error("Failed to get users list with activity time");
+    //        return Result<List<UserWithActivity>>.Error("Failed to get users list with activity time");
     //    }
     //}
 
     /// <inheritdoc/>
-    public async Task<IOperationResult<List<User>>> GetUsersAsync(string? filterText = null, int? skip = null, int? take = null)
+    public async Task<Result<List<User>>> GetUsersAsync(string? filterText = null, int? skip = null, int? take = null)
     {
         try
         {
@@ -224,12 +224,12 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
                 ? await _vkUsersRepo.FindAllWhereNameLikeValueAsync(filterText, skip, take)
                 : await _vkUsersRepo.FindAllAsync(skip, take);
 
-            return ServiceResult<List<User>>.Success(users);
+            return Result<List<User>>.Success(users);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, GetUsersError);
-            return ServiceResult<List<User>>.Error(GetUsersError);
+            return Result.Fail<List<User>>(GetUsersError);
         }
     }
 
@@ -358,35 +358,35 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         return seconds;
     }
 
-    public async Task<IOperationResult<DateTime>> GetLastVisitDate(int userId)
+    public async Task<Result<DateTime>> GetLastVisitDate(int userId)
     {
         var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userId);
         var lastUserActivity = lastUsersActivity.FirstOrDefault();
 
         if (lastUserActivity == null)
         {
-            return ServiceResult<DateTime>.Error($"Activity for user {userId} is not found");
+            return Result.Fail<DateTime>($"Activity for user {userId} is not found");
         }
 
         var lastVisitDate = lastUserActivity.LastSeen.FromUnixEpoch();
-        return ServiceResult<DateTime>.Success(lastVisitDate);
+        return lastVisitDate;
     }
 
-    public async Task<IOperationResult<bool>> IsOnline(int userId)
+    public async Task<Result<bool>> IsOnline(int userId)
     {
         var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userId);
         var lastUserActivity = lastUsersActivity.FirstOrDefault();
 
         if (lastUserActivity == null)
         {
-            return ServiceResult<bool>.Error($"Activity for user {userId} is not found");
+            return Result.Fail<bool>($"Activity for user {userId} is not found");
         }
 
         if (lastUserActivity.IsOnline == null)
         {
-            return ServiceResult<bool>.Error($"Activity for user {userId} is not defined");
+            return Result.Fail<bool>($"Activity for user {userId} is not defined");
         }
 
-        return ServiceResult<bool>.Success(lastUserActivity.IsOnline.Value);
+        return lastUserActivity.IsOnline.Value;
     }
 }

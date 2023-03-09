@@ -35,10 +35,7 @@ public class PostgreSqlInMemory
         var activityLogItems = StubFactory.CreateActivityLogItems(entitiesCount - 10);
 
 
-        Task.WaitAll(new Task[]
-        {
-            UsersRepository.SaveRangeAsync(users),
-            ActivityLogItemsRepository.SaveRangeAsync(activityLogItems)
-        });
+        var t = Task.WhenAll(UsersRepository.SaveRangeAsync(users), ActivityLogItemsRepository.SaveRangeAsync(activityLogItems));
+        t.Wait();
     }
 }

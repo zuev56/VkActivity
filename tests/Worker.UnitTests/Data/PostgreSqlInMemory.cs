@@ -29,16 +29,16 @@ public class PostgreSqlInMemory
         return new VkActivityContextFactory(options);
     }
 
-    public void FillWithFakeData(int entitiesCount)
+    public async Task FillWithFakeDataAsync(int entitiesCount)
     {
         var users = StubFactory.CreateUsers(entitiesCount);
         var activityLogItems = StubFactory.CreateActivityLogItems(entitiesCount - 10);
 
 
-        Task.WaitAll(new Task[]
-        {
-            UsersRepository.SaveRangeAsync(users),
-            ActivityLogItemsRepository.SaveRangeAsync(activityLogItems)
-        });
+        //Task.WaitAll(UsersRepository.SaveRangeAsync(users), ActivityLogItemsRepository.SaveRangeAsync(activityLogItems));
+        var t1 = await UsersRepository.SaveRangeAsync(users);
+        var t2 = await ActivityLogItemsRepository.SaveRangeAsync(activityLogItems);
+
+        //var t = await Task.WhenAll(, ActivityLogItemsRepository.SaveRangeAsync(activityLogItems));
     }
 }

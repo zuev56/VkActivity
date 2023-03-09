@@ -131,7 +131,7 @@ public partial class VkActivityContext : DbContext
 
         var connectionStringBuilder = new DbConnectionStringBuilder()
         {
-            ConnectionString = configuration.GetSecretValue("ConnectionStrings:Default")
+            ConnectionString = configuration["ConnectionStrings:Default"]
         };
         var dbName = connectionStringBuilder["Database"] as string;
 

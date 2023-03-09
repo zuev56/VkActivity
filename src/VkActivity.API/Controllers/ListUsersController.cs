@@ -29,7 +29,6 @@ public sealed class ListUsersController : Controller
     public async Task<IActionResult> GetUsersWithActivity(DateTime fromDate, DateTime toDate, string? filterText)
     {
         var usersWithActivityResult = await _activityAnalyzer.GetUsersWithActivityAsync(fromDate, toDate, filterText);
-        usersWithActivityResult.AssertResultIsSuccessful();
         var userDtos = usersWithActivityResult.Value.Select(Mapper.ToListUserDto);
 
         return Ok(userDtos);

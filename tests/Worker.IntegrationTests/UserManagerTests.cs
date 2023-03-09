@@ -25,7 +25,7 @@ namespace Worker.IntegrationTests
             var addUserResult = await userManager.AddUsersAsync(userId);
 
             // Assert
-            addUserResult.IsSuccess.Should().BeTrue();
+            addUserResult.Successful.Should().BeTrue();
             addUserResult.Value.Should().HaveCount(1);
             addUserResult.Value[0].Id.Should().Be(8790237);
 
@@ -44,7 +44,7 @@ namespace Worker.IntegrationTests
             var addUserResult = await userManager.AddUsersAsync(userIds);
 
             // Assert
-            addUserResult.IsSuccess.Should().BeTrue();
+            addUserResult.Successful.Should().BeTrue();
             addUserResult.Value.Should().HaveCount(userIds.Length);
 
             await Task.Delay(1000);
@@ -68,7 +68,7 @@ namespace Worker.IntegrationTests
             var updateUserResult = await userManager.UpdateUsersAsync(userId);
 
             // Assert
-            updateUserResult.IsSuccess.Should().BeTrue();
+            updateUserResult.Successful.Should().BeTrue();
             var dbUserAfterUpdate = await usersRepository.FindByIdAsync(userId);
             dbUserAfterUpdate!.FirstName.Should().NotBe(outdatedName);
 

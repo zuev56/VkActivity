@@ -27,7 +27,7 @@ public class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, ID
         var configuration = new ConfigurationBuilder()
             .AddJsonFile(System.IO.Path.GetFullPath(@"..\VkActivity.Worker\appsettings.Development.json"))
             .Build();
-        var connectionString = configuration.GetSecretValue("ConnectionStrings:Default");
+        var connectionString = configuration["ConnectionStrings:Default"];
 
         var optionsBuilder = new DbContextOptionsBuilder<VkActivityContext>();
         optionsBuilder.UseNpgsql(connectionString);

@@ -49,13 +49,13 @@ public sealed class VkIntegration : IVkIntegration
     {
         var responseResult = await GetResponseAsync<UsersApiResponse>(url, _httpClient).ConfigureAwait(false);
 
-        if (!responseResult.IsSuccess || responseResult.Value?.Users == null)
+        if (!responseResult.Successful || responseResult.Value?.Users == null)
             throw new InvalidOperationException("Unable to get correct response from Vk API");
 
         return responseResult.Value.Users;
     }
 
-    private static async Task<IOperationResult<TResponse>> GetResponseAsync<TResponse>(string url, HttpClient httpClient)
+    private static async Task<Result<TResponse>> GetResponseAsync<TResponse>(string url, HttpClient httpClient)
     {
         if (await _semaphore.WaitAsync(_apiAccessTimeout))
         {
@@ -67,7 +67,7 @@ public sealed class VkIntegration : IVkIntegration
                 _lastApiAccessTime = DateTime.UtcNow;
                 var response = await httpClient.GetAsync<TResponse>(url).ConfigureAwait(false);
 
-                return ServiceResult<TResponse>.Success(response);
+                return response;
             }
             finally
             {
@@ -76,7 +76,7 @@ public sealed class VkIntegration : IVkIntegration
         }
         else
         {
-            return ServiceResult<TResponse>.Error("VK API access timeout error");
+            return Result.Fail<TResponse>("VK API access timeout error");
         }
     }
 
@@ -98,7 +98,7 @@ public sealed class VkIntegration : IVkIntegration
 
         var responseResult = await GetResponseAsync<FriendsApiResponse>(url, _httpClient).ConfigureAwait(false);
 
-        if (!responseResult.IsSuccess || responseResult.Value?.Data?.FriendIds == null)
+        if (!responseResult.Successful || responseResult.Value?.Data?.FriendIds == null)
             throw new InvalidOperationException("Unable to get correct response from Vk API");
 
         return responseResult.Value.Data.FriendIds;

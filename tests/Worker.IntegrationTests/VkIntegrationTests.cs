@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using VkActivity.Common;
 using VkActivity.Common.Abstractions;
 using VkActivity.Common.Services;
@@ -13,13 +14,13 @@ using Xunit;
 namespace Worker.IntegrationTests;
 
 [ExcludeFromCodeCoverage]
-public class VkIntegrationTests
+public class VkIntegrationTests : TestBase
 {
     [Fact]
     public async Task GetUsersWithActivityInfoAsync_ByScreenNames_ReturnsExpectedUsers()
     {
         // Arrange
-        var vkIntegration = CreateVkIntegration();
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
         var screenNames = new string[] { "durov", "zuev56" };
 
         // Act
@@ -35,7 +36,7 @@ public class VkIntegrationTests
     public async Task GetUsersWithActivityInfoAsync_ByIds_ReturnsExpectedUsers()
     {
         // Arrange
-        var vkIntegration = CreateVkIntegration();
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
         var userIds = new string[] { "1", "8790237" };
 
         // Act
@@ -51,7 +52,7 @@ public class VkIntegrationTests
     public async Task GetUsersWithActivityInfoAsync_ManyRequests_ExecuteWithDelay()
     {
         // Arrange
-        var vkIntegration = CreateVkIntegration();
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
         var screenNames = new string[] { "1", "8790237" };
         var sw = new Stopwatch();
         var attempts = 10;
@@ -76,7 +77,7 @@ public class VkIntegrationTests
     public async Task GetUsersWithFullInfoAsync_ReturnsUsersWithFullInfo()
     {
         // Arrange
-        var vkIntegration = CreateVkIntegration();
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
         var screenNames = new string[] { "durov", "zuev56" };
 
         // Act
@@ -94,7 +95,7 @@ public class VkIntegrationTests
     public async Task GetFriendIds_ReturnsFriendIdsArray()
     {
         // Arrange
-        var vkIntegration = CreateVkIntegration();
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
         var userId = 8790237; //Надо перебирать пользователей с открытыми друзьями
 
         // Act
@@ -104,17 +105,5 @@ public class VkIntegrationTests
         friendIds.Should().NotBeNull();
         friendIds.Should().HaveCountGreaterThan(100);
         friendIds.Should().OnlyHaveUniqueItems();
-    }
-
-    private IVkIntegration CreateVkIntegration()
-    {
-        var configuration = new ConfigurationBuilder()
-           .AddJsonFile(Path.GetFullPath(Constants.VkActivityServiceAppSettingsPath))
-           .Build();
-
-        var token = configuration[AppSettings.Vk.AccessToken];
-        var version = configuration[AppSettings.Vk.Version];
-
-        return new VkIntegration(token, version);
     }
 }

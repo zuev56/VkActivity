@@ -199,7 +199,7 @@ internal class StubFactory
     internal static IUserManager GetUserManager(UserIdSet userIdSet, bool vkIntergationWorks = true)
     {
         var postgreSqlInMemory = new PostgreSqlInMemory();
-        postgreSqlInMemory.FillWithFakeData(userIdSet.InitialUsersAmount);
+        postgreSqlInMemory.FillWithFakeDataAsync(userIdSet.InitialUsersAmount);
 
         var vkIntegrationMock = CreateVkIntegrationMock(userIdSet, vkIntergationWorks);
 

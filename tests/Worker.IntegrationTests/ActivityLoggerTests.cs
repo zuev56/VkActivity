@@ -30,10 +30,10 @@ public class ActivityLoggerTests : TestBase
         var saveActivityResult = await activityLogger.SaveUsersActivityAsync();
 
         // Assert
-        saveActivityResult?.IsSuccess.Should().BeTrue();
-        saveActivityResult?.Messages
-            .Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning)
-            .Should().BeEmpty();
+        saveActivityResult?.Successful.Should().BeTrue();
+        //saveActivityResult?.Messages
+        //    .Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning)
+        //    .Should().BeEmpty();
 
         await Task.Delay(1000);
     }
@@ -56,7 +56,7 @@ public class ActivityLoggerTests : TestBase
 
         // Assert
         setUndefinedActivityResult.Should().NotBeNull();
-        setUndefinedActivityResult.IsSuccess.Should().BeTrue();
+        setUndefinedActivityResult.Successful.Should().BeTrue();
         activitiesAfter.Should().NotBeEquivalentTo(activitiesBefore);
         activitiesAfter.Should().HaveCountLessThanOrEqualTo(existingUsers.Count);
         activitiesAfter.Should().OnlyContain(i => i.IsOnline == null);
@@ -80,9 +80,9 @@ public class ActivityLoggerTests : TestBase
 
         // Assert
         setUndefinedActivityResult1.Should().NotBeNull();
-        setUndefinedActivityResult1.IsSuccess.Should().BeTrue();
+        setUndefinedActivityResult1.Successful.Should().BeTrue();
         setUndefinedActivityResult2.Should().NotBeNull();
-        setUndefinedActivityResult2.IsSuccess.Should().BeTrue();
+        setUndefinedActivityResult2.Successful.Should().BeTrue();
         activitiesAfter1.Should().BeEquivalentTo(activitiesAfter2);
 
         await Task.Delay(1000);
@@ -101,8 +101,8 @@ public class ActivityLoggerTests : TestBase
 
         // Assert
         setUndefinedActivityResult.Should().NotBeNull();
-        setUndefinedActivityResult.IsSuccess.Should().BeTrue();
-        setUndefinedActivityResult.HasWarnings.Should().BeTrue();
+        setUndefinedActivityResult.Successful.Should().BeFalse();
+        //setUndefinedActivityResult.HasWarnings.Should().BeTrue();
         activitiesAfter.Should().BeEmpty();
 
         await Task.Delay(1000);

@@ -24,9 +24,9 @@ public class UserManagerTest
         var addUsersResult = await userManager.AddUsersAsync(_userIdSet.NewUserStringIds);
 
         // Assert
-        Assert.True(addUsersResult?.IsSuccess);
-        Assert.False(addUsersResult?.HasWarnings);
-        Assert.Empty(addUsersResult?.Messages);
+        Assert.True(addUsersResult?.Successful);
+        //Assert.False(addUsersResult?.HasWarnings);
+        //Assert.Empty(addUsersResult?.Messages);
         Assert.Equal(_newUsersCount, addUsersResult!.Value.Count);
     }
 
@@ -40,8 +40,8 @@ public class UserManagerTest
         var addUsersResult = await userManager.AddUsersAsync(_userIdSet.NewAndExistingUserStringIds);
 
         // Assert
-        addUsersResult.IsSuccess.Should().BeTrue();
-        addUsersResult.HasWarnings.Should().BeTrue();
+        addUsersResult.Successful.Should().BeTrue();
+        //addUsersResult.HasWarnings.Should().BeTrue();
         addUsersResult.Value.Should().HaveCount(_newUsersCount);
     }
 
@@ -55,10 +55,10 @@ public class UserManagerTest
         var addUsersResult = await userManager.AddUsersAsync(_userIdSet.NewUserStringIds);
 
         // Assert
-        Assert.False(addUsersResult?.IsSuccess);
-        Assert.NotEmpty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Error));
-        Assert.Empty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning));
-        Assert.Empty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Info));
+        Assert.False(addUsersResult?.Successful);
+        //Assert.NotEmpty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Error));
+        //Assert.Empty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning));
+        //Assert.Empty(addUsersResult?.Messages.Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Info));
     }
 
     [Fact]
@@ -71,9 +71,9 @@ public class UserManagerTest
         var updateUsersResult = await userManager.UpdateUsersAsync(_userIdSet.ChangedExistingUserIds);
 
         // Assert
-        updateUsersResult.IsSuccess.Should().BeTrue();
-        updateUsersResult.HasWarnings.Should().BeFalse();
-        updateUsersResult?.Messages.Should().BeEmpty();
+        updateUsersResult.Successful.Should().BeTrue();
+        //updateUsersResult.HasWarnings.Should().BeFalse();
+        //updateUsersResult?.Messages.Should().BeEmpty();
     }
 
     [Fact]
@@ -87,9 +87,9 @@ public class UserManagerTest
         var updateUsersResult = await userManager.UpdateUsersAsync(userIdsToUpdate);
 
         // Assert
-        updateUsersResult.IsSuccess.Should().BeTrue();
-        updateUsersResult.HasWarnings.Should().BeTrue();
-        updateUsersResult?.Messages.Should().NotBeEmpty();
+        updateUsersResult.Successful.Should().BeTrue();
+        //updateUsersResult.HasWarnings.Should().BeTrue();
+        //updateUsersResult?.Messages.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -102,9 +102,9 @@ public class UserManagerTest
         var updateUsersResult = await userManager.UpdateUsersAsync(null!);
 
         // Assert
-        updateUsersResult.IsSuccess.Should().BeFalse();
-        updateUsersResult.HasWarnings.Should().BeFalse();
-        updateUsersResult?.Messages.Should().NotBeEmpty();
+        updateUsersResult.Successful.Should().BeFalse();
+        //updateUsersResult.HasWarnings.Should().BeFalse();
+        //updateUsersResult?.Messages.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -117,9 +117,9 @@ public class UserManagerTest
         var updateUsersResult = await userManager.UpdateUsersAsync(new int[0]);
 
         // Assert
-        updateUsersResult.IsSuccess.Should().BeFalse();
-        updateUsersResult.HasWarnings.Should().BeFalse();
-        updateUsersResult?.Messages.Should().NotBeEmpty();
+        updateUsersResult.Successful.Should().BeFalse();
+        //updateUsersResult.HasWarnings.Should().BeFalse();
+        //updateUsersResult?.Messages.Should().NotBeEmpty();
     }
 
 }

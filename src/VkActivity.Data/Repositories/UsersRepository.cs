@@ -59,7 +59,7 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
         }
     }
 
-    public async Task<ServiceResult> UpdateRangeAsync(IEnumerable<User> users, CancellationToken cancellationToken)
+    public async Task<Result> UpdateRangeAsync(IEnumerable<User> users, CancellationToken cancellationToken)
     {
         var userIds = users.Select(u => u.Id);
         await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
@@ -77,7 +77,7 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
 
             var saved = await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return ServiceResult.Success();
+            return Result.Success();
         }
     }
 

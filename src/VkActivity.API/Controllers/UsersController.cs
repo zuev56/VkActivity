@@ -25,7 +25,7 @@ public sealed class UsersController : Controller
     public async Task<IActionResult> GetUser(int userId)
     {
         var gerUsersResult = await _userManager.GetUserAsync(userId);
-        return gerUsersResult.IsSuccess
+        return gerUsersResult.Successful
             ? Ok(gerUsersResult.Value.ToDto())
             : StatusCode(500, gerUsersResult);
     }
@@ -43,7 +43,7 @@ public sealed class UsersController : Controller
 
         var addUsersResult = await _userManager.AddUsersAsync(screenNames).ConfigureAwait(false);
 
-        return addUsersResult.IsSuccess
+        return addUsersResult.Successful
             ? Ok(addUsersResult)
             : StatusCode(500, addUsersResult);
     }
@@ -59,7 +59,7 @@ public sealed class UsersController : Controller
 
         var addFriendsResult = await _userManager.AddFriendsOf(userId);
 
-        return addFriendsResult.IsSuccess
+        return addFriendsResult.Successful
             ? Ok(addFriendsResult)
             : StatusCode(500, addFriendsResult);
     }

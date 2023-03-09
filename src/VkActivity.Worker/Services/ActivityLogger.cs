@@ -8,7 +8,7 @@ using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
-using Zs.Common.Services.Abstractions;
+using Zs.Common.Services.Logging.DelayedLogger;
 using static VkActivity.Worker.Models.Constants;
 
 namespace VkActivity.Worker.Services;
@@ -36,17 +36,17 @@ public sealed class ActivityLogger : IActivityLogger
     }
 
     /// <inheritdoc/>
-    public async Task<IOperationResult> SaveUsersActivityAsync()
+    public async Task<Result> SaveUsersActivityAsync()
     {
-        ServiceResult result = ServiceResult.Success();
         try
         {
             var userIds = await _usersRepo.FindAllIdsAsync().ConfigureAwait(false);
 
             if (!userIds.Any())
             {
-                result.AddMessage(NoUsersInDatabase, InfoMessageType.Warning);
-                return result;
+                return new Fault(NoUsersInDatabase);
+                //result.AddMessage(NoUsersInDatabase, InfoMessageType.Warning);
+                //return result;
             }
 
             var userStringIds = userIds.Select(id => id.ToString()).ToArray();
@@ -58,8 +58,8 @@ public sealed class ActivityLogger : IActivityLogger
             Trace.WriteLine(LoggedItemsCount(loggedItemsCount));
 #endif
 
-            result.AddMessage(LoggedItemsCount(loggedItemsCount));
-            return result;
+            //result.AddMessage(LoggedItemsCount(loggedItemsCount));
+            return Result.Success();
         }
         catch (Exception ex)
         {
@@ -68,12 +68,12 @@ public sealed class ActivityLogger : IActivityLogger
 
             await ChangeAllUserActivitiesToUndefinedAsync().ConfigureAwait(false);
 
-            return ServiceResult.Error(SaveUsersActivityError);
+            return Result.Fail(SaveUsersActivityError);
         }
     }
 
     /// <summary>Save undefined user activities to database</summary>
-    public async Task<IOperationResult> ChangeAllUserActivitiesToUndefinedAsync()
+    public async Task<Result> ChangeAllUserActivitiesToUndefinedAsync()
     {
         try
         {
@@ -82,7 +82,7 @@ public sealed class ActivityLogger : IActivityLogger
             var lastUsersActivityLogItems = await _activityLogRepo.FindLastUsersActivityAsync();
             if (!lastUsersActivityLogItems.Any())
             {
-                return ServiceResult.Warning(ActivityLogIsEmpty);
+                return Result.Fail(ActivityLogIsEmpty);
             }
 
             var activityLogItems = new List<ActivityLogItem>();
@@ -107,12 +107,12 @@ public sealed class ActivityLogger : IActivityLogger
 #if DEBUG
             Trace.WriteLine(SetUndefinedActivityToAllUsers);
 #endif
-            return ServiceResult.Success();
+            return Result.Success();
         }
         catch
         {
             _logger.LogErrorIfNeed(SetUndefinedActivityToAllUsersError);
-            return ServiceResult.Error(SetUndefinedActivityToAllUsersError);
+            return Result.Fail(SetUndefinedActivityToAllUsersError);
         }
     }
 
