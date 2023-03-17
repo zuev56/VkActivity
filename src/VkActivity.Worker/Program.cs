@@ -1,6 +1,10 @@
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using VkActivity.Common;
 using VkActivity.Common.Abstractions;
@@ -8,18 +12,17 @@ using VkActivity.Common.Services;
 using VkActivity.Data;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Repositories;
-using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
 using VkActivity.Worker.Services;
-using Zs.Common.Services.Abstractions;
+using Zs.Common.Services.Connection;
 using Zs.Common.Services.Logging.DelayedLogger;
-using Zs.Common.Services.Scheduler;
+using Zs.Common.Services.Scheduling;
 
 [assembly: InternalsVisibleTo("Worker.UnitTests")]
 [assembly: InternalsVisibleTo("Worker.IntegrationTests")]
 
 
-IHost host = Host.CreateDefaultBuilder(args)
+var host = Host.CreateDefaultBuilder(args)
     .UseSerilog()
     .ConfigureServices(ConfigureServices)
     .Build();
@@ -42,7 +45,7 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 
     services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
 
-    services.AddConnectionAnalyzer(context.Configuration);
+    services.AddConnectionAnalyzer();
     services.AddVkIntegration(context.Configuration);
     services.AddSingleton<IScheduler, Scheduler>();
     // TODO: Create Factory!

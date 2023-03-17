@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -8,112 +7,108 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Npgsql;
 using VkActivity.Common;
 using VkActivity.Common.Abstractions;
 using VkActivity.Common.Services;
 using VkActivity.Data;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Repositories;
-using VkActivity.Worker;
 using VkActivity.Worker.Abstractions;
-using VkActivity.Worker.Extensions;
 using VkActivity.Worker.Services;
-using Zs.Common.Services.Abstractions;
-using static Worker.IntegrationTests.Constants;
+using Zs.Common.Services.Connection;
+using Zs.Common.Services.Logging.DelayedLogger;
 
-namespace Worker.IntegrationTests
+namespace Worker.IntegrationTests;
+
+[ExcludeFromCodeCoverage]
+public abstract class TestBase : IDisposable
 {
-    [ExcludeFromCodeCoverage]
-    public abstract class TestBase : IDisposable
+    private static readonly string DbName = $"VkActivityTEST_{Guid.NewGuid()}";
+    protected readonly ServiceProvider ServiceProvider;
+
+    protected TestBase()
     {
-        private readonly string _testDbName = $"VkActivityTEST_{Guid.NewGuid()}";
-        protected readonly ServiceProvider ServiceProvider;
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .AddJsonFile("appsettings.Development.json", optional: true)
+            //.AddUserSecrets<TestBase>()
+            .Build();
 
-        protected TestBase()
+        ServiceProvider = CreateServiceProvider(configuration);
+
+        InitializeDataBase();
+    }
+
+    private static ServiceProvider CreateServiceProvider(IConfiguration configuration)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(configuration);
+        services.AddDbContext<VkActivityContext>(options =>
         {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile(Path.GetFullPath(VkActivityServiceAppSettingsPath))
-                .AddUserSecrets<TestBase>()
-                .Build();
-
-            ServiceProvider = CreateServiceProvider(configuration, _testDbName);
-
-            InitializeDataBase();
-        }
-
-        private static ServiceProvider CreateServiceProvider(IConfiguration configuration, string dbName)
-        {
-            var services = new ServiceCollection();
-            services.AddDbContext<VkActivityContext>(options =>
+            var connectionString = configuration["ConnectionStrings:Default"];
+            var csb = new NpgsqlConnectionStringBuilder(connectionString)
             {
-                var connectionString = $"Host=localhost;Persist Security Info=True;"
-                    + $"Port={configuration[DbPortSecretsKey]};"
-                    + $"Database={dbName};"
-                    + $"Username={configuration[DbUserSecretsKey]};"
-                    + $"Password={configuration[DbPasswordSecretsKey]};";
-                options.UseNpgsql(connectionString);
-            });
+                Database = DbName
+            };
+            connectionString = csb.ToString();
+            options.UseNpgsql(connectionString);
+        });
 
-            services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
-            services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
-            services.AddScoped<IUsersRepository, UsersRepository>();
+        services.AddScoped<IDbContextFactory<VkActivityContext>, VkActivityContextFactory>();
+        services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
+        services.AddScoped<IUsersRepository, UsersRepository>();
 
-            services.AddConnectionAnalyzer(configuration);
-            services.AddVkIntegration(configuration);
+        services.AddConnectionAnalyzer();
+        services.AddVkIntegration(configuration);
 
-            services.AddSingleton<ILoggerFactory, LoggerFactory>();
-            services.AddSingleton(sp => Mock.Of<ILogger<ActivityLogger>>());
-            services.AddSingleton(sp => Mock.Of<IDelayedLogger<ActivityLogger>>());
-            services.AddSingleton(sp => Mock.Of<ILogger<UserManager>>());
+        services.AddSingleton<ILoggerFactory, LoggerFactory>();
+        services.AddSingleton(_ => Mock.Of<ILogger<ActivityLogger>>());
+        services.AddSingleton(_ => Mock.Of<IDelayedLogger<ActivityLogger>>());
+        services.AddSingleton(_ => Mock.Of<ILogger<UserManager>>());
 
-            services.AddScoped<IUserManager, UserManager>();
-            services.AddScoped<IActivityLogger, ActivityLogger>();
+        services.AddScoped<IUserManager, UserManager>();
+        services.AddScoped<IActivityLogger, ActivityLogger>();
 
-            return services.BuildServiceProvider();
-        }
+        services.AddVkIntegration(configuration);
 
-        private void InitializeDataBase()
+        return services.BuildServiceProvider();
+    }
+
+    private void InitializeDataBase()
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var scopedServices = scope.ServiceProvider;
+        var context = scopedServices.GetRequiredService<VkActivityContext>();
+
+        context.Database.EnsureCreated();
+    }
+
+    protected async Task AddRealUsersAsync(int amount)
+    {
+        var usersManager = ServiceProvider.GetRequiredService<IUserManager>();
+        var userIds = new string[amount];
+
+        for (var i = 0; i < amount; i++)
         {
-            using (var scope = ServiceProvider.CreateScope())
+            var id = Random.Shared.Next(1, 40000000).ToString();
+            if (userIds.Contains(id))
             {
-                var scopedServices = scope.ServiceProvider;
-                var db = scopedServices.GetRequiredService<VkActivityContext>();
-
-                db.Database.EnsureCreated();
+                i--;
+                continue;
             }
+            userIds[i] = id;
         }
 
-        protected async Task AddRealUsersAsync(int amount)
-        {
-            var usersManager = ServiceProvider.GetRequiredService<IUserManager>();
+        var addUsersResult = await usersManager.AddUsersAsync(userIds);
+        addUsersResult.EnsureSuccess();
+    }
 
-            var userIds = new string[amount];
-
-            for (int i = 0; i < amount; i++)
-            {
-                var id = Random.Shared.Next(1, 40000000).ToString();
-                if (userIds.Contains(id))
-                {
-                    i--;
-                    continue;
-                }
-                userIds[i] = id;
-            }
-
-            var addUsersResult = await usersManager.AddUsersAsync(userIds);
-            addUsersResult.EnsureSuccess();
-        }
-
-        public void Dispose()
-        {
-            using (var scope = ServiceProvider.CreateScope())
-            {
-                var scopedServices = scope.ServiceProvider;
-                var dbContext = scopedServices.GetRequiredService<VkActivityContext>();
-
-                dbContext.Database.EnsureDeleted();
-            }
-
-        }
+    public void Dispose()
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var scopedServices = scope.ServiceProvider;
+        var dbContext = scopedServices.GetRequiredService<VkActivityContext>();
+        dbContext.Database.EnsureDeleted();
     }
 }

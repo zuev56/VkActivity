@@ -1,12 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using VkActivity.Data;
 using VkActivity.Data.Repositories;
 
-namespace UnitTests.Data;
+namespace Api.UnitTests.Data;
 
-public class PostgreSqlInMemory
+public sealed class PostgreSqlInMemory
 {
     public ActivityLogItemsRepository ActivityLogItemsRepository { get; }
     public UsersRepository UsersRepository { get; }
@@ -35,10 +33,7 @@ public class PostgreSqlInMemory
         var activityLogItems = StubFactory.CreateActivityLogItems(entitiesCount - 10);
 
 
-        Task.WaitAll(new Task[]
-        {
-            UsersRepository.SaveRangeAsync(users),
-            ActivityLogItemsRepository.SaveRangeAsync(activityLogItems)
-        });
+        var t = Task.WhenAll(UsersRepository.SaveRangeAsync(users), ActivityLogItemsRepository.SaveRangeAsync(activityLogItems));
+        t.Wait();
     }
 }

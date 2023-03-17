@@ -6,11 +6,11 @@ using VkActivity.Common.Models.VkApi;
 using DbUser = VkActivity.Data.Models.User;
 using Status = VkActivity.Data.Models.Status;
 
-namespace VkActivity.Common;
+namespace VkActivity.Common.Models;
 
 public static class Mapper
 {
-    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         WriteIndented = true,
@@ -22,7 +22,7 @@ public static class Mapper
         ArgumentNullException.ThrowIfNull(nameof(apiVkUser));
 
         //Просто удалить из словаря ненужные поля перед сериализацией
-        var json = JsonSerializer.Serialize(apiVkUser, _jsonSerializerOptions);
+        var json = JsonSerializer.Serialize(apiVkUser, JsonSerializerOptions);
 
         return new DbUser
         {

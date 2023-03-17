@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 
-namespace UnitTests.Data;
+namespace Worker.UnitTests.Data;
 
-internal class UserIdSet
+internal sealed class UserIdSet
 {
     public int InitialUsersAmount { get; }
     public int[] InitialUserIds { get; }
@@ -17,9 +17,9 @@ internal class UserIdSet
     private UserIdSet(int initialUsersAmount, int subluistAmountDivider)
     {
         InitialUsersAmount = initialUsersAmount;
-        int newUsersAmount = InitialUsersAmount / subluistAmountDivider;
-        int existingUsersAmountWhenAddNew = newUsersAmount / subluistAmountDivider;
-        int changedUsersAmount = InitialUsersAmount / subluistAmountDivider / 2;
+        var newUsersAmount = InitialUsersAmount / subluistAmountDivider;
+        var existingUsersAmountWhenAddNew = newUsersAmount / subluistAmountDivider;
+        var changedUsersAmount = InitialUsersAmount / subluistAmountDivider / 2;
 
         InitialUserIds = Enumerable.Range(1, initialUsersAmount).ToArray();
         NewUserIds = Enumerable.Range(initialUsersAmount + 1, newUsersAmount).ToArray();
@@ -32,6 +32,6 @@ internal class UserIdSet
         ChangedExistingUserStringIds = ChangedExistingUserIds.Select(x => x.ToString()).ToArray();
     }
 
-    public static UserIdSet Create(int initialUsersAmount, int subluistAmountDivider = 10)
-        => new(initialUsersAmount, subluistAmountDivider);
+    public static UserIdSet Create(int initialUsersAmount, int sublistAmountDivider = 10)
+        => new(initialUsersAmount, sublistAmountDivider);
 }

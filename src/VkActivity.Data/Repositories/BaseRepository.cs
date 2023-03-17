@@ -1,5 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
@@ -17,21 +22,19 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
     protected BaseRepository(
         IDbContextFactory<TContext> contextFactory,
         TimeSpan? criticalQueryExecutionTimeForLogging = null,
-        ILoggerFactory? loggerfFactory = null)
+        ILoggerFactory? loggerFactory = null)
     {
-        ContextFactory = contextFactory ?? throw new NullReferenceException(nameof(contextFactory));
+        ContextFactory = contextFactory;
         _criticalQueryExecutionTime = criticalQueryExecutionTimeForLogging ?? TimeSpan.FromSeconds(1);
-        _logger = loggerfFactory?.CreateLogger<BaseRepository<TContext, TEntity>>();
+        _logger = loggerFactory?.CreateLogger<BaseRepository<TContext, TEntity>>();
     }
 
     protected async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default)
     {
-        await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
-        {
-            return predicate is null
-                ? await context.Set<TEntity>().CountAsync(cancellationToken).ConfigureAwait(false)
-                : await context.Set<TEntity>().CountAsync(predicate, cancellationToken).ConfigureAwait(false);
-        }
+        await using var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        return predicate is null
+            ? await context.Set<TEntity>().CountAsync(cancellationToken).ConfigureAwait(false)
+            : await context.Set<TEntity>().CountAsync(predicate, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -53,20 +56,22 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
 
         try
         {
-            await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
+            await using var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            IQueryable<TEntity> query = context.Set<TEntity>();
+
+            if (predicate != null)
             {
-                IQueryable<TEntity> query = context.Set<TEntity>();
-
-                if (predicate != null)
-                    query = query.Where(predicate);
-
-                if (orderBy != null)
-                    query = orderBy(query);
-
-                resultQuery = query.ToQueryString();
-
-                return await query.AsNoTracking().FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                query = query.Where(predicate);
             }
+
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            resultQuery = query.ToQueryString();
+
+            return await query.AsNoTracking().FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -95,26 +100,32 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
 
         try
         {
-            await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
+            await using var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            IQueryable<TEntity> query = context.Set<TEntity>();
+
+            if (predicate != null)
             {
-                IQueryable<TEntity> query = context.Set<TEntity>();
-
-                if (predicate != null)
-                    query = query.Where(predicate);
-
-                if (orderBy != null)
-                    query = orderBy(query);
-
-                if (skip != null)
-                    query = query.Skip((int)skip);
-
-                if (take != null)
-                    query = query.Take((int)take);
-
-                resultQuery = query.ToQueryString();
-
-                return await query.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
+                query = query.Where(predicate);
             }
+
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            if (skip != null)
+            {
+                query = query.Skip((int)skip);
+            }
+
+            if (take != null)
+            {
+                query = query.Take((int)take);
+            }
+
+            resultQuery = query.ToQueryString();
+
+            return await query.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -131,14 +142,12 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
 
         try
         {
-            await using (var context = await ContextFactory.CreateDbContextAsync().ConfigureAwait(false))
-            {
-                var query = context.Set<TEntity>().FromSqlRaw(sql);
+            await using var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var query = context.Set<TEntity>().FromSqlRaw(sql);
 
-                resultQuery = query.ToQueryString();
+            resultQuery = query.ToQueryString();
 
-                return await query.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
-            }
+            return await query.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -159,14 +168,12 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
 
         try
         {
-            await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
-            {
-                context.Set<TEntity>().Add(item);
+            await using var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            context.Set<TEntity>().Add(item);
 
-                GetChangesForLogging(context, out resultChanges, out detailedResultChanges);
+            GetChangesForLogging(context, out resultChanges, out detailedResultChanges);
 
-                return 1 == await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
+            return 1 == await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -192,17 +199,15 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
 
         try
         {
-            await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
+            await using var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var item in items)
             {
-                foreach (var item in items)
-                {
-                    context.Set<TEntity>().Add(item);
-                }
-
-                GetChangesForLogging(context, out resultChanges, out detailedResultChanges);
-
-                return items.Count() == await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                context.Set<TEntity>().Add(item);
             }
+
+            GetChangesForLogging(context, out resultChanges, out detailedResultChanges);
+
+            return items.Count() == await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -215,18 +220,15 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
     {
         var itemId = getId(item);
 
-        var existingItem = !itemId.Equals(default(TId))
-            ? await context.Set<TEntity>().FirstOrDefaultAsync(i => getId(i).Equals(itemId), cancellationToken).ConfigureAwait(false)
+        var existingItem = itemId != null && !itemId.Equals(default(TId))
+            ? await context.Set<TEntity>().FirstOrDefaultAsync(i => getId(i)!.Equals(itemId), cancellationToken).ConfigureAwait(false)
             : null;
 
-        if (existingItem != null)
+        if (existingItem != null && !item.Equals(existingItem))
         {
-            if (!item.Equals(existingItem))
-            {
-                context.Entry(existingItem).State = EntityState.Detached;
-                context.Entry(item).State = EntityState.Modified;
-                context.Set<TEntity>().Update(item);
-            }
+            context.Entry(existingItem).State = EntityState.Detached;
+            context.Entry(item).State = EntityState.Modified;
+            context.Set<TEntity>().Update(item);
         }
         else
         {
@@ -315,24 +317,33 @@ public class BaseRepository<TContext, TEntity> : IBaseRepository<TEntity> where 
     protected void LogFind(string message, TimeSpan elapsed, string sql)
     {
         if (elapsed > _criticalQueryExecutionTime)
+        {
             _logger?.LogWarningIfNeed(message, elapsed, sql);
+        }
         else
+        {
             _logger?.LogDebugIfNeed(message, elapsed, sql);
+        }
     }
 
     protected void LogSave(string message, TimeSpan elapsed, string changes, string detailedChanges)
     {
         if (elapsed > _criticalQueryExecutionTime)
+        {
             _logger?.LogWarning(message, elapsed, detailedChanges);
+        }
         else if (_logger?.IsEnabled(LogLevel.Trace) != true)
+        {
             _logger?.LogDebug(message, elapsed, changes);
+        }
         else
+        {
             _logger?.LogTrace(message, elapsed, detailedChanges);
+        }
     }
 
     protected void LogDelete(string message, TimeSpan elapsed, string changes)
     {
         LogFind(message, elapsed, changes);
     }
-
 }

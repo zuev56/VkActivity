@@ -1,5 +1,10 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VkActivity.Data.Abstractions;
@@ -14,8 +19,8 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
     public UsersRepository(
         IDbContextFactory<VkActivityContext> contextFactory,
         TimeSpan? criticalQueryExecutionTimeForLogging = null,
-        ILoggerFactory? loggerfFactory = null)
-        : base(contextFactory, criticalQueryExecutionTimeForLogging, loggerfFactory)
+        ILoggerFactory? loggerFactory = null)
+        : base(contextFactory, criticalQueryExecutionTimeForLogging, loggerFactory)
     {
     }
 
@@ -43,7 +48,7 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
         await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
         {
             return await context.VkUsers!
-                .Select(u => u.Id).ToArrayAsync()
+                .Select(u => u.Id).ToArrayAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
     }
@@ -54,12 +59,12 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
         {
             return await context.VkUsers!
                 .Where(u => userIds.Contains(u.Id))
-                .Select(u => u.Id).ToArrayAsync()
+                .Select(u => u.Id).ToArrayAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
     }
 
-    public async Task<ServiceResult> UpdateRangeAsync(IEnumerable<User> users, CancellationToken cancellationToken)
+    public async Task<Result> UpdateRangeAsync(IEnumerable<User> users, CancellationToken cancellationToken)
     {
         var userIds = users.Select(u => u.Id);
         await using (var context = await ContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false))
@@ -77,17 +82,17 @@ public sealed class UsersRepository : BaseRepository<VkActivityContext, User>, I
 
             var saved = await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return ServiceResult.Success();
+            return Result.Success();
         }
     }
 
     private void UpdateUserFromOther(User target, User source)
     {
         var rawDataHistory = target.RawDataHistory != null
-            ? JsonNode.Parse(target.RawDataHistory).AsArray()
+            ? JsonNode.Parse(target.RawDataHistory)!.AsArray()
             : new JsonArray();
 
-        var historyItem = JsonNode.Parse(target.RawData).AsObject();
+        var historyItem = JsonNode.Parse(target.RawData)!.AsObject();
         historyItem.Add("addedToHistory", DateTime.UtcNow);
         rawDataHistory.Add(historyItem);
         target.RawDataHistory = JsonSerializer.Serialize(rawDataHistory).NormalizeJsonString();

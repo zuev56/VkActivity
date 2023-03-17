@@ -1,4 +1,6 @@
-﻿namespace VkActivity.Data.Models;
+﻿using System;
+
+namespace VkActivity.Data.Models;
 
 /// <summary>Vk user (DB)</summary>
 public partial class User : IEquatable<User?>

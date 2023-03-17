@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace IntegrationTests;
+namespace Api.IntegrationTests;
 
 [ExcludeFromCodeCoverage]
 public class ActivityLoggerTests //: IDisposable

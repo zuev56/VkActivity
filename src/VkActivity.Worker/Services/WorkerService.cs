@@ -1,12 +1,21 @@
-﻿using VkActivity.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using VkActivity.Common;
 using VkActivity.Common.Abstractions;
 using VkActivity.Data.Abstractions;
 using VkActivity.Worker.Abstractions;
-using Zs.Common.Abstractions;
 using Zs.Common.Enums;
 using Zs.Common.Extensions;
-using Zs.Common.Services.Abstractions;
-using Zs.Common.Services.Scheduler;
+using Zs.Common.Models;
+using Zs.Common.Services.Connection;
+using Zs.Common.Services.Logging.DelayedLogger;
+using Zs.Common.Services.Scheduling;
 using static VkActivity.Worker.Models.Constants;
 
 namespace VkActivity.Worker.Services;
@@ -15,66 +24,49 @@ internal sealed class WorkerService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IScheduler _scheduler;
-    private readonly IConnectionAnalyser _connectionAnalyser;
+    private readonly IConnectionAnalyzer _connectionAnalyzer;
     private readonly IConfiguration _configuration;
     private readonly IDelayedLogger<WorkerService> _delayedLogger;
     private readonly ILogger<WorkerService> _logger;
     private DateTime _disconnectionTime = DateTime.UtcNow;
 
-    private IJob _userActivityLoggerJob = null!;
+    private Job _userActivityLoggerJob = null!;
     private bool _isFirstStep = true;
 
 
     public WorkerService(
         IServiceScopeFactory serviceScopeFactory,
         IScheduler scheduler,
-        IConnectionAnalyser connectionAnalyser,
+        IConnectionAnalyzer connectionAnalyzer,
         IConfiguration configuration,
         IDelayedLogger<WorkerService> delayedLogger,
         ILogger<WorkerService> logger)
     {
-        try
-        {
-            _scopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
-            _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
-            _connectionAnalyser = connectionAnalyser ?? throw new ArgumentNullException(nameof(connectionAnalyser));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _delayedLogger = delayedLogger ?? throw new ArgumentNullException(nameof(delayedLogger));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _scopeFactory = serviceScopeFactory;
+        _scheduler = scheduler;
+        _connectionAnalyzer = connectionAnalyzer;
+        _configuration = configuration;
+        _delayedLogger = delayedLogger;
+        _logger = logger;
 
-            _scheduler.Jobs.AddRange(CreateJobs());
-        }
-        catch (Exception ex)
-        {
-            var tiex = new TypeInitializationException(typeof(WorkerService).FullName, ex);
-            _logger?.LogError(tiex, $"{nameof(WorkerService)} initialization error");
-            throw;
-        }
+        _scheduler.Jobs.AddRange(CreateJobs());
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        try
-        {
-            _connectionAnalyser.ConnectionStatusChanged += СonnectionAnalyser_StatusChanged;
-            _connectionAnalyser.Start(2000, 3000);
+        _connectionAnalyzer.ConnectionStatusChanged += ConnectionAnalyzer_StatusChanged;
+        _connectionAnalyzer.Start(2.Seconds(), 3.Seconds());
 
-            _scheduler.Start(3000, 1000);
+        _scheduler.Start(3.Seconds(), 1.Seconds());
 
-            _logger.LogInformation($"{nameof(WorkerService)} started");
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"{nameof(WorkerService)} starting error");
-            throw;
-        }
+        _logger.LogInformation($"{nameof(WorkerService)} started");
+        return Task.CompletedTask;
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        _connectionAnalyser.ConnectionStatusChanged -= СonnectionAnalyser_StatusChanged;
-        _connectionAnalyser.Stop();
+        _connectionAnalyzer.ConnectionStatusChanged -= ConnectionAnalyzer_StatusChanged;
+        _connectionAnalyzer.Stop();
 
         _scheduler.Stop();
 
@@ -82,14 +74,14 @@ internal sealed class WorkerService : BackgroundService
         return Task.CompletedTask;
     }
 
-    private void СonnectionAnalyser_StatusChanged(ConnectionStatus status)
+    private void ConnectionAnalyzer_StatusChanged(ConnectionStatus status)
     {
         _disconnectionTime = status == ConnectionStatus.Ok
             ? default
             : DateTime.UtcNow;
     }
 
-    private List<IJobBase> CreateJobs()
+    private List<JobBase> CreateJobs()
     {
         _userActivityLoggerJob = new ProgramJob(
             period: TimeSpan.FromSeconds(_configuration.GetSection(AppSettings.Vk.ActivityLogIntervalSec).Get<int>()),
@@ -104,7 +96,7 @@ internal sealed class WorkerService : BackgroundService
             description: "userDataUpdaterJob",
             logger: _logger);
 
-        return new List<IJobBase>()
+        return new List<JobBase>
         {
             _userActivityLoggerJob,
             userDataUpdaterJob
@@ -118,7 +110,7 @@ internal sealed class WorkerService : BackgroundService
         {
             await SetUndefinedActivityToAllUsers().ConfigureAwait(false);
 
-            _delayedLogger.LogError(NoInernetConnection);
+            _delayedLogger.LogError(NoInternetConnection);
             return;
         }
 
@@ -131,60 +123,53 @@ internal sealed class WorkerService : BackgroundService
         }
 
         if (_userActivityLoggerJob.IdleStepsCount > 0)
+        {
             _userActivityLoggerJob.IdleStepsCount = 0;
+        }
 
         var result = await SaveUsersActivityAsync().ConfigureAwait(false);
-        if (!result.IsSuccess)
+        if (!result.Successful)
         {
-            string logMessage = result.Messages.Count == 1
-                ? result.Messages[0].Text
-                : result.JoinMessages();
+            var logMessage = result.Fault!.Code;
 
             _logger.LogErrorIfNeed(logMessage);
         }
 
-        _logger.LogTraceIfNeed(result.JoinMessages());
+        //_logger.LogTraceIfNeed(result.JoinMessages());
     }
 
-    private async Task<IOperationResult> SaveUsersActivityAsync()
+    private async Task<Result> SaveUsersActivityAsync()
     {
-        using (var scope = _scopeFactory.CreateScope())
-        {
-            var activityLoggerService = scope.ServiceProvider.GetRequiredService<IActivityLogger>();
-            return await activityLoggerService.SaveUsersActivityAsync().ConfigureAwait(false);
-        }
+        using var scope = _scopeFactory.CreateScope();
+        var activityLoggerService = scope.ServiceProvider.GetRequiredService<IActivityLogger>();
+        return await activityLoggerService.SaveUsersActivityAsync().ConfigureAwait(false);
     }
 
-    private async Task<IOperationResult> SetUndefinedActivityToAllUsers()
+    private async Task SetUndefinedActivityToAllUsers()
     {
-        using (var scope = _scopeFactory.CreateScope())
-        {
-            var activityLoggerService = scope.ServiceProvider.GetRequiredService<IActivityLogger>();
-            return await activityLoggerService.ChangeAllUserActivitiesToUndefinedAsync().ConfigureAwait(false);
-        }
+        using var scope = _scopeFactory.CreateScope();
+        var activityLoggerService = scope.ServiceProvider.GetRequiredService<IActivityLogger>();
+        await activityLoggerService.ChangeAllUserActivitiesToUndefinedAsync().ConfigureAwait(false);
     }
     private async Task AddUsersFullInfoAsync()
     {
-        using (var scope = _scopeFactory.CreateScope())
-        {
-            var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
-            var initialUserIds = _configuration.GetSection(AppSettings.Vk.InitialUserIds).Get<string[]>();
-            await userManager.AddUsersAsync(initialUserIds ?? Array.Empty<string>()).ConfigureAwait(false);
-        }
+        using var scope = _scopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
+        var initialUserIds = _configuration.GetSection(AppSettings.Vk.InitialUserIds).Get<string[]>();
+        await userManager.AddUsersAsync(initialUserIds ?? Array.Empty<string>()).ConfigureAwait(false);
     }
 
     private async Task UpdateUsersDataAsync()
     {
-        using (var scope = _scopeFactory.CreateScope())
+        using var scope = _scopeFactory.CreateScope();
+        var usersRepo = scope.ServiceProvider.GetRequiredService<IUsersRepository>();
+        var userIds = await usersRepo.FindAllIdsAsync().ConfigureAwait(false);
+        var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
+        var updateResult = await userManager.UpdateUsersAsync(userIds);
+
+        if (!updateResult.Successful)
         {
-            var usersRepo = scope.ServiceProvider.GetRequiredService<IUsersRepository>();
-            var userIds = await usersRepo.FindAllIdsAsync().ConfigureAwait(false);
-
-            var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
-            var updateResult = await userManager.UpdateUsersAsync(userIds);
-
-            if (!updateResult.IsSuccess)
-                _logger.LogError(string.Join(Environment.NewLine, updateResult.Messages), new { UserIds = userIds });
+            _logger.LogError(string.Join(Environment.NewLine, updateResult.Fault!.Code), new { UserIds = userIds });
         }
     }
 }

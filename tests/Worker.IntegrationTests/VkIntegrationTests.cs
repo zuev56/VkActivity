@@ -1,11 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using VkActivity.Common;
+using Microsoft.Extensions.DependencyInjection;
 using VkActivity.Common.Abstractions;
 using VkActivity.Common.Services;
 using Xunit;
@@ -13,19 +11,16 @@ using Xunit;
 namespace Worker.IntegrationTests;
 
 [ExcludeFromCodeCoverage]
-public class VkIntegrationTests
+public sealed class VkIntegrationTests : TestBase
 {
     [Fact]
     public async Task GetUsersWithActivityInfoAsync_ByScreenNames_ReturnsExpectedUsers()
     {
-        // Arrange
-        var vkIntegration = CreateVkIntegration();
-        var screenNames = new string[] { "durov", "zuev56" };
+        var screenNames = new [] { "durov", "zuev56" };
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
 
-        // Act
         var users = await vkIntegration.GetUsersWithActivityInfoAsync(screenNames);
 
-        // Assert
         Assert.NotNull(users);
         Assert.DoesNotContain(null, users);
         Assert.Equal(screenNames.Length, users.Count);
@@ -34,14 +29,11 @@ public class VkIntegrationTests
     [Fact]
     public async Task GetUsersWithActivityInfoAsync_ByIds_ReturnsExpectedUsers()
     {
-        // Arrange
-        var vkIntegration = CreateVkIntegration();
-        var userIds = new string[] { "1", "8790237" };
+        var userIds = new [] { "1", "8790237" };
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
 
-        // Act
         var users = await vkIntegration.GetUsersWithActivityInfoAsync(userIds);
 
-        // Assert
         Assert.NotNull(users);
         Assert.DoesNotContain(null, users);
         Assert.Equal(userIds.Length, users.Count);
@@ -50,15 +42,13 @@ public class VkIntegrationTests
     [Fact]
     public async Task GetUsersWithActivityInfoAsync_ManyRequests_ExecuteWithDelay()
     {
-        // Arrange
-        var vkIntegration = CreateVkIntegration();
-        var screenNames = new string[] { "1", "8790237" };
+        var screenNames = new [] { "1", "8790237" };
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
         var sw = new Stopwatch();
         var attempts = 10;
 
-        // Act
         sw.Start();
-        for (int i = 0; i < attempts; i++)
+        for (var i = 0; i < attempts; i++)
         {
             var users = await vkIntegration.GetUsersWithActivityInfoAsync(screenNames);
 
@@ -75,14 +65,11 @@ public class VkIntegrationTests
     [Fact]
     public async Task GetUsersWithFullInfoAsync_ReturnsUsersWithFullInfo()
     {
-        // Arrange
-        var vkIntegration = CreateVkIntegration();
-        var screenNames = new string[] { "durov", "zuev56" };
+        var screenNames = new [] { "durov", "zuev56" };
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
 
-        // Act
         var users = await vkIntegration.GetUsersWithFullInfoAsync(screenNames);
 
-        // Assert
         Assert.NotNull(users);
         Assert.DoesNotContain(null, users);
         Assert.Contains(null, users.Select(u => u.LastSeen));
@@ -90,31 +77,16 @@ public class VkIntegrationTests
         Assert.Equal(screenNames.Length, users.Count);
     }
 
-    [Fact]
-    public async Task GetFriendIds_ReturnsFriendIdsArray()
+    [Theory]
+    [InlineData(8790237)]
+    public async Task GetFriendIds_ReturnsFriendIdsArray(int userId)
     {
-        // Arrange
-        var vkIntegration = CreateVkIntegration();
-        var userId = 8790237; //Надо перебирать пользователей с открытыми друзьями
+        var vkIntegration = ServiceProvider.GetRequiredService<IVkIntegration>();
 
-        // Act
         var friendIds = await vkIntegration.GetFriendIds(userId);
 
-        // Assert
         friendIds.Should().NotBeNull();
         friendIds.Should().HaveCountGreaterThan(100);
         friendIds.Should().OnlyHaveUniqueItems();
-    }
-
-    private IVkIntegration CreateVkIntegration()
-    {
-        var configuration = new ConfigurationBuilder()
-           .AddJsonFile(Path.GetFullPath(Constants.VkActivityServiceAppSettingsPath))
-           .Build();
-
-        var token = configuration[AppSettings.Vk.AccessToken];
-        var version = configuration[AppSettings.Vk.Version];
-
-        return new VkIntegration(token, version);
     }
 }

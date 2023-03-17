@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using VkActivity.Api.Models;
 using VkActivity.Common.Abstractions;
 
 namespace VkActivity.Api.Controllers;
@@ -22,12 +27,13 @@ public sealed class UsersController : Controller
     /// <param name="userId"></param>
     /// <returns></returns>
     [HttpGet("{userId:int}")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUser(int userId)
     {
         var gerUsersResult = await _userManager.GetUserAsync(userId);
-        return gerUsersResult.IsSuccess
-            ? Ok(gerUsersResult.Value.ToDto())
-            : StatusCode(500, gerUsersResult);
+        var userDto = gerUsersResult.Value.ToDto();
+
+        return Ok(userDto);
     }
 
     /// <summary>
@@ -36,20 +42,23 @@ public sealed class UsersController : Controller
     /// <param name="screenNames"></param>
     /// <returns></returns>
     [HttpPost]
+    [ProducesResponseType(typeof(UserDto[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> AddNewUsers([FromBody] string[] screenNames)
     {
-        if (screenNames == null || screenNames.Length == 0)
+        if (screenNames.Length == 0)
+        {
             return BadRequest("No VK user IDs to add");
+        }
 
         var addUsersResult = await _userManager.AddUsersAsync(screenNames).ConfigureAwait(false);
+        var userDtos = addUsersResult.Value.Select(Mapper.ToDto).ToArray();
 
-        return addUsersResult.IsSuccess
-            ? Ok(addUsersResult)
-            : StatusCode(500, addUsersResult);
+        return Ok(userDtos);
     }
 
 
     [HttpPost("friends/{userId:int}")]
+    [ProducesResponseType(typeof(UserDto[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> AddFriendsOf(int userId)
     {
         if (userId == default)
@@ -58,9 +67,8 @@ public sealed class UsersController : Controller
         }
 
         var addFriendsResult = await _userManager.AddFriendsOf(userId);
+        var userDtos = addFriendsResult.Value.Select(Mapper.ToDto).ToArray();
 
-        return addFriendsResult.IsSuccess
-            ? Ok(addFriendsResult)
-            : StatusCode(500, addFriendsResult);
+        return Ok(userDtos);
     }
 }

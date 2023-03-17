@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Zs.Common.Extensions;
 
 namespace VkActivity.Data;
 
-public class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, IDesignTimeDbContextFactory<VkActivityContext>
+public sealed class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, IDesignTimeDbContextFactory<VkActivityContext>
 {
     private readonly DbContextOptions<VkActivityContext>? _options;
 
@@ -27,12 +27,11 @@ public class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, ID
         var configuration = new ConfigurationBuilder()
             .AddJsonFile(System.IO.Path.GetFullPath(@"..\VkActivity.Worker\appsettings.Development.json"))
             .Build();
-        var connectionString = configuration.GetSecretValue("ConnectionStrings:Default");
+        var connectionString = configuration["ConnectionStrings:Default"];
 
         var optionsBuilder = new DbContextOptionsBuilder<VkActivityContext>();
         optionsBuilder.UseNpgsql(connectionString);
 
         return new VkActivityContext(optionsBuilder.Options);
     }
-
 }

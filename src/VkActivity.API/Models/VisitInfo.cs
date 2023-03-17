@@ -1,11 +1,11 @@
-﻿using VkActivity.Data.Models;
+﻿using System;
+using VkActivity.Data.Models;
 
-namespace VkActivity.Api.Models
+namespace VkActivity.Api.Models;
+
+public sealed class VisitInfo
 {
-    public sealed class VisitInfo
-    {
-        public Platform Platform { get; set; }
-        public int Count { get; set; }
-        public TimeSpan Time { get; set; }
-    }
+    public Platform Platform { get; set; }
+    public int Count { get; set; }
+    public TimeSpan Time { get; set; }
 }

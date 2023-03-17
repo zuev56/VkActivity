@@ -1,4 +1,7 @@
-﻿using VkActivity.Data.Models;
+﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using VkActivity.Data.Models;
 using VkActivity.Data.Repositories;
 using Zs.Common.Models;
 
@@ -12,5 +15,5 @@ public interface IUsersRepository : IBaseRepository<User>
     Task<List<User>> FindAllAsync(int? skip, int? take, CancellationToken cancellationToken = default);
     Task<int[]> FindAllIdsAsync(CancellationToken cancellationToken = default);
     Task<int[]> FindExistingIdsAsync(int[] userIds, CancellationToken cancellationToken = default);
-    Task<ServiceResult> UpdateRangeAsync(IEnumerable<User> users, CancellationToken cancellationToken = default);
+    Task<Result> UpdateRangeAsync(IEnumerable<User> users, CancellationToken cancellationToken = default);
 }

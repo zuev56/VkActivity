@@ -1,9 +1,13 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using VkActivity.Api.Abstractions;
 using VkActivity.Api.Models;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
-using Zs.Common.Abstractions;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
 using static VkActivity.Api.Models.Constants;
@@ -22,25 +26,31 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         IUsersRepository vkUsersRepo,
         ILogger<ActivityAnalyzer> logger)
     {
-        _vkActivityLogRepo = vkActivityLogRepo ?? throw new ArgumentNullException(nameof(vkActivityLogRepo));
-        _vkUsersRepo = vkUsersRepo ?? throw new ArgumentNullException(nameof(vkUsersRepo));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _vkActivityLogRepo = vkActivityLogRepo;
+        _vkUsersRepo = vkUsersRepo;
+        _logger = logger;
     }
 
-    public async Task<IOperationResult<DetailedActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
+    public async Task<Result<DetailedActivity>> GetUserStatisticsForPeriodAsync(int userId, DateTime fromDate, DateTime toDate)
     {
         try
         {
             if (fromDate >= toDate)
-                return ServiceResult<DetailedActivity>.Error(EndDateIsNotMoreThanStartDate);
+            {
+                return Result.Fail<DetailedActivity>(EndDateIsNotMoreThanStartDate);
+            }
 
             var user = await _vkUsersRepo.FindByIdAsync(userId);
             if (user == null)
-                return ServiceResult<DetailedActivity>.Error(UserNotFound(userId));
+            {
+                return Result.Fail<DetailedActivity>(UserNotFound(userId));
+            }
 
             var orderedLogForUser = await GetOrderedLog(fromDate, toDate, userId);
             if (!orderedLogForUser.Any())
-                return ServiceResult<DetailedActivity>.Warning(ActivityForUserNotFound(userId), new DetailedActivity(user));
+            {
+                return Result.Fail<DetailedActivity>(ActivityForUserNotFound(userId));
+            }
 
             var activityDetails = new DetailedActivity(user)
             {
@@ -49,12 +59,12 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
                 VisitInfos = GetVisitInfos(orderedLogForUser),
             };
 
-            return ServiceResult<DetailedActivity>.Success(activityDetails);
+            return activityDetails;
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, GetUserStatisticsForPeriodError);
-            return ServiceResult<DetailedActivity>.Error(GetUserStatisticsForPeriodError);
+            _logger.LogError(ex, GetUserStatisticsForPeriodError);
+            return Result.Fail<DetailedActivity>(GetUserStatisticsForPeriodError);
         }
     }
     private async Task<List<ActivityLogItem>> GetOrderedLog(DateTime fromDate, DateTime toDate, params int[] userIds)
@@ -101,8 +111,8 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         //  - Первый элемент списка должен быть IsOnline == true
         //  - Каждый последующий элемент обрабатывается опираясь на предыдущий
 
-        int seconds = 0;
-        for (int i = 1; i < orderedLog.Count; i++)
+        var seconds = 0;
+        for (var i = 1; i < orderedLog.Count; i++)
         {
             var prev = orderedLog[i - 1];
             var cur = orderedLog[i];
@@ -126,20 +136,22 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     }
 
     private static bool IsWebSite(Platform platform)
-        => platform == Platform.MobileSiteVersion || platform == Platform.FullSiteVersion;
+        => platform is Platform.MobileSiteVersion or Platform.FullSiteVersion;
 
-
-    /// <inheritdoc/>
-    public async Task<IOperationResult<List<ActivityListItem>>> GetUsersWithActivityAsync(DateTime fromDate, DateTime toDate, string? filterText)
+    public async Task<Result<List<ActivityListItem>>> GetUsersWithActivityAsync(DateTime fromDate, DateTime toDate, string? filterText)
     {
         try
         {
             if (fromDate >= toDate)
-                return ServiceResult<List<ActivityListItem>>.Error(EndDateIsNotMoreThanStartDate);
+            {
+                return Result.Fail<List<ActivityListItem>>(EndDateIsNotMoreThanStartDate);
+            }
 
             var usersResult = await GetUsersAsync(filterText);
-            if (!usersResult.IsSuccess)
-                return ServiceResult<List<ActivityListItem>>.ErrorFrom(usersResult);
+            if (!usersResult.Successful)
+            {
+                return usersResult.Fault!;
+            }
 
             var activityLog = await GetOrderedLog(fromDate, toDate, usersResult.Value.Select(u => u.Id).ToArray());
             var onlineUserIds = await GetOnlineUserIdsAsync();
@@ -162,16 +174,16 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
                 .OrderByDescending(i => i.ActivitySec).ThenBy(i => i.User.FirstName).ThenBy(i => i.User.LastName)
                 .ToList();
 
-            return ServiceResult<List<ActivityListItem>>.Success(orderedUserList);
+            return Result.Success(orderedUserList);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, GetUsersWithActivityError);
-            return ServiceResult<List<ActivityListItem>>.Error(GetUsersWithActivityError);
+            return Result.Fail<List<ActivityListItem>>(GetUsersWithActivityError);
         }
     }
 
-    //public async Task<IOperationResult<Table<UserWithActivity>>> GetUsersWithActivityTable(TableParameters tableParameters)
+    //public async Task<Result<Table<UserWithActivity>>> GetUsersWithActivityTable(TableParameters tableParameters)
     //{
     //    try
     //    {
@@ -206,17 +218,16 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     //            .OrderByDescending(i => i.ActivitySec).ThenBy(i => i.User.FirstName).ThenBy(i => i.User.LastName)
     //            .ToList();
     //
-    //        return ServiceResult<List<UserWithActivity>>.Success(orderedUserList);
+    //        return Result<List<UserWithActivity>>.Success(orderedUserList);
     //    }
     //    catch (Exception ex)
     //    {
     //        _logger?.LogError(ex, "GetVkUsersWithActivity error");
-    //        return ServiceResult<List<UserWithActivity>>.Error("Failed to get users list with activity time");
+    //        return Result<List<UserWithActivity>>.Error("Failed to get users list with activity time");
     //    }
     //}
 
-    /// <inheritdoc/>
-    public async Task<IOperationResult<List<User>>> GetUsersAsync(string? filterText = null, int? skip = null, int? take = null)
+    public async Task<Result<List<User>>> GetUsersAsync(string? filterText = null, int? skip = null, int? take = null)
     {
         try
         {
@@ -224,12 +235,12 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
                 ? await _vkUsersRepo.FindAllWhereNameLikeValueAsync(filterText, skip, take)
                 : await _vkUsersRepo.FindAllAsync(skip, take);
 
-            return ServiceResult<List<User>>.Success(users);
+            return Result.Success(users);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, GetUsersError);
-            return ServiceResult<List<User>>.Error(GetUsersError);
+            return Result.Fail<List<User>>(GetUsersError);
         }
     }
 
@@ -237,7 +248,8 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     {
         var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userIds);
 
-        return lastUsersActivity.Where(i => i.IsOnline == true && DateTime.UtcNow - i.InsertDate < TimeSpan.FromDays(1))
+        return lastUsersActivity
+            .Where(i => i.IsOnline == true && DateTime.UtcNow - i.InsertDate < TimeSpan.FromDays(1))
             .Select(i => i.UserId).ToArray();
     }
 
@@ -248,7 +260,9 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         var lastLogItem = orderedLog.LastOrDefault();
         var endInterval = DateTime.UtcNow < toDate ? DateTime.UtcNow.ToUnixEpoch() : toDate.ToUnixEpoch();
         if (lastLogItem?.IsOnline == true)
+        {
             orderedLog.Add(new ActivityLogItem { IsOnline = false, LastSeen = endInterval, InsertDate = DateTime.UtcNow });
+        }
     }
 
     private static Dictionary<Platform, TimeSpan> GetTimeOnPlatforms(List<ActivityLogItem> orderedLogForUser)
@@ -258,9 +272,10 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         foreach (var platform in Enum.GetValues<Platform>())
         {
             var seconds = GetActivityTimeOnPlatform(orderedLogForUser, platform).Seconds;
-
             if (seconds > 0)
+            {
                 timeOnPlatforms.Add(platform, TimeSpan.FromSeconds(seconds));
+            }
         }
 
         return timeOnPlatforms;
@@ -270,19 +285,23 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
     {
         // Вычисление активности за каждый день должно начинаться с начала суток, если предыдущие сутки закончились онлайн
         if (log == null)
+        {
             throw new ArgumentOutOfRangeException(nameof(log));
+        }
 
         var resultMap = new Dictionary<DateTime, TimeSpan>();
 
-        bool prevDayEndedOnlineFromPC = false;
-        bool prevDayEndedOnlineFromMobile = false;
+        var prevDayEndedOnlineFromPC = false;
+        var prevDayEndedOnlineFromMobile = false;
         log.Select(l => l.InsertDate.Date).Distinct().ToList().ForEach(day =>
         {
-            int secondsADay = 0;
+            var secondsADay = 0;
             var dailyLog = log.Where(l => l.InsertDate.Date == day).OrderBy(l => l.InsertDate).ToList();
 
             if (prevDayEndedOnlineFromPC || prevDayEndedOnlineFromMobile)
+            {
                 secondsADay += dailyLog[0].LastSeen - day.ToUnixEpoch();
+            }
 
             // TODO: разделить подсчёт времени с браузера и мобильного
             secondsADay += GetActivitySeconds(dailyLog, Device.All);
@@ -294,8 +313,14 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
             var last = dailyLog.Last();
             if (last.IsOnline == true)
             {
-                if (!IsWebSite(last.Platform)) prevDayEndedOnlineFromMobile = true;
-                else prevDayEndedOnlineFromPC = true;
+                if (!IsWebSite(last.Platform))
+                {
+                    prevDayEndedOnlineFromMobile = true;
+                }
+                else
+                {
+                    prevDayEndedOnlineFromPC = true;
+                }
 
                 secondsADay += (day + TimeSpan.FromDays(1)).ToUnixEpoch() - last.LastSeen;
             }
@@ -323,8 +348,8 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
 
         // TODO: обработать для каждого типа Platform
 
-        int seconds = 0;
-        for (int i = 1; i < orderedLog.Count; i++)
+        var seconds = 0;
+        for (var i = 1; i < orderedLog.Count; i++)
         {
             var prev = orderedLog[i - 1];
             var cur = orderedLog[i];
@@ -335,15 +360,21 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
             {
                 case Device.PC:
                     if (prev.IsOnline == true && !prevIsOnlineMobile && (cur.IsOnline == true && curIsOnlineMobile || cur.IsOnline == false))
+                    {
                         seconds += cur.LastSeen - prev.LastSeen;
+                    }
                     break;
                 case Device.Mobile:
                     if (prev.IsOnline == true && prevIsOnlineMobile && (cur.IsOnline == true && !curIsOnlineMobile || cur.IsOnline == false))
+                    {
                         seconds += cur.LastSeen - prev.LastSeen;
+                    }
                     break;
                 case Device.All:
                     if (prev.IsOnline == true)
+                    {
                         seconds += cur.LastSeen - prev.LastSeen;
+                    }
                     break;
             }
         }
@@ -358,35 +389,35 @@ public sealed class ActivityAnalyzer : IActivityAnalyzer
         return seconds;
     }
 
-    public async Task<IOperationResult<DateTime>> GetLastVisitDate(int userId)
+    public async Task<Result<DateTime>> GetLastVisitDate(int userId)
     {
         var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userId);
         var lastUserActivity = lastUsersActivity.FirstOrDefault();
 
         if (lastUserActivity == null)
         {
-            return ServiceResult<DateTime>.Error($"Activity for user {userId} is not found");
+            return Result.Fail<DateTime>($"Activity for user {userId} is not found");
         }
 
         var lastVisitDate = lastUserActivity.LastSeen.FromUnixEpoch();
-        return ServiceResult<DateTime>.Success(lastVisitDate);
+        return lastVisitDate;
     }
 
-    public async Task<IOperationResult<bool>> IsOnline(int userId)
+    public async Task<Result<bool>> IsOnline(int userId)
     {
         var lastUsersActivity = await _vkActivityLogRepo.FindLastUsersActivityAsync(userId);
         var lastUserActivity = lastUsersActivity.FirstOrDefault();
 
         if (lastUserActivity == null)
         {
-            return ServiceResult<bool>.Error($"Activity for user {userId} is not found");
+            return Result.Fail<bool>($"Activity for user {userId} is not found");
         }
 
         if (lastUserActivity.IsOnline == null)
         {
-            return ServiceResult<bool>.Error($"Activity for user {userId} is not defined");
+            return Result.Fail<bool>($"Activity for user {userId} is not defined");
         }
 
-        return ServiceResult<bool>.Success(lastUserActivity.IsOnline.Value);
+        return lastUserActivity.IsOnline.Value;
     }
 }

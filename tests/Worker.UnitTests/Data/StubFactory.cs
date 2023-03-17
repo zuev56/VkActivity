@@ -14,7 +14,7 @@ using Zs.Common.Extensions;
 
 [assembly: InternalsVisibleTo("Worker.IntegrationTests")]
 
-namespace UnitTests.Data;
+namespace Worker.UnitTests.Data;
 
 // Extract to Common project
 internal class StubFactory
@@ -98,8 +98,10 @@ internal class StubFactory
     {
         var users = new User[amount];
 
-        for (int i = 0; i < amount; i++)
+        for (var i = 0; i < amount; i++)
+        {
             users[i] = CreateUser(i + 1);
+        }
 
         return users;
     }
@@ -126,7 +128,7 @@ internal class StubFactory
         var shift = 1;
 
         DateTime lastSeen;
-        for (int i = 1; i < usersCount + 1; i++)
+        for (var i = 1; i < usersCount + 1; i++)
         {
             lastSeen = DateTime.UtcNow - TimeSpan.FromDays(Random.Shared.Next(10, 365));
             activityLogItems[i - 1] = CreateActivityLogItem(
@@ -138,7 +140,7 @@ internal class StubFactory
         }
 
         shift += usersCount;
-        for (int i = 1; i < usersCount + 1; i++)
+        for (var i = 1; i < usersCount + 1; i++)
         {
             lastSeen = DateTime.UtcNow - TimeSpan.FromHours(Random.Shared.Next(10, 200));
             activityLogItems[i - 2 + shift] = CreateActivityLogItem(
@@ -150,7 +152,7 @@ internal class StubFactory
         }
 
         shift += usersCount;
-        for (int i = 0; i < usersCount; i += 3)
+        for (var i = 0; i < usersCount; i += 3)
         {
             lastSeen = DateTime.UtcNow - TimeSpan.FromMinutes(Random.Shared.Next(0, 500));
             activityLogItems[i - 2 + shift] = CreateActivityLogItem(
@@ -199,7 +201,7 @@ internal class StubFactory
     internal static IUserManager GetUserManager(UserIdSet userIdSet, bool vkIntergationWorks = true)
     {
         var postgreSqlInMemory = new PostgreSqlInMemory();
-        postgreSqlInMemory.FillWithFakeData(userIdSet.InitialUsersAmount);
+        postgreSqlInMemory.FillWithFakeDataAsync(userIdSet.InitialUsersAmount);
 
         var vkIntegrationMock = CreateVkIntegrationMock(userIdSet, vkIntergationWorks);
 
@@ -225,7 +227,9 @@ internal class StubFactory
         using (var document = JsonDocument.Parse(sbUsersJsonArray.ToString().TrimEnd(',')))
         {
             foreach (var user in document.RootElement.EnumerateArray())
+            {
                 users.Add(JsonSerializer.Deserialize<VkApiUser>(user)!);
+            }
         }
 
         return users;

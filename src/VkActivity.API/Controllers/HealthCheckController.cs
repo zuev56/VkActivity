@@ -1,5 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using VkActivity.Common;
 using VkActivity.Data.Services;
 
@@ -13,7 +16,7 @@ public sealed class HealthCheckController : Controller
 
     public HealthCheckController(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString(AppSettings.ConnectionStrings.Default);
+        _connectionString = configuration.GetConnectionString(AppSettings.ConnectionStrings.Default)!;
     }
 
     [HttpGet]
@@ -21,7 +24,9 @@ public sealed class HealthCheckController : Controller
     public async Task<IActionResult> GetHealthInfo()
     {
         if (Request.Method == "HEAD")
+        {
             return Ok();
+        }
 
         var currentProcess = Process.GetCurrentProcess();
 
@@ -47,7 +52,7 @@ public sealed class HealthCheckController : Controller
     // TODO: Use Zs.Common.Models.ProgramUtilites.GetAppsettingsPath instead
     private static string BytesToSize(long bytes)
     {
-        string[] array = new string[5]
+        var array = new string[5]
         {
             "Bytes",
             "KB",
@@ -61,9 +66,7 @@ public sealed class HealthCheckController : Controller
             return "0 Byte";
         }
 
-        int num = (int)Math.Floor(Math.Log(bytes) / Math.Log(1024.0));
+        var num = (int)Math.Floor(Math.Log(bytes) / Math.Log(1024.0));
         return Math.Round(bytes / Math.Pow(1024.0, num), 2) + " " + array[num];
     }
 }
-
-

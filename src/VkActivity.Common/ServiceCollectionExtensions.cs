@@ -10,8 +10,8 @@ public static class ServiceCollectionExtensions
     {
         return services.AddSingleton<IVkIntegration, VkIntegration>(
             sp => new VkIntegration(
-                configuration[AppSettings.Vk.AccessToken],
-                configuration[AppSettings.Vk.Version])
+                configuration[AppSettings.Vk.AccessToken]!,
+                configuration[AppSettings.Vk.Version]!)
             );
     }
 }
