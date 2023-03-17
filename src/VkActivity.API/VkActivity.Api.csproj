@@ -3,8 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
 		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-    	<PublishTrimmed>true</PublishTrimmed>
+    	<PublishTrimmed>false</PublishTrimmed>
     	<PublishSingleFile>true</PublishSingleFile>
     	<SelfContained>true</SelfContained>
     	<RuntimeIdentifier>linux-x64</RuntimeIdentifier>

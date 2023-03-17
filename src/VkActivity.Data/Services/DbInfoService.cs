@@ -1,14 +1,16 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Npgsql;
 using VkActivity.Data.Models;
 
-namespace VkActivity.Data.Services
+namespace VkActivity.Data.Services;
+
+public static class DbInfoService
 {
-    public static class DbInfoService
+    public static async Task<DbInfo[]> GetInfoAsync(string connectionString)
     {
-        public static async Task<DbInfo[]> GetInfoAsync(string connectionString)
-        {
-            const string _tablesInfoQuery = @"
+        const string _tablesInfoQuery = @"
                 select (with userQuery as (
                     select
                     	ist.table_name as table,
@@ -20,19 +22,18 @@ namespace VkActivity.Data.Services
                     order by 3
                 ) select json_agg(q) from userQuery q)";
 
-            using (var dbConnection = new NpgsqlConnection(connectionString))
+        using (var dbConnection = new NpgsqlConnection(connectionString))
+        {
+            dbConnection.Open();
+            using (var command = new NpgsqlCommand(_tablesInfoQuery, dbConnection))
             {
-                dbConnection.Open();
-                using (var command = new NpgsqlCommand(_tablesInfoQuery, dbConnection))
+                var result = await command.ExecuteScalarAsync();
+                if (result is string value)
                 {
-                    var result = await command.ExecuteScalarAsync();
-                    if (result is string value)
-                    {
-                        return JsonSerializer.Deserialize<DbInfo[]>(value)!;
-                    }
-
-                    return Array.Empty<DbInfo>();
+                    return JsonSerializer.Deserialize<DbInfo[]>(value)!;
                 }
+
+                return Array.Empty<DbInfo>();
             }
         }
     }

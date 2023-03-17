@@ -1,6 +1,6 @@
-﻿namespace VkActivity.Api.Models.Dto;
+﻿namespace VkActivity.Api.Models;
 
-public class ListUserDto
+public sealed class ListUserDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;

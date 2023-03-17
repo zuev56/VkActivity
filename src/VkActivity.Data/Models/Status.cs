@@ -1,9 +1,8 @@
-﻿namespace VkActivity.Data.Models
+﻿namespace VkActivity.Data.Models;
+
+public enum Status
 {
-    public enum Status
-    {
-        Active = 0,
-        Banned,
-        Deleted
-    }
+    Active = 0,
+    Banned,
+    Deleted
 }

@@ -1,13 +1,16 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using VkActivity.Data.Models;
 
 namespace VkActivity.Api.Models;
 
-public class DetailedActivity
+public sealed class DetailedActivity
 {
-    public int UserId { get; init; }
-    public string UserName { get; init; } = null!;
-    public string Url { get; init; } = null!;
+    public int UserId { get; }
+    public string UserName { get; }
+    public string Url { get; }
     public int AnalyzedDaysCount { get; init; }
     public int ActivityDaysCount { get; init; }
     public List<VisitInfo> VisitInfos { get; set; } = new();

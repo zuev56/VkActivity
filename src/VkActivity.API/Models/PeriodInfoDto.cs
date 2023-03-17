@@ -1,6 +1,8 @@
-﻿namespace VkActivity.Api.Models.Dto;
+﻿using System.Collections.Generic;
 
-public class PeriodInfoDto
+namespace VkActivity.Api.Models;
+
+public sealed class PeriodInfoDto
 {
     public int UserId { get; init; }
     public string UserName { get; init; } = null!;

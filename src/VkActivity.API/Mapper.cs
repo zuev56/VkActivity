@@ -1,5 +1,7 @@
-﻿using VkActivity.Api.Models;
-using VkActivity.Api.Models.Dto;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using VkActivity.Api.Models;
 using VkActivity.Data.Models;
 using Zs.Common.Extensions;
 

@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Zs.Common.Extensions;
 
 namespace VkActivity.Data;
 
-public class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, IDesignTimeDbContextFactory<VkActivityContext>
+public sealed class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, IDesignTimeDbContextFactory<VkActivityContext>
 {
     private readonly DbContextOptions<VkActivityContext>? _options;
 
@@ -34,5 +34,4 @@ public class VkActivityContextFactory : IDbContextFactory<VkActivityContext>, ID
 
         return new VkActivityContext(optionsBuilder.Options);
     }
-
 }

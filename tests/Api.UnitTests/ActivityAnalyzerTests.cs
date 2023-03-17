@@ -1,39 +1,35 @@
+using Api.UnitTests.Data;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using UnitTests.Data;
 using VkActivity.Api.Abstractions;
-using VkActivity.Api.Models;
 using VkActivity.Api.Services;
 using Xunit;
 
 namespace Api.UnitTests;
 
-public class ActivityAnalyzerTests
+public sealed class ActivityAnalyzerTests
 {
-    private const int _dbEntitiesAmount = 1000;
-    private static readonly DateTime _tmpMinLogDate = new(2022, 09, 18);
-    private static readonly DateTime _utcNow = DateTime.UtcNow;
+    private const int DbEntitiesAmount = 1000;
+    private static readonly DateTime TmpMinLogDate = new(2022, 09, 18);
+    private static readonly DateTime UtcNow = DateTime.UtcNow;
     public static readonly object[][] WrongDateIntervals =
     {
-        new object[] { _utcNow, _utcNow },
-        new object[] { _utcNow, _utcNow - TimeSpan.FromMilliseconds(1) }
+        new object[] { UtcNow, UtcNow },
+        new object[] { UtcNow, UtcNow - TimeSpan.FromMilliseconds(1) }
     };
 
     [Obsolete]
     [Fact]
     public async Task GetFullTimeActivityAsync_Successful_When_CorrectUserId()
     {
-        for (int i = 0; i < _dbEntitiesAmount / 10; i++)
+        for (var i = 0; i < DbEntitiesAmount / 10; i++)
         {
-            // Arrange
             var activityAnalyzer = GetActivityAnalyzer();
-            var userId = Random.Shared.Next(1, _dbEntitiesAmount);
+            var userId = Random.Shared.Next(1, DbEntitiesAmount);
 
-            // Act
-            var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, _tmpMinLogDate, DateTime.UtcNow);
+            var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, TmpMinLogDate, DateTime.UtcNow);
 
-            // Assert
             result.Should().NotBeNull();
             result.Successful.Should().BeTrue();
             result.Value.Should().NotBeNull();
@@ -55,13 +51,10 @@ public class ActivityAnalyzerTests
     [InlineData(int.MaxValue)]
     public async Task GetFullTimeActivityAsync_Fail_When_UnknownUserId(int userId)
     {
-        // Arrange
         var activityAnalyzer = GetActivityAnalyzer();
 
-        // Act
-        var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, _tmpMinLogDate, DateTime.UtcNow);
+        var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, TmpMinLogDate, DateTime.UtcNow);
 
-        // Assert
         result.Should().NotBeNull();
         result.Successful.Should().BeFalse();
         result.Value.Should().BeNull();
@@ -72,14 +65,11 @@ public class ActivityAnalyzerTests
     [Fact]
     public async Task GetFullTimeActivityAsync_HasWarning_When_NoDataForUser()
     {
-        // Arrange
-        var userWithoutActivityDataId = _dbEntitiesAmount - 1;
+        var userWithoutActivityDataId = DbEntitiesAmount - 1;
         var activityAnalyzer = GetActivityAnalyzer();
 
-        // Act
-        var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userWithoutActivityDataId, _tmpMinLogDate, DateTime.UtcNow);
+        var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userWithoutActivityDataId, TmpMinLogDate, DateTime.UtcNow);
 
-        // Assert
         result.Should().NotBeNull();
         result.Successful.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -90,18 +80,15 @@ public class ActivityAnalyzerTests
     [Fact]
     public async Task GetUserStatisticsForPeriodAsync_Successful_When_CorrectParameters()
     {
-        for (int i = 0; i < _dbEntitiesAmount / 10; i++)
+        for (var i = 0; i < DbEntitiesAmount / 10; i++)
         {
-            // Arrange
             var userId = i + 1;
-            var fromDate = _utcNow - TimeSpan.FromHours(Random.Shared.Next(10, 100));
-            var toDate = _utcNow - TimeSpan.FromHours(Random.Shared.Next(0, 9));
+            var fromDate = UtcNow - TimeSpan.FromHours(Random.Shared.Next(10, 100));
+            var toDate = UtcNow - TimeSpan.FromHours(Random.Shared.Next(0, 9));
             var activityAnalyzer = GetActivityAnalyzer();
 
-            // Act
             var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
 
-            // Assert
             result.Should().NotBeNull();
             result.Successful.Should().BeTrue();
             result.Value.Should().NotBeNull();
@@ -115,15 +102,12 @@ public class ActivityAnalyzerTests
     [InlineData(int.MaxValue)]
     public async Task GetUserStatisticsForPeriodAsync_Fail_When_UnknownUserId(int userId)
     {
-        // Arrange
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.MaxValue;
         var activityAnalyzer = GetActivityAnalyzer();
 
-        // Act
         var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
 
-        // Assert
         result.Should().NotBeNull();
         result.Successful.Should().BeFalse();
         result.Value.Should().BeNull();
@@ -136,14 +120,11 @@ public class ActivityAnalyzerTests
     public async Task GetUserStatisticsForPeriodAsync_Fail_When_ToDateNotMoreThanFromDate(
         DateTime fromDate, DateTime toDate)
     {
-        // Arrange
-        var userId = Random.Shared.Next(1, _dbEntitiesAmount);
+        var userId = Random.Shared.Next(1, DbEntitiesAmount);
         var activityAnalyzer = GetActivityAnalyzer();
 
-        // Act
         var result = await activityAnalyzer.GetUserStatisticsForPeriodAsync(userId, fromDate, toDate);
 
-        // Assert
         result.Should().NotBeNull();
         result.Successful.Should().BeFalse();
         result.Value.Should().BeNull();
@@ -151,28 +132,25 @@ public class ActivityAnalyzerTests
         //result.Messages.Should().ContainSingle();
     }
 
-    public static readonly object[][] _correctParametersForGetUsersWithActivityAsync =
+    public static readonly object[][] CorrectParametersForGetUsersWithActivityAsync =
     {
         new object[] { "", DateTime.MinValue, DateTime.MaxValue },
         new object[] { null!, DateTime.MinValue, DateTime.MaxValue },
-        new object[] { "Te", _utcNow - TimeSpan.FromHours(3), _utcNow },
-        new object[] { "!@$^", _utcNow - TimeSpan.FromDays(30), _utcNow + TimeSpan.FromDays(30) },
+        new object[] { "Te", UtcNow - TimeSpan.FromHours(3), UtcNow },
+        new object[] { "!@$^", UtcNow - TimeSpan.FromDays(30), UtcNow + TimeSpan.FromDays(30) },
         new object[] { "Er", new DateTime(2017, 2, 1), new DateTime(2018, 2, 28) },
         new object[] { "1", new DateTime(2095, 2, 1), new DateTime(2187, 2, 28) }
     };
 
     [Theory]
-    [MemberData(nameof(_correctParametersForGetUsersWithActivityAsync))]
+    [MemberData(nameof(CorrectParametersForGetUsersWithActivityAsync))]
     public async Task GetUsersWithActivityAsync_Successful_When_CorrectParameters(
         string filterText, DateTime fromDate, DateTime toDate)
     {
-        // Arrange
         var activityAnalyzer = GetActivityAnalyzer();
 
-        // Act
         var result = await activityAnalyzer.GetUsersWithActivityAsync(fromDate, toDate, filterText);
 
-        // Assert
         result.Should().NotBeNull();
         result.Successful.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -183,14 +161,11 @@ public class ActivityAnalyzerTests
     public async Task GetUsersWithActivityAsync_Fail_When_ToDateNotMoreThanFromDate(
         DateTime fromDate, DateTime toDate)
     {
-        // Arrange
         var filterText = string.Empty;
         var activityAnalyzer = GetActivityAnalyzer();
 
-        // Act
         var result = await activityAnalyzer.GetUsersWithActivityAsync(fromDate, toDate, filterText);
 
-        // Assert
         result.Should().NotBeNull();
         result.Successful.Should().BeFalse();
         result.Value.Should().BeNull();
@@ -201,7 +176,7 @@ public class ActivityAnalyzerTests
     private static IActivityAnalyzer GetActivityAnalyzer()
     {
         var postgreSqlInMemory = new PostgreSqlInMemory();
-        postgreSqlInMemory.FillWithFakeData(_dbEntitiesAmount);
+        postgreSqlInMemory.FillWithFakeData(DbEntitiesAmount);
 
         return new ActivityAnalyzer(
             postgreSqlInMemory.ActivityLogItemsRepository,

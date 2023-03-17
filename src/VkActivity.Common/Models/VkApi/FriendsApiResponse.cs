@@ -7,7 +7,7 @@ public sealed class FriendsApiResponse
     [JsonPropertyName("response")]
     public ResponseData? Data { get; init; }
 
-    public class ResponseData
+    public sealed class ResponseData
     {
         [JsonPropertyName("count")]
         public int Count { get; init; }

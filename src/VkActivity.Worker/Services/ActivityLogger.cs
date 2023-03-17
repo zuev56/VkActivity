@@ -1,11 +1,14 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using VkActivity.Common.Abstractions;
 using VkActivity.Common.Models.VkApi;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
 using VkActivity.Worker.Abstractions;
-using Zs.Common.Abstractions;
-using Zs.Common.Enums;
 using Zs.Common.Extensions;
 using Zs.Common.Models;
 using Zs.Common.Services.Logging.DelayedLogger;
@@ -28,11 +31,11 @@ public sealed class ActivityLogger : IActivityLogger
         ILogger<ActivityLogger> logger,
         IDelayedLogger<ActivityLogger> delayedLogger)
     {
-        _activityLogRepo = activityLogRepo ?? throw new ArgumentNullException(nameof(activityLogRepo));
-        _usersRepo = usersRepo ?? throw new ArgumentNullException(nameof(usersRepo));
-        _vkIntegration = vkIntegration ?? throw new ArgumentNullException(nameof(vkIntegration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _delayedLogger = delayedLogger ?? throw new ArgumentNullException(nameof(delayedLogger));
+        _activityLogRepo = activityLogRepo;
+        _usersRepo = usersRepo;
+        _vkIntegration = vkIntegration;
+        _logger = logger;
+        _delayedLogger = delayedLogger;
     }
 
     /// <inheritdoc/>
@@ -52,7 +55,7 @@ public sealed class ActivityLogger : IActivityLogger
             var userStringIds = userIds.Select(id => id.ToString()).ToArray();
             var vkUsers = await _vkIntegration.GetUsersWithActivityInfoAsync(userStringIds).ConfigureAwait(false);
 
-            int loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
+            var loggedItemsCount = await LogVkUsersActivityAsync(vkUsers).ConfigureAwait(false);
 
 #if DEBUG
             Trace.WriteLine(LoggedItemsCount(loggedItemsCount));
@@ -118,7 +121,7 @@ public sealed class ActivityLogger : IActivityLogger
 
     /// <summary>Save user activities to database</summary>
     /// <param name="apiUsers">All users current state from VK API</param>
-    /// <returns>Logged <see cref="ActivityLogItem">s count</returns>
+    /// <returns>Logged <see cref="ActivityLogItem"/>s count</returns>
     private async Task<int> LogVkUsersActivityAsync(List<VkApiUser> apiUsers)
     {
         // TODO: Add user activity info (range) - ???
@@ -129,7 +132,9 @@ public sealed class ActivityLogger : IActivityLogger
         {
             // When account is deleted or banned or smth else
             if (apiUser.LastSeen == null)
+            {
                 continue;
+            }
 
             var lastActivityLogItem = lastActivityLogItems.FirstOrDefault(i => i.UserId == apiUser.Id);
             var currentPlatform = apiUser.LastSeen.Platform;
@@ -140,9 +145,11 @@ public sealed class ActivityLogger : IActivityLogger
                 || lastActivityLogItem.Platform != currentPlatform)
             {
                 // Vk corrects LastSeen, so we have to work with logged value, not current API value
-                int lastSeenForLog = apiUser.LastSeen?.UnixTime ?? 0;
+                var lastSeenForLog = apiUser.LastSeen?.UnixTime ?? 0;
                 if (lastActivityLogItem != null && apiUser.LastSeen != null)
+                {
                     lastSeenForLog = Math.Max(lastActivityLogItem.LastSeen, apiUser.LastSeen.UnixTime);
+                }
 
                 activityLogItemsForSave.Add(
                     new ActivityLogItem
@@ -156,13 +163,13 @@ public sealed class ActivityLogger : IActivityLogger
             }
         }
 
-        if (activityLogItemsForSave.Any())
+        if (!activityLogItemsForSave.Any())
         {
-            return await _activityLogRepo.SaveRangeAsync(activityLogItemsForSave).ConfigureAwait(false)
-                ? activityLogItemsForSave.Count
-                : -1;
+            return 0;
         }
 
-        return 0;
+        return await _activityLogRepo.SaveRangeAsync(activityLogItemsForSave).ConfigureAwait(false)
+            ? activityLogItemsForSave.Count
+            : -1;
     }
 }

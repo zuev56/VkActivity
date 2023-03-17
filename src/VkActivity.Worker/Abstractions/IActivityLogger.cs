@@ -1,4 +1,4 @@
-﻿using Zs.Common.Abstractions;
+﻿using System.Threading.Tasks;
 using Zs.Common.Models;
 
 namespace VkActivity.Worker.Abstractions;

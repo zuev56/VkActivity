@@ -1,4 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using VkActivity.Data.Abstractions;
 using VkActivity.Data.Models;
@@ -11,8 +16,8 @@ public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContex
     public ActivityLogItemsRepository(
         IDbContextFactory<VkActivityContext> contextFactory,
         TimeSpan? criticalQueryExecutionTimeForLogging = null,
-        ILoggerFactory? loggerfFactory = null)
-        : base(contextFactory, criticalQueryExecutionTimeForLogging, loggerfFactory)
+        ILoggerFactory? loggerFactory = null)
+        : base(contextFactory, criticalQueryExecutionTimeForLogging, loggerFactory)
     {
     }
 
@@ -33,10 +38,11 @@ public sealed class ActivityLogItemsRepository : BaseRepository<VkActivityContex
                           LATERAL (SELECT * FROM vk.activity_log WHERE user_id < t.user_id ORDER BY user_id DESC, last_seen DESC, insert_date DESC LIMIT 1) AS bpt 
                         ) SELECT * FROM t";
 
-        if (userIds?.Length > 0)
+        if (userIds.Length > 0)
+        {
             sql += $" WHERE t.user_id in ({string.Join(',', userIds)})";
+        }
 
         return await FindAllBySqlAsync(sql);
     }
-
 }

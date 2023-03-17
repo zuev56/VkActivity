@@ -1,14 +1,20 @@
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using VkActivity.Api;
 using VkActivity.Api.Abstractions;
-using VkActivity.Api.Helpers;
 using VkActivity.Api.Services;
 using VkActivity.Common;
 using VkActivity.Common.Abstractions;
@@ -21,7 +27,7 @@ using VkActivity.Data.Repositories;
 [assembly: InternalsVisibleTo("Api.IntegrationTests")]
 
 
-IHost host = Host.CreateDefaultBuilder(args)
+var host = Host.CreateDefaultBuilder(args)
     .UseSerilog()
     .ConfigureWebHostDefaults(ConfigureWebHostDefaults)
     .ConfigureServices(ConfigureServices)
@@ -38,7 +44,7 @@ Log.Warning("-! Starting {ProcessName} (MachineName: {MachineName}, OS: {OS}, Us
 await host.RunAsync();
 
 
-void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
+static void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 {
     webHostBuilder.ConfigureServices((context, services) =>
     {
@@ -78,7 +84,9 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
 
         // Configure the HTTP request pipeline.
         if (!context.HostingEnvironment.IsDevelopment())
+        {
             app.UseHsts();
+        }
 
         app.UseSwagger();
         app.UseSwaggerUI(c => c.SwaggerEndpoint(
@@ -102,7 +110,7 @@ void ConfigureWebHostDefaults(IWebHostBuilder webHostBuilder)
             endpoints.MapControllers();
         });
     })
-    .ConfigureKestrel((context, serverOptions) =>
+    .ConfigureKestrel((_, serverOptions) =>
     {
         // https://docs.microsoft.com/ru-ru/aspnet/core/fundamentals/servers/kestrel/options?view=aspnetcore-6.0
 
@@ -145,5 +153,3 @@ void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     services.AddScoped<IActivityLogItemsRepository, ActivityLogItemsRepository>();
     services.AddScoped<IUsersRepository, UsersRepository>();
 }
-
-

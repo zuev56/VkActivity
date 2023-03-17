@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using System;
+using System.Data.Common;
 using System.Reflection;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -129,7 +130,7 @@ public partial class VkActivityContext : DbContext
                .AddJsonFile(System.IO.Path.GetFullPath(configPath))
                .Build();
 
-        var connectionStringBuilder = new DbConnectionStringBuilder()
+        var connectionStringBuilder = new DbConnectionStringBuilder
         {
             ConnectionString = configuration["ConnectionStrings:Default"]
         };
@@ -151,7 +152,9 @@ public partial class VkActivityContext : DbContext
         }
 
         if (!string.IsNullOrWhiteSpace(dbName))
+        {
             sb.Replace("DefaultDbName", dbName);
+        }
 
         return sb.ToString();
     }

@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Logging;
 using Zs.Common.Extensions;
 
 namespace VkActivity.Api;
 
 // TODO: Move to Zs.Common.Web
-public class ApiExceptionFilter : Attribute, IExceptionFilter
+public sealed class ApiExceptionFilter : Attribute, IExceptionFilter
 {
     private readonly ILogger<ApiExceptionFilter> _logger;
 

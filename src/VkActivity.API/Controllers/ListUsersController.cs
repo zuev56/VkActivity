@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using VkActivity.Api.Abstractions;
-using Zs.Common.Extensions;
+using VkActivity.Api.Models;
 
 namespace VkActivity.Api.Controllers;
 
@@ -26,11 +30,12 @@ public sealed class ListUsersController : Controller
     /// <param name="toDate"></param>
     /// <returns></returns>
     [HttpGet("period/{fromDate}/{toDate}")]
+    [ProducesResponseType(typeof(ListUserDto[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUsersWithActivity(DateTime fromDate, DateTime toDate, string? filterText)
     {
         var usersWithActivityResult = await _activityAnalyzer.GetUsersWithActivityAsync(fromDate, toDate, filterText);
-        var userDtos = usersWithActivityResult.Value.Select(Mapper.ToListUserDto);
+        var users = usersWithActivityResult.Value.Select(Mapper.ToListUserDto).ToArray();
 
-        return Ok(userDtos);
+        return Ok(users);
     }
 }

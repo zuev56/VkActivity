@@ -1,43 +1,45 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace VkActivity.Api
+namespace VkActivity.Api;
+
+public class JsonBooleanConverter : JsonConverter<bool>
 {
-    public class JsonBooleanConverter : JsonConverter<bool>
+    public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        var value = reader.GetString();
+
+        if (string.IsNullOrWhiteSpace(value))
         {
-            string? value = reader.GetString();
-
-            if (string.IsNullOrWhiteSpace(value))
-                return false;
-
-            string lowerCaseValue = value.ToLower();
-            if (lowerCaseValue.Equals("true") || lowerCaseValue.Equals("yes") || lowerCaseValue.Equals("1"))
-            {
-                return true;
-            }
-            if (value.ToLower().Equals("false") || lowerCaseValue.Equals("no") || lowerCaseValue.Equals("0"))
-            {
-                return false;
-            }
-
-            throw new JsonException("JsonBooleanConverter.Read error");
+            return false;
         }
 
-        public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
+        var lowerCaseValue = value.ToLower();
+        if (lowerCaseValue.Equals("true") || lowerCaseValue.Equals("yes") || lowerCaseValue.Equals("1"))
         {
-            throw new NotImplementedException();
+            return true;
+        }
+        if (value.ToLower().Equals("false") || lowerCaseValue.Equals("no") || lowerCaseValue.Equals("0"))
+        {
+            return false;
+        }
 
-            switch (value)
-            {
-                case true:
-                    writer.WriteStringValue("true");
-                    break;
-                case false:
-                    writer.WriteStringValue("false");
-                    break;
-            }
+        throw new JsonException("JsonBooleanConverter.Read error");
+    }
+
+    public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
+    {
+        throw new NotImplementedException();
+
+        switch (value)
+        {
+            case true:
+                writer.WriteStringValue("true");
+                break;
+            case false:
+                writer.WriteStringValue("false");
+                break;
         }
     }
 }

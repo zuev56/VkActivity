@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using VkActivity.Api.Abstractions;
-using Zs.Common.Extensions;
+using VkActivity.Api.Models;
 
 namespace VkActivity.Api.Controllers;
 
@@ -26,10 +29,11 @@ public sealed class ActivityLogController : Controller
 
     public ActivityLogController(IActivityAnalyzer activityAnalyzerService)
     {
-        _activityAnalyzerService = activityAnalyzerService ?? throw new ArgumentNullException(nameof(activityAnalyzerService));
+        _activityAnalyzerService = activityAnalyzerService;
     }
 
     [HttpGet("{userId:int}/period/{fromDate:datetime}/{toDate:datetime}")]
+    [ProducesResponseType(typeof(PeriodInfoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPeriodInfo(
         [FromRoute] int userId, [FromRoute] DateTime fromDate, [FromRoute] DateTime toDate)
     {
@@ -40,8 +44,8 @@ public sealed class ActivityLogController : Controller
     }
 
     [HttpGet("{userId:int}/day/{date:datetime}")]
-    public async Task<IActionResult> GetDayInfo(
-        [FromRoute] int userId, [FromRoute] DateTime date)
+    [ProducesResponseType(typeof(PeriodInfoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDayInfo([FromRoute] int userId, [FromRoute] DateTime date)
     {
         var fromDate = date.Date;
         var toDate = fromDate.AddDays(1).AddMilliseconds(-1);
@@ -52,18 +56,20 @@ public sealed class ActivityLogController : Controller
     }
 
     [HttpGet("{userId:int}/fulltime")]
+    [ProducesResponseType(typeof(PeriodInfoDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFullTimeInfo([FromRoute] int userId)
     {
         var tmpMinLogDate = new DateTime(2022, 09, 18);
-        var fullTimeStatistictResult = await _activityAnalyzerService
+        var fullTimeStatisticsResult = await _activityAnalyzerService
             .GetUserStatisticsForPeriodAsync(userId, tmpMinLogDate, DateTime.UtcNow);
-        var fullTimeInfoDto = Mapper.ToPeriodInfoDto(fullTimeStatistictResult.Value);
+        var fullTimeInfoDto = Mapper.ToPeriodInfoDto(fullTimeStatisticsResult.Value);
 
         return Ok(fullTimeInfoDto);
     }
 
     /// <summary>UTC</summary>
     [HttpGet("{userId:int}/last-utc")]
+    [ProducesResponseType(typeof(DateTime), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLastVisitDate([FromRoute] int userId)
     {
         var lastVisitDateResult = await _activityAnalyzerService.GetLastVisitDate(userId);
@@ -73,6 +79,7 @@ public sealed class ActivityLogController : Controller
 
     /// <summary>UTC</summary>
     [HttpGet("{userId:int}/is-online")]
+    [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
     public async Task<IActionResult> IsOnline([FromRoute] int userId)
     {
         var isOnlineResult = await _activityAnalyzerService.IsOnline(userId);

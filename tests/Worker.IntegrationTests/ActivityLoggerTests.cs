@@ -11,25 +11,22 @@ using Xunit;
 namespace Worker.IntegrationTests;
 
 [ExcludeFromCodeCoverage]
-public class ActivityLoggerTests : TestBase
+public sealed class ActivityLoggerTests : TestBase
 {
-    private const int _dbEntitiesAmount = 1000;
+    private const int DbEntitiesAmount = 1000;
 
     public ActivityLoggerTests()
     {
-        AddRealUsersAsync(_dbEntitiesAmount).Wait();
+        AddRealUsersAsync(DbEntitiesAmount).Wait();
     }
 
     [Fact]
     public async Task SaveVkUsersActivityAsync_Should_ReturnSuccess()
     {
-        // Arrange
         var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
 
-        // Act
         var saveActivityResult = await activityLogger.SaveUsersActivityAsync();
 
-        // Assert
         saveActivityResult?.Successful.Should().BeTrue();
         //saveActivityResult?.Messages
         //    .Where(m => m.Type == Zs.Common.Enums.InfoMessageType.Warning)
@@ -41,7 +38,6 @@ public class ActivityLoggerTests : TestBase
     [Fact]
     public async Task SetUndefinedActivityToAllUsersAsync_Should_AddUndefinedStateToAll()
     {
-        // Arrange
         var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
         var usersRepository = ServiceProvider.GetRequiredService<IUsersRepository>();
         var activityLogsRepository = ServiceProvider.GetRequiredService<IActivityLogItemsRepository>();
@@ -50,11 +46,9 @@ public class ActivityLoggerTests : TestBase
         await activityLogger.SaveUsersActivityAsync();
         var activitiesBefore = await activityLogsRepository!.FindLastUsersActivityAsync();
 
-        // Act
         var setUndefinedActivityResult = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
         var activitiesAfter = await activityLogsRepository.FindLastUsersActivityAsync();
 
-        // Assert
         setUndefinedActivityResult.Should().NotBeNull();
         setUndefinedActivityResult.Successful.Should().BeTrue();
         activitiesAfter.Should().NotBeEquivalentTo(activitiesBefore);
@@ -67,18 +61,15 @@ public class ActivityLoggerTests : TestBase
     [Fact]
     public async Task SetUndefinedActivityToAllUsersAsync_Should_AddUndefinedActivityOnlyOnce_When_InvokesManyTimes()
     {
-        // Arrange
         var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
         var activityLogsRepository = ServiceProvider.GetRequiredService<IActivityLogItemsRepository>();
         await activityLogger.SaveUsersActivityAsync();
 
-        // Act
         var setUndefinedActivityResult1 = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
         var activitiesAfter1 = await activityLogsRepository.FindLastUsersActivityAsync();
         var setUndefinedActivityResult2 = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
         var activitiesAfter2 = await activityLogsRepository.FindLastUsersActivityAsync();
 
-        // Assert
         setUndefinedActivityResult1.Should().NotBeNull();
         setUndefinedActivityResult1.Successful.Should().BeTrue();
         setUndefinedActivityResult2.Should().NotBeNull();
@@ -91,18 +82,14 @@ public class ActivityLoggerTests : TestBase
     [Fact]
     public async Task ChangeAllUserActivitiesToUndefinedAsync_ShouldDoNothing_When_EmptyActivityLog()
     {
-        // Arrange
         var activityLogger = ServiceProvider.GetRequiredService<IActivityLogger>();
         var activityLogsRepository = ServiceProvider.GetRequiredService<IActivityLogItemsRepository>();
 
-        // Act
         var setUndefinedActivityResult = await activityLogger.ChangeAllUserActivitiesToUndefinedAsync();
         var activitiesAfter = await activityLogsRepository.FindLastUsersActivityAsync();
 
-        // Assert
         setUndefinedActivityResult.Should().NotBeNull();
         setUndefinedActivityResult.Successful.Should().BeFalse();
-        //setUndefinedActivityResult.HasWarnings.Should().BeTrue();
         activitiesAfter.Should().BeEmpty();
 
         await Task.Delay(1000);

@@ -1,14 +1,13 @@
 ﻿using System;
 using Xunit;
 
-namespace UnitTests
+namespace Worker.UnitTests;
+
+public class MapperTests
 {
-    public class MapperTests
+    [Fact(Skip = "NotImplemented")]
+    public void Map()
     {
-        [Fact(Skip = "NotImplemented")]
-        public void Map()
-        {
-            throw new NotImplementedException();
-        }
+        throw new NotImplementedException();
     }
 }

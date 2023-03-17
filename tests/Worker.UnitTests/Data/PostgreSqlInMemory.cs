@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using VkActivity.Data;
 using VkActivity.Data.Repositories;
 
-namespace UnitTests.Data;
+namespace Worker.UnitTests.Data;
 
-public class PostgreSqlInMemory
+public sealed class PostgreSqlInMemory
 {
     public ActivityLogItemsRepository ActivityLogItemsRepository { get; }
     public UsersRepository UsersRepository { get; }

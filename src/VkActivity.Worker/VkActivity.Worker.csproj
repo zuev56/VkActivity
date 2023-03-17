@@ -3,7 +3,11 @@
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
+        <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+        <PublishTrimmed>false</PublishTrimmed>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>true</PublishSingleFile>
+        <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
     </PropertyGroup>
     
     <!-- https://stackoverflow.com/questions/41546943/how-to-set-aspnetcore-environment-to-be-considered-for-publishing-an-asp-net-cor
